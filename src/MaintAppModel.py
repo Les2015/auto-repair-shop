@@ -4,7 +4,19 @@ Created on May 27, 2009
 @author: 
 '''
 
-from MaintAppObjects import Customer, Vehicle, Workorder
+import os
+from google.appengine.ext import db
+from google.appengine.api import apiproxy_stub_map 
+from google.appengine.api import datastore_file_stub 
+from MaintAppObjects import Customer 
+from MaintAppObjects import Vehicle 
+from MaintAppObjects import Workorder 
+from CustomerEnt import CustomerEnt
+from VehicleEnt import VehicleEnt
+from WorkorderEnt import WorkorderEnt
+
+APP_ID = u'auto-repair-shop'
+os.environ['APPLICATION_ID'] = APP_ID  
 
 class MaintAppModel(object):
     def __init__(self):
@@ -25,34 +37,130 @@ class MaintAppModel(object):
             primary key of the customer (the new one if creating, the existing
             one if updating.)
         """
-        return 24
-    
+        if customer.id == '-1':
+            entity = None
+        else:
+            entity = CustomerEnt.get_by_key_name(str(customer.id))
+            #entity = CustomerEnt.get(db.Key(customer.id))
+
+        if entity:
+            #print "Entity is not None"
+            entity.first_name = customer.first_name
+            entity.last_name = customer.last_name
+            entity.address1 = customer.address1
+            entity.address2 = customer.address2
+            entity.city = customer.city
+            entity.state = customer.state
+            entity.zip = customer.zip
+            entity.phone1 = customer.phone1
+            entity.phone2 = customer.phone2
+            entity.email = customer.email
+            entity.comments = customer.comments
+        else:    
+            #print "Entity is None"        
+            entity = CustomerEnt(first_name=customer.first_name,
+                                 last_name=customer.last_name,
+                                 address1=customer.address1,
+                                 address2=customer.address2,
+                                 city=customer.city,
+                                 state=customer.state,
+                                 zip=customer.zip,
+                                 phone1=customer.phone1,
+                                 phone2=customer.phone2,
+                                 email=customer.email,
+                                 comments=customer.comments)
+        
+        key = entity.put()
+        return str(key)
+            
     def getCustomer(self, customer_id):
         """ Retrieve the customer record from the database whose primary key
             is the customer_id passed in.
         """
-        return Customer(id=customer_id, first_name="Wing", last_name="Wong")
+        #entity = CustomerEnt.get_by_key_name(customer_id)
+        entity = CustomerEnt.get(db.Key(customer_id))
+        if entity:
+            return Customer(id=customer_id, 
+                            first_name=entity.first_name, 
+                            last_name=entity.last_name,
+                            address1=entity.address1,
+                            address2=entity.address2,
+                            city=entity.city,
+                            state=entity.state,
+                            zip=entity.zip,
+                            phone1=entity.phone1,
+                            phone2=entity.phone2,
+                            email=entity.email,
+                            comments=entity.comments)
+        else:
+            return None
     
     def saveVehicleInfo(self, vehicle):
         """ Write vehicle object to data store.  If id in vehicle object is
             -1, create the record; otherwise, update the existing record
             in the database.  Return primary key of the vehicle.
         """
-        return 10344
+        if vehicle.id == '-1':
+            entity = None
+        else:
+            entity = VehicleEnt.get_by_key_name(str(vehicle.id))
+            #entity = VehicleEnt.get(db.Key(vehicle.id))
+        
+        customer_ent = CustomerEnt.get(db.Key(vehicle.customer_id))    
+        #print "-- In saveVehicleInfo, customer_ent: ", customer_ent
+        if entity:
+            entity.make = vehicle.make
+            entity.model = vehicle.model
+            entity.year = vehicle.year
+            entity.mileage = vehicle.mileage
+            entity.license = vehicle.license
+            entity.vin = vehicle.vin
+            entity.notes = vehicle.notes
+            entity.customer = customer_ent
+        else:    
+            entity = VehicleEnt(make=vehicle.make,
+                                model=vehicle.model,
+                                year=vehicle.year,
+                                mileage=vehicle.mileage,
+                                license=vehicle.license,
+                                vin=vehicle.vin,
+                                notes=vehicle.notes,
+                                customer=customer_ent)
+        
+        key = entity.put()
+        return str(key)
     
     def getVehicle(self, vehicle_id):
         """ Retrieve the vehicle record from the database whose primary key
             is the vehicle_id passed in.
         """
-        return Vehicle(id="10344", make="Honda", modle="Civic", year=1993)
+        customer_key = '-1'
+        entity = VehicleEnt.get(db.Key(vehicle_id))
+        if entity:
+            if entity.customer:
+                customer_key = str(entity.customer.key())
+                
+            #print "--In getVehicle, customer_key: " + customer_key    
+            #print "--In getVehicle, customer object:", entity.customer    
+            return Vehicle(id=vehicle_id, 
+                           make=entity.make, 
+                           model=entity.model, 
+                           year=entity.year,
+                           mileage=entity.mileage,
+                           license=entity.license,
+                           vin=entity.vin,
+                           notes=entity.notes,
+                           customer_id=customer_key)
+        else:
+            return None
     
     def getVehicleList(self, customer_id):
         """ This method queries the database for vehicles records belonging
             to the customer identified by customer_id. Return an empty list
             if no vehicles are found.
         """
-        return [Vehicle(id="10344", make="Honda", model="Civic", year=1993),
-                Vehicle(id="10346", make="Toyota", model="Tercel", year=2002)]
+        return [Vehicle(id=10344, make="Honda", model="Civic", year=1993),
+                Vehicle(id=10346, make="Toyota", model="Tercel", year=2002)]
     
     def searchForMatchingCustomers(self, searchCriteria):
         """ The model forms a query based on AND logic for the various
@@ -122,5 +230,112 @@ class MaintAppModel(object):
             (field name, error type) tuples.
         """
         return []
+    
+
+class TestMaintAppModel(object):
+    #def setUp(self): 
+    def __init__(self): 
+        # Start with a fresh api proxy. 
+        apiproxy_stub_map.apiproxy = apiproxy_stub_map.APIProxyStubMap() 
+        
+        # Use a fresh stub datastore. 
+        stub = datastore_file_stub.DatastoreFileStub(APP_ID, '', '') 
+        apiproxy_stub_map.apiproxy.RegisterStub('datastore_v3', stub) 
+        
+    def testSaveAndGet(self):
+        appModel = MaintAppModel()
+        print "** testing customer save..."
+        c1 = Customer(id='-1',
+                      first_name='Fiona',
+                      last_name='Wong',
+                      address1='PO Box 3134',
+                      address2='',
+                      city='Santa Clara',
+                      state='CA',
+                      zip='95055',
+                      phone1='111.111.1111',
+                      phone2='222.222.2222',
+                      email='fionawhwong@gmail.com',
+                      comments='')
+        #print "c1 created -", c1
+        c1_key = appModel.saveCustomerInfo(c1)
+        print "c1_key = " + c1_key
+                        
+        c2 = Customer(id='c2',
+                      first_name='Wing',
+                      last_name='Wong',
+                      address1='c2 address1',
+                      address2='',
+                      city='c2 city',
+                      state='CA',
+                      zip='95055',
+                      phone1='111.111.1111',
+                      phone2='222.222.2222',
+                      email='wingwong@gmail.com',
+                      comments='')
+        #print "c2 created -", c2
+        c2_key = appModel.saveCustomerInfo(c2)
+        print "c2_key = " + c2_key
+
+        print "* all saved customers:"
+        customers = CustomerEnt.all()
+        for customer in customers:
+            print customer.first_name, customer.last_name, ", object ", customer
+        
+        print "\n** testing customer retrieve..."
+        print "c1_key = " + c1_key
+        c1_retrived = appModel.getCustomer(c1_key)
+        print "c1_retrived: ", c1_retrived
+        print "c2_key = " + c2_key
+        c2_retrived = appModel.getCustomer(c2_key)
+        print "c2_retrived: ", c2_retrived
+
+        print "\n** testing vehicle save..."
+        v1 = Vehicle(id='-1',
+                     make='Honda', 
+                     model='Civic', 
+                     year=2001,
+                     mileage=120000,
+                     license='AB1234',
+                     vin='VIN',
+                     notes='',
+                     customer_id=c1_key)
+        v1_key = appModel.saveVehicleInfo(v1)
+        print "v1_key = " + v1_key
+
+        v2 = Vehicle(id='v2',
+                     make='Honda', 
+                     model='Accord', 
+                     year=2007,
+                     mileage=3000,
+                     license='XY1234',
+                     vin='VIN',
+                     notes='',
+                     customer_id=c2_key)
+        v2_key = appModel.saveVehicleInfo(v2)
+        print "v2_key = " + v2_key
+        
+        print "* all saved vehicles:"
+        vehicles = VehicleEnt.all()
+        for vehicle in vehicles:
+            print vehicle.make, vehicle.model, ", owner by customer with id ", str(vehicle.customer.key()), "(object ", vehicle.customer, ")"
+        
+    
+        print "\n** testing vehicle retrieve..."
+        print "v1_key = " + v1_key
+        v1_retrived = appModel.getVehicle(v1_key)
+        print "v1_retrived: ", v1_retrived    
+        print "v2_key = " + v2_key
+        v2_retrived = appModel.getVehicle(v2_key)
+        print "v2_retrived: ", v2_retrived
+        
+        
+def main( ):
+    #run_wsgi_app(application)
+    test = TestMaintAppModel()
+    test.testSaveAndGet()
+
+if __name__ == '__main__' :
+    main()
     
     

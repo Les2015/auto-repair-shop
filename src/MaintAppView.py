@@ -234,7 +234,20 @@ class CustomerSubview(object):
             <label for="first_name">First Name: </label>
             <input type="text" name="first_name" value="" />
             <label for="last_name">Last Name: </label>
-            <input type="text" name="last_name" value="" /></div>
+            <input type="text" name="last_name" value="" />
+            <br />
+            <label for="address1">Address1: </label>
+            <input type="text" name="address1" value="" />
+            <label for="city">City: </label>
+            <input type="text" name="city" value="" />
+            <br />
+            <label for="state">State: </label>
+            <input type="text" name="state" value="" />
+            <label for="zip">Zip: </label>
+            <input type="text" name="zip" value="" />
+            <br />
+            <label for="phone1">Primary Phone: </label>
+            <input type="text" name="phone1" value="" />            
         """)
         if not self.__searchMode:
             reqhandler.response.out.write("""
