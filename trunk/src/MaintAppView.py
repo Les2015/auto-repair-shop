@@ -230,7 +230,7 @@ class CustomerSubview(object):
     
     def _serve_content(self, reqhandler):
         reqhandler.response.out.write("""
-            <table style="margin-top:15px;">
+            <table style="margin-top:15px; margin-left:auto; margin-right:auto;">
             <tr>
             <td>
             <label for="first_name">First Name: </label>
@@ -281,20 +281,30 @@ class CustomerSubview(object):
             <input type="text" name="phone1" value="" />
             </td>
             <td></td><td></td>
-            </tr>
-            </table>            
+            </tr>            
         """)
         if not self.__searchMode:
             reqhandler.response.out.write("""
+            <tr><td colspan="4">
             <p>Comments:</p>
-            <div><textarea name="comments" rows="3" cols="60">""" + self.__customer.getComments() +  
-              """</textarea></div><div><input type="submit" name="submit_savecust" value="Save Customer Info" />
-                 <input type="submit" name="submit_resetcust_0" value="Reset Customer Info" /></div>
+            <div>
+            <textarea name="comments" rows="3" cols="60">""" + self.__customer.getComments() +  
+              """</textarea>
+            </div><p style="width:100%; text-align:center;"><input type="submit" name="submit_savecust" value="Save Customer Info" />
+                 <input type="submit" name="submit_resetcust_0" value="Reset Customer Info" /></p>
+                 </td></tr>
+            </table>
             """)
         else:
             reqhandler.response.out.write("""
-            <div><input type="submit" name="submit_search" value="Find Customer(s)" />
-                 <input type="submit" name="submit_resetcust_1" value="Clear Customer Info" /></div>""")
+            <tr><td colspan="4">
+            <p style="width:100%; text-align:center;">
+                <input type="submit" name="submit_search" value="Find Customer(s)" />
+                <input type="submit" name="submit_resetcust_1" value="Clear Customer Info" />
+            </p>
+            </td></tr>
+            </table>
+            """)
         return None
     
 class VehicleSubview(object):
