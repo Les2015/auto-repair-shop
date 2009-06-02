@@ -230,24 +230,59 @@ class CustomerSubview(object):
     
     def _serve_content(self, reqhandler):
         reqhandler.response.out.write("""
-            <div>
+            <table style="margin-top:15px;">
+            <tr>
+            <td>
             <label for="first_name">First Name: </label>
+            </td>
+            <td>
             <input type="text" name="first_name" value="" />
-            <label for="last_name">Last Name: </label>
+            </td>
+            <td>
+            <label for="last_name" style="padding-left:10px">Last Name: </label>
+            </td>
+            <td>
             <input type="text" name="last_name" value="" />
-            <br />
+            </td>
+            </tr>
+            <tr>
+            <td>
             <label for="address1">Address1: </label>
+            </td>
+            <td>
             <input type="text" name="address1" value="" />
-            <label for="city">City: </label>
+            </td>
+            <td>
+            <label for="city" style="padding-left:10px">City: </label>
+            </td>
+            <td>
             <input type="text" name="city" value="" />
-            <br />
+            </td>
+            </tr>
+            <tr>
+            <td>
             <label for="state">State: </label>
+            </td>
+            <td>
             <input type="text" name="state" value="" />
-            <label for="zip">Zip: </label>
+            </td>
+            <td>
+            <label for="zip" style="padding-left:10px">Zip: </label>
+            </td>
+            <td>
             <input type="text" name="zip" value="" />
-            <br />
+            </td>
+            </tr>
+            <tr>
+            <td>
             <label for="phone1">Primary Phone: </label>
-            <input type="text" name="phone1" value="" />            
+            </td>
+            <td>
+            <input type="text" name="phone1" value="" />
+            </td>
+            <td></td><td></td>
+            </tr>
+            </table>            
         """)
         if not self.__searchMode:
             reqhandler.response.out.write("""
