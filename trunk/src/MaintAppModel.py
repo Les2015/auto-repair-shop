@@ -112,7 +112,7 @@ class MaintAppModel(object):
             entity.make = vehicle.make
             entity.model = vehicle.model
             entity.year = vehicle.year
-            entity.mileage = vehicle.mileage
+            #entity.mileage = vehicle.mileage
             entity.license = vehicle.license
             entity.vin = vehicle.vin
             entity.notes = vehicle.notes
@@ -121,7 +121,7 @@ class MaintAppModel(object):
             entity = VehicleEnt(make=vehicle.make,
                                 model=vehicle.model,
                                 year=vehicle.year,
-                                mileage=vehicle.mileage,
+                                #mileage=vehicle.mileage,
                                 license=vehicle.license,
                                 vin=vehicle.vin,
                                 notes=vehicle.notes,
@@ -146,7 +146,7 @@ class MaintAppModel(object):
                            make=entity.make, 
                            model=entity.model, 
                            year=entity.year,
-                           mileage=entity.mileage,
+                           #mileage=entity.mileage,
                            license=entity.license,
                            vin=entity.vin,
                            notes=entity.notes,
@@ -295,7 +295,7 @@ class TestMaintAppModel(object):
                      make='Honda', 
                      model='Civic', 
                      year=2001,
-                     mileage=120000,
+                     #mileage=120000,
                      license='AB1234',
                      vin='VIN',
                      notes='',
@@ -307,7 +307,7 @@ class TestMaintAppModel(object):
                      make='Honda', 
                      model='Accord', 
                      year=2007,
-                     mileage=3000,
+                     #mileage=3000,
                      license='XY1234',
                      vin='VIN',
                      notes='',

@@ -16,9 +16,9 @@ Created on May 27, 2009
 import time
 
 class Customer(object):
-    def __init__(self, id="-1", first_name="", last_name="",
-                 address1="", address2="", city="", state="", zip="",
-                 phone1="", phone2="", email="", comments=""):
+    def __init__(self, id="-1", first_name=None, last_name=None,
+                 address1=None, address2=None, city=None, state=None, zip=None,
+                 phone1=None, phone2=None, email=None, comments=None):
         self.id = id
         self.first_name = first_name
         self.last_name = last_name
@@ -111,13 +111,13 @@ class Customer(object):
     
 class Vehicle(object):
     def __init__(self, id="-1", customer_id=None, make=None, model=None,
-                 year=None, mileage=None, license=None, vin=None, notes=None):
+                 year=None, license=None, vin=None, notes=None):
         self.id = id
         self.customer_id = customer_id
         self.make = make
         self.model = model
         self.year = year
-        self.mileage = mileage
+        #self.mileage = mileage
         self.license = license
         self.vin = vin
         self.notes = notes
@@ -151,7 +151,7 @@ class Vehicle(object):
         self.make = dictionary['make']
         self.model = dictionary['model']
         self.year = int(dictionary['year'])
-        self.mileage = int(dictionary['mileage'])
+        #self.mileage = int(dictionary['mileage'])
         self.license = dictionary['license']
         self.vin = dictionary['vin']
         self.notes = dictionary['notes']
@@ -163,7 +163,6 @@ class Vehicle(object):
                 "\tmake = " + self.make + "\n" + \
                 "\tmodel = " + self.model + "\n" + \
                 "\tyear = " + str(self.year) + "\n" + \
-                "\tmileage = " + str(self.mileage) + "\n" + \
                 "\tlicense = " + self.license + "\n" + \
                 "\tvin = " + self.vin + "\n" + \
                 "\tnotes = " + self.notes + "\n" + \

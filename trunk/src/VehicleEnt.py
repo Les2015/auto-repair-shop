@@ -7,7 +7,6 @@ class VehicleEnt(db.Model):
     model = db.StringProperty(verbose_name = "Model", required=True)
     # should it have validator=checkYr where this is a function?
     year = db.IntegerProperty(verbose_name = "Year", required=True)
-    mileage = db.IntegerProperty(verbose_name = "Initial Mielage", required=True)
     license = db.StringProperty(verbose_name = "License Plate Number", required=True)
     vin = db.StringProperty(verbose_name = "VIN", required=False)
     #email = db.EmailProperty(verbose_name = "Email Address", required=False)
