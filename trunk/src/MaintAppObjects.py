@@ -60,10 +60,7 @@ class Customer(object):
         return self.comments
     
     def loadFromDictionary(self, dictionary):
-        """ Load values from dictionary passed over from the view.
-            Data authentication is being done on client side with
-            javascript.
-        """
+        """ Load values from dictionary passed over from the view. """
         customer_id = dictionary['customer_id']
         if customer_id == '-1':
             self.setId(None)
@@ -84,7 +81,7 @@ class Customer(object):
         if 'comments' in dictionary.keys():
             self.setComments(dictionary['comments'])
             
-        #return None
+        return None
     
     def __str__(self):
         return "customer ID " + str(self.id) + ":\n" + \
