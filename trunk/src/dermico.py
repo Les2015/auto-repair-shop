@@ -752,15 +752,20 @@ class MaintAppController(object):
             The View is then requested to refresh (the configuration didn't change
               so we simply request a refresh.
         """
-        self.__clearHiddenIdFields()
-        self.__view.configureCustomerContent(Customer())
-        activeConfig = int(tag)
-        if activeConfig == 0:
-            self.__configureSidePanel(1, "Clearing Customer Info")
-            self.__view.set_new_customer_mode()
+        if self.__vehicleActive(): # This is a hack until the UI can reset the button
+                                   # this should really be going directly to the
+                                   # restore call.
+            self.restoreCustomerInfo(reqhandler, tag)
         else:
-            self.__configureSidePanel(2, "Clearing Customer Info")
-            self.__view.set_search_mode()
+            self.__clearHiddenIdFields()
+            self.__view.configureCustomerContent(Customer())
+            activeConfig = int(tag)
+            if activeConfig == 0:
+                self.__configureSidePanel(1, "Clearing Customer Info")
+                self.__view.set_new_customer_mode()
+            else:
+                self.__configureSidePanel(2, "Clearing Customer Info")
+                self.__view.set_search_mode()
         return None
     
     def restoreCustomerInfo(self, reqhandler, tag):
