@@ -16,7 +16,7 @@ Created on May 27, 2009
 import time
 
 def nz(value):
-	return ("" is value is None else value)
+	return ("" if value is None else value)
 
 class Customer(object):
     def __init__(self, id="-1", first_name="", last_name="",
