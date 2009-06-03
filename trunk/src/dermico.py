@@ -383,7 +383,8 @@ class MaintAppController(object):
                 activeVehicle = self.__findActiveVehicle(activeVehicleList)
         # Load any information that might have already been entered into the
         # form fields into the active vehicle.
-        activeVehicle.loadFromDictionary(self.__userValues)
+        if self.__vehicleActive():
+            activeVehicle.loadFromDictionary(self.__userValues)
         self.__view.configureVehicleContent(activeVehicleList)
         return None
     
@@ -522,7 +523,7 @@ class MaintAppController(object):
             
         customer = Customer()
         customer.loadFromDictionary(self.__userValues)
-        self.__view.configureCustomerContent(Customer())
+        self.__view.configureCustomerContent(customer)
     
         self.__view.configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Save Vehicle Info")
