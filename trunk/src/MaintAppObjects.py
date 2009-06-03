@@ -151,6 +151,14 @@ class Vehicle(object):
         else:
             self.setId(vehicle_id)
             
+        self.make = dictionary['make']
+        self.model = dictionary['model']
+        self.year = int(dictionary['year'])
+        self.mileage = int(dictionary['mileage'])
+        self.license = dictionary['license']
+        self.vin = dictionary['vin']
+        self.notes = dictionary['notes']
+            
         return None
 
     def __str__(self):
