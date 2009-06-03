@@ -285,14 +285,14 @@ class CustomerSubview(object):
         """)
         if not self.__searchMode:
             reqhandler.response.out.write("""
-            <tr><td colspan="4">
-            <p>Comments:</p>
-            <div>
+            <tr><td colspan="4"><br />
+            <label for="comments">Comments:</label><br />
             <textarea name="comments" rows="3" cols="60">""" + self.__customer.getComments() +  
               """</textarea>
-            </div><p style="width:100%; text-align:center;"><input type="submit" name="submit_savecust" value="Save Customer Info" />
-                 <input type="submit" name="submit_resetcust_0" value="Reset Customer Info" /></p>
-                 </td></tr>
+            <p style="width:100%; text-align:center;"><input type="submit" name="submit_savecust" value="Save Customer Info" />
+                <input type="submit" name="submit_resetcust_0" value="Reset Customer Info" />
+            </p>
+            </td></tr>
             </table>
             """)
         else:
@@ -317,14 +317,67 @@ class VehicleSubview(object):
     
     def _serve_content(self, reqhandler):
         reqhandler.response.out.write("""
-        <p>
-        <input class="tab_button" type="submit" name="submit_vtab_0" value="1999 Honda Accord" />
-        <input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
-        <input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
-        </p>
+            <p>
+            <input class="tab_button" type="submit" name="submit_vtab_0" value="1999 Honda Accord" />
+            <input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
+            <input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
+            </p>
+            <table style="margin-top:15px; width:90%; margin-left:auto; margin-right:auto;">
+            <tr>
+            <td>
+            <label for="make">Make: </label>
+            </td>
+            <td>
+            <input type="text" name="make" value="" />
+            </td>
+            <td>
+            <label for="model" style="padding-left:10px">Model: </label>
+            </td>
+            <td>
+            <input type="text" name="model" value="" />
+            </td>
+            <td>
+            <label for="year" style="padding-left:10px">Year: </label>
+            </td>
+            <td>
+            <input type="text" name="year" size="8" value="" />
+            </td>
+            </tr>
+            <tr>
+            <td>
+            <label for="license">License Plate: </label>
+            </td>
+            <td>
+            <input type="text" name="license" value="" />
+            <input type="hidden" name="mileage" value="150000" />
+            </td>
+            <td>
+            <label for="vin" style="padding-left:10px">VIN: </label>
+            </td>
+            <td colspan="3">
+            <input type="text" name="vin" size="40" value="" />
+            </td>
+            </tr>
+            <tr>
+            <td colspan="6"><br />
+            <label for="notes">Notes: </label><br />
+            <textarea name="notes" rows="3" cols="65"></textarea>
+            </td>
+            </tr>            
         """)
         reqhandler.response.out.write("""
-        <div><input type="submit" name="submit_savevhcl" value="Save Vehicle Info" />
-             <input type="submit" name="submit_rstrvhcl" value="Clear Vehicle Info" /></div>""")
+            <tr><td colspan="3">
+            <p style="width:100%; text-align:left;">
+            <input type="submit" name="submit_savevhcl" value="Save Vehicle Info" />
+            <input type="submit" name="submit_rstrvhcl" value="Clear Vehicle Info" />
+            </p>
+            </td><td colspan="3">
+            <p style="width:100%; text-align:right;">
+            <input type="submit" name="submit_newwo" value="New Work Order" />
+            <input type="submit" name="submit_showwos" value="Show Work Order History" />
+            </p>
+            </td></tr>
+            </table>
+            """)
         return None
     
