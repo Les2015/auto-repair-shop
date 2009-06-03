@@ -15,10 +15,13 @@ Created on May 27, 2009
 
 import time
 
+def nz(value):
+	return ("" is value is None else value)
+
 class Customer(object):
-    def __init__(self, id="-1", first_name=None, last_name=None,
-                 address1=None, address2=None, city=None, state=None, zip=None,
-                 phone1=None, phone2=None, email=None, comments=None):
+    def __init__(self, id="-1", first_name="", last_name="",
+                 address1="", address2="", city="", state="", zip="",
+                 phone1="", phone2="", email="", comments=""):
         self.id = id
         self.first_name = first_name
         self.last_name = last_name
@@ -45,19 +48,19 @@ class Customer(object):
         self.first_name = first_name
         
     def getFirstName(self):
-        return self.first_name
+        return nz(self.first_name)
     
     def setLastname(self, last_name):
         self.last_name = last_name
         
     def getLastName(self):
-        return self.last_name
+        return nz(self.last_name)
     
     def setComments(self, comments):
         self.comments = comments
         
     def getComments(self):
-        return self.comments
+        return nz(self.comments)
     
     def loadFromDictionary(self, dictionary):
         """ Load values from dictionary passed over from the view. """
@@ -150,7 +153,7 @@ class Vehicle(object):
             
         self.make = dictionary['make']
         self.model = dictionary['model']
-        self.year = int(dictionary['year'])
+        self.year = dictionary['year']
         #self.mileage = int(dictionary['mileage'])
         self.license = dictionary['license']
         self.vin = dictionary['vin']
