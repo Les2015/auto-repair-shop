@@ -114,7 +114,7 @@ class MaintAppController(object):
         self.__model = MaintAppModel()
         self.__model.initialize()
         self.__userValues = None
-        self.__clearHiddenFields()
+        self.__clearHiddenIdFields()
         
         return None
     
@@ -133,7 +133,7 @@ class MaintAppController(object):
         
         self.__getValues(reqhandler)
         if bIndex != "STARTUP":
-            self.__getHiddenFieldIds()
+            self.__getHiddenIdFields()
         
         # If button would result in context change where edits might be lost, 
         # display dialog prompting for save or not.
@@ -146,6 +146,10 @@ class MaintAppController(object):
                 dispatch_function(self, reqhandler, bIndex)
             else:
                 sys.stderr.write("Button '%s' not found in dispatch list." % whichButton)
+                self.__regenerateCurrentView()
+                
+            self.__configureHiddenIdFields()
+            self.__view.serve_content(reqhandler)
         return None
     
     def handle_dialog_event(self, reqhandler, response, whichButton, tag):
@@ -282,7 +286,7 @@ class MaintAppController(object):
         """
         return not self.__customerActive()
     
-    def __getHiddenFieldIds(self):
+    def __getHiddenIdFields(self):
         """ Extract the three active ids (customer_id, vehicle_id, and workorder_id) from
             the dictionary of values returned from the hidden fields in the form.
         """
@@ -291,14 +295,14 @@ class MaintAppController(object):
         self.__activeWorkorderId = self.__userValues['workorder_id']
         return None
     
-    def __configureHiddenFields(self):
+    def __configureHiddenIdFields(self):
         """ Send ids off to the View to populate the hidden field values. """
         self.__view.configureHiddenFields(self.__activeCustomerId,
                                           self.__activeVehicleId,
                                           self.__activeWorkorderId)
         return None
     
-    def __clearHiddenFields(self):
+    def __clearHiddenIdFields(self):
         """ Utility function to set all hidden fields to -1 to indicate no customer
             vehicle or workorder is currently active.
         """
@@ -407,12 +411,10 @@ class MaintAppController(object):
             Tell view to go into New Customer configuration.
             Ask view to re-render display.
         """
-        self.__clearHiddenFields()
+        self.__clearHiddenIdFields()
         self.__view.configureCustomerContent(Customer())
         self.__configureSidePanel(1, "Add New Customer") # For debugging
-        self.__configureHiddenFields()
         self.__view.set_new_customer_mode()
-        self.__view.serve_content(reqhandler)
         return None
         
     def saveCustomerInfo(self, reqhandler, tag):
@@ -438,13 +440,11 @@ class MaintAppController(object):
             self.__configureVehicleInfo()
             
             self.__activeCustomerId = customerDbId
-            self.__configureHiddenFields()
             self.__configureSidePanel(0, "Save Customer Info")
             self.__view.set_customer_vehicle_mode()
         else:
             self.__view.configureErrorMessages(errorList)
             self.__view.configureCustomerContent(activeCustomer)
-            self.__configureHiddenFields()
             if self.__activeCustomerId == "-1":
                 self.__view.set_new_customer_mode()
                 self.__configureSidePanel(1, "New Customer Save Error")
@@ -452,7 +452,6 @@ class MaintAppController(object):
                 self.__configureVehicleInfo()
                 self.__view.set_customer_vehicle_mode()
                 self.__configureSidePanel(0, "Customer Save Error")
-        self.__view.serve_content(reqhandler)
         return None
     
     def setupCustomerSearch(self, reqhandler, tag):
@@ -466,11 +465,9 @@ class MaintAppController(object):
             Ask view to re-render display.
         """
         self.__view.configureCustomerContent(Customer())
-        self.__clearHiddenFields()
-        self.__configureHiddenFields()
+        self.__clearHiddenIdFields()
         self.__configureSidePanel(2, "Find Customer Info")
         self.__view.set_search_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def doSearch(self, reqhandler, tag):
@@ -494,7 +491,7 @@ class MaintAppController(object):
         self.__view.configureSearchResults(searchResults)
         self.__configureSidePanel(2, "Search Results")
         self.__view.set_search_results_mode()
-        self.__view.serve_content(reqhandler)
+        return None
     
     def saveVehicleInfo(self, reqhandler, tag):
         """ Save the Vehicle information to the data store.  Redisplay the current
@@ -535,10 +532,8 @@ class MaintAppController(object):
         self.__view.configureCustomerContent(Customer())
     
         self.__view.configureVehicleContent(vehicleList)
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "Save Vehicle Info")
         self.__view.set_customer_vehicle_mode()
-        self.__view.serve_content(reqhandler)
         return None
 
     def vehicleTabClicked(self, reqhandler, tag):
@@ -568,10 +563,8 @@ class MaintAppController(object):
         self.__view.configureCustomerContent(Customer())
 
         self.__view.configureVehicleContent(vehicleList)
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "Vehicle Tab Change")
         self.__view.set_customer_vehicle_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def newWorkOrder(self, reqhandler, tag):
@@ -588,10 +581,8 @@ class MaintAppController(object):
         self.__activeWorkorderId == "-1"  # Creating a new work order.
         workorders.insert(0, Workorder())
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "New Workorder")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def showWorkOrderHistory(self, reqhandler, tag):
@@ -607,10 +598,8 @@ class MaintAppController(object):
         self.__activeWorkorderId = workorders[0].getId()
         self.__configureWorkorderCustomerVehicleInfo()
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(3, "Show Workorder History")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def saveWorkOrder(self, reqhandler, tag):
@@ -666,10 +655,8 @@ class MaintAppController(object):
                 
         self.__configureWorkorderCustomerVehicleInfo()
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(3, "Save Workorder")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def workOrderTabClicked(self, reqhandler, tag):
@@ -687,10 +674,8 @@ class MaintAppController(object):
         self.__activeWorkorderId = workorders[0].getId()
         self.__configureWorkorderCustomerVehicleInfo()
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(3, "Workorder Tab Change")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     
@@ -721,10 +706,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__configureWorkorderCustomerVehicleInfo()
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(3, "Display Open/Completed Workorder")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def showCustomer(self, reqhandler, tag):
@@ -751,10 +734,8 @@ class MaintAppController(object):
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         self.__view.configureVehicleContent(vehicleList)
         self.__activeCustomerId = vehicleList[0].getId()
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "Showing Customer")
         self.__view.set_customer_vehicle_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def clearCustomerInfo(self, reqhandler, tag):
@@ -777,9 +758,8 @@ class MaintAppController(object):
             The View is then requested to refresh (the configuration didn't change
               so we simply request a refresh.
         """
-        self.__clearHiddenFields()
+        self.__clearHiddenIdFields()
         self.__view.configureCustomerContent(Customer())
-        self.__configureHiddenFields()
         activeConfig = int(tag)
         if activeConfig == 0:
             self.__configureSidePanel(1, "Clearing Customer Info")
@@ -787,7 +767,6 @@ class MaintAppController(object):
         else:
             self.__configureSidePanel(2, "Clearing Customer Info")
             self.__view.set_search_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def restoreCustomerInfo(self, reqhandler, tag):
@@ -803,10 +782,8 @@ class MaintAppController(object):
         customer = self.__model.getCustomer(self.__activeCustomerId)
         self.__view.configureCustomerContent(customer)
         self.__configureVehicleInfo()
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "Restoring Customer Info")
         self.__view.set_customer_vehicle_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def restoreVehicleInfo(self, reqhandler, tag):
@@ -829,10 +806,8 @@ class MaintAppController(object):
         vehicleList.append(Vehicle())
         self.__view.configureVehicleContent(vehicleList)
         
-        self.__configureHiddenFields()
         self.__configureSidePanel(0, "Restoring Vehicle Info")
         self.__view.set_customer_vehicle_mode()
-        self.__view.serve_content(reqhandler)
         return None
 
     def restoreWorkOrder(self, reqhandler, tag):
@@ -852,10 +827,8 @@ class MaintAppController(object):
         if self.__activeWorkorderId == "-1":  # Creating a new work order.
             workorders.insert(0, Workorder())
         self.__view.configureWorkorderContent(workorders)
-        self.__configureHiddenFields()
         self.__configureSidePanel(3, "Restoring Workorder Info")
         self.__view.set_workorder_mode()
-        self.__view.serve_content(reqhandler)
         return None
     
     def __regenerateCurrentView(self):
@@ -863,9 +836,61 @@ class MaintAppController(object):
             from the user's perspective their last action had no effect.  Used in
             the dialog handling when save can't be performed or action was cancelled.
         """
-        # QQQQ Fill this in.
-        pass
+        if self.__customerActive():
+            self.__regenerateCustomerView()
+            if self.__vehicleActive():
+                self.__regenerateVehicleView()
+                self.__configureSidePanel(0, "Regenerated Cust./Veh. Mode")
+                self.__view.set_customer_vehicle_mode()
+            else:
+                # This situation will correspond to new vehicle mode rather than
+                # search mode because error dialog only occurs for when entering
+                # info that might be lost. (We don't care in search mode.
+                self.__configureSidePanel(1, "Regenerated New Veh. Mode")
+                self.__view.set_new_customer_mode()
+        else:
+            self.__regenerateWorkorderView()
+            self.__configureSidePanel(3, "Regenerated Workorder Mode")
+            self.__view.set_workorder_mode()
+        return None
     
+    def __regenerateCustomerView():
+        """ Restore the customer form fields to the state that the user left them
+            when attempting to move to another configuration.
+        """
+        customer = Customer()
+        customer.loadFromDictionary(self.__userValues)
+        self.__view.configureCustomerContent(customer)
+        return None
+    
+    def __regenerateVehicleView(self):
+        """ Restore the vehicle form fields to the state that the user left them
+            when attempting to move to another configuration.
+        """
+        self.__configureVehicleInfo()
+        return None
+    
+    def __regenerateWorkorderView(self):
+        """ Restore the work order form fields to the state that the user left them
+            when attempting to move to another configuration.
+        """
+        workorder = Workorder()
+        workorder.loadFromDictionary(self.__userValues)
+        
+        workorders = self.__model.getWorkorderList(self.__activeVehicleId)
+        if self.__activeWorkorderId == "-1":
+            # User is entering a new work order.
+            workorders.insert(0, workorder)
+        else:
+            # Replace entry in list with the active one whose values were
+            #   loaded from the form fields.
+            workorderIndex = self.__findActiveWorkorder(workorders)
+            workorders.pop(workorderIndex)
+            workorders.insert(workorderIndex, workorder)
+            
+        self.__configureWorkorderCustomerVehicleInfo()
+        self.__view.configureWorkorderContent(workorders)
+        return None
 
     def run(self):
         run_wsgi_app(self.__app)
