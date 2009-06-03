@@ -444,14 +444,7 @@ class MaintAppController(object):
             self.__view.set_customer_vehicle_mode()
         else:
             self.__view.configureErrorMessages(errorList)
-            self.__view.configureCustomerContent(activeCustomer)
-            if self.__activeCustomerId == "-1":
-                self.__view.set_new_customer_mode()
-                self.__configureSidePanel(1, "New Customer Save Error")
-            else:
-                self.__configureVehicleInfo()
-                self.__view.set_customer_vehicle_mode()
-                self.__configureSidePanel(0, "Customer Save Error")
+            self.__regenerateCurrentView()
         return None
     
     def setupCustomerSearch(self, reqhandler, tag):
@@ -838,22 +831,22 @@ class MaintAppController(object):
         """
         if self.__customerActive():
             self.__regenerateCustomerView()
-            if self.__vehicleActive():
-                self.__regenerateVehicleView()
-                self.__configureSidePanel(0, "Regenerated Cust./Veh. Mode")
-                self.__view.set_customer_vehicle_mode()
-            else:
+            if self.__activeCustomerId == "-1":
                 # This situation will correspond to new vehicle mode rather than
                 # search mode because error dialog only occurs for when entering
                 # info that might be lost. (We don't care in search mode.
                 self.__configureSidePanel(1, "Regenerated New Veh. Mode")
                 self.__view.set_new_customer_mode()
+            else:
+                self.__regenerateVehicleView()
+                self.__configureSidePanel(0, "Regenerated Cust./Veh. Mode")
+                self.__view.set_customer_vehicle_mode()
         else:
             self.__regenerateWorkorderView()
             self.__configureSidePanel(3, "Regenerated Workorder Mode")
             self.__view.set_workorder_mode()
         return None
-    
+   
     def __regenerateCustomerView():
         """ Restore the customer form fields to the state that the user left them
             when attempting to move to another configuration.
