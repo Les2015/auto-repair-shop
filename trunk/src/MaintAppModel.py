@@ -120,7 +120,7 @@ class MaintAppModel(object):
         if entity:
             entity.make = vehicle.make
             entity.model = vehicle.model
-            entity.year = vehicle.year
+            entity.year = int(vehicle.year)
             entity.license = vehicle.license
             entity.vin = vehicle.vin
             entity.notes = vehicle.notes
@@ -128,7 +128,7 @@ class MaintAppModel(object):
         else:    
             entity = VehicleEnt(make=vehicle.make,
                                 model=vehicle.model,
-                                year=vehicle.year,
+                                year=int(vehicle.year),
                                 license=vehicle.license,
                                 vin=vehicle.vin,
                                 notes=vehicle.notes,
@@ -150,7 +150,7 @@ class MaintAppModel(object):
             return Vehicle(id=str(vehicle_ent.key()), 
                            make=vehicle_ent.make, 
                            model=vehicle_ent.model, 
-                           year=vehicle_ent.year,
+                           year=str(vehicle_ent.year),
                            license=vehicle_ent.license,
                            vin=vehicle_ent.vin,
                            notes=vehicle_ent.notes,
