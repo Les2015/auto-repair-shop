@@ -40,8 +40,10 @@ class MaintAppModel(object):
         if customer.id == '-1':
             entity = None
         else:
-            entity = CustomerEnt.get_by_key_name(str(customer.id))
-            #entity = CustomerEnt.get(db.Key(customer.id))
+            try:
+                entity = CustomerEnt.get(db.Key(customer.id))
+            except Exception:
+                entity = None
 
         if entity:
             #print "Entity is not None"
@@ -69,7 +71,6 @@ class MaintAppModel(object):
                                  phone2=customer.phone2,
                                  email=customer.email,
                                  comments=customer.comments)
-        
         key = entity.put()
         return str(key)
             
@@ -77,8 +78,12 @@ class MaintAppModel(object):
         """ Retrieve the customer record from the database whose primary key
             is the customer_id passed in.
         """
-        #entity = CustomerEnt.get_by_key_name(customer_id)
-        entity = CustomerEnt.get(db.Key(customer_id))
+        try:
+        #entity = CustomerEnt.get(db.Key.from_path('CustomerEnt', customer_id))
+            entity = CustomerEnt.get(db.Key(customer_id))
+        except Exception:
+            entity = None
+
         if entity:
             return Customer(id=customer_id, 
                             first_name=entity.first_name, 
@@ -103,8 +108,12 @@ class MaintAppModel(object):
         if vehicle.id == '-1':
             entity = None
         else:
-            entity = VehicleEnt.get_by_key_name(str(vehicle.id))
-            #entity = VehicleEnt.get(db.Key(vehicle.id))
+            try:
+            #entity = VehicleEnt.get_by_key_name(str(vehicle.id))
+            #entity = VehicleEnt.get(db.Key.from_path('VehicleEnt', vehicle.id))
+                entity = VehicleEnt.get(db.Key(vehicle.id))
+            except Exception:
+                entity = None
         
         customer_ent = CustomerEnt.get(db.Key(vehicle.customer_id))    
         #print "-- In saveVehicleInfo, customer_ent: ", customer_ent
@@ -112,7 +121,6 @@ class MaintAppModel(object):
             entity.make = vehicle.make
             entity.model = vehicle.model
             entity.year = vehicle.year
-            #entity.mileage = vehicle.mileage
             entity.license = vehicle.license
             entity.vin = vehicle.vin
             entity.notes = vehicle.notes
@@ -121,7 +129,6 @@ class MaintAppModel(object):
             entity = VehicleEnt(make=vehicle.make,
                                 model=vehicle.model,
                                 year=vehicle.year,
-                                #mileage=vehicle.mileage,
                                 license=vehicle.license,
                                 vin=vehicle.vin,
                                 notes=vehicle.notes,
@@ -130,12 +137,38 @@ class MaintAppModel(object):
         key = entity.put()
         return str(key)
     
+    def getVehicleFromVehicleEnt(self, vehicle_ent):
+        """ Create a Vehicle object from a VehicleEnt; this is a helper method for getVehicleList
+        """
+        customer_key = '-1'
+        if vehicle_ent:
+            if vehicle_ent.customer:
+                customer_key = str(vehicle_ent.customer.key())
+                
+            #print "--In getVehicleFromVehicleEnt, customer_key: " + customer_key    
+            #print "--In getVehicleFromVehicleEnt, customer object:", vehicle_ent.customer    
+            return Vehicle(id=str(vehicle_ent.key()), 
+                           make=vehicle_ent.make, 
+                           model=vehicle_ent.model, 
+                           year=vehicle_ent.year,
+                           license=vehicle_ent.license,
+                           vin=vehicle_ent.vin,
+                           notes=vehicle_ent.notes,
+                           customer_id=customer_key)
+        else:
+            return None
+
     def getVehicle(self, vehicle_id):
         """ Retrieve the vehicle record from the database whose primary key
             is the vehicle_id passed in.
         """
-        customer_key = '-1'
-        entity = VehicleEnt.get(db.Key(vehicle_id))
+        try:
+            entity = VehicleEnt.get(db.Key(vehicle_id))
+        except Exception:
+            entity = None
+        return self.getVehicleFromVehicleEnt(entity)
+    
+        """
         if entity:
             if entity.customer:
                 customer_key = str(entity.customer.key())
@@ -146,21 +179,28 @@ class MaintAppModel(object):
                            make=entity.make, 
                            model=entity.model, 
                            year=entity.year,
-                           #mileage=entity.mileage,
                            license=entity.license,
                            vin=entity.vin,
                            notes=entity.notes,
                            customer_id=customer_key)
         else:
             return None
-    
+        """
+        
     def getVehicleList(self, customer_id):
         """ This method queries the database for vehicles records belonging
             to the customer identified by customer_id. Return an empty list
             if no vehicles are found.
         """
-        return [Vehicle(id=10344, make="Honda", model="Civic", year=1993),
-                Vehicle(id=10346, make="Toyota", model="Tercel", year=2002)]
+        result = []
+        #print "customer_id: " + str(customer_id)
+        customer = CustomerEnt.get(db.Key(customer_id))
+        
+        query = VehicleEnt.gql("WHERE customer = :key", key=customer)
+        vehicles = query.fetch(10) # get at most 10 vehicle for each customer
+        for vehicle_ent in vehicles:
+            result.append(self.getVehicleFromVehicleEnt(vehicle_ent))
+        return result
     
     def searchForMatchingCustomers(self, searchCriteria):
         """ The model forms a query based on AND logic for the various
@@ -295,7 +335,6 @@ class TestMaintAppModel(object):
                      make='Honda', 
                      model='Civic', 
                      year=2001,
-                     #mileage=120000,
                      license='AB1234',
                      vin='VIN',
                      notes='',
@@ -307,7 +346,6 @@ class TestMaintAppModel(object):
                      make='Honda', 
                      model='Accord', 
                      year=2007,
-                     #mileage=3000,
                      license='XY1234',
                      vin='VIN',
                      notes='',
@@ -315,6 +353,17 @@ class TestMaintAppModel(object):
         v2_key = appModel.saveVehicleInfo(v2)
         print "v2_key = " + v2_key
         
+        v3 = Vehicle(id='v3',
+                     make='Honda', 
+                     model='SUV', 
+                     year=2008,
+                     license='XY9999',
+                     vin='VIN',
+                     notes='also belong to c2',
+                     customer_id=c2_key)
+        v3_key = appModel.saveVehicleInfo(v3)
+        print "v3_key = " + v3_key
+
         print "* all saved vehicles:"
         vehicles = VehicleEnt.all()
         for vehicle in vehicles:
@@ -328,6 +377,26 @@ class TestMaintAppModel(object):
         print "v2_key = " + v2_key
         v2_retrived = appModel.getVehicle(v2_key)
         print "v2_retrived: ", v2_retrived
+        print "v3_key = " + v3_key
+        v3_retrived = appModel.getVehicle(v3_key)
+        print "v3_retrived: ", v3_retrived
+
+
+        print "\n** testing vehicleList retrieve..."
+        """
+        nonexist_list = appModel.getVehicleList('-1')
+        print "list of vehicle owned by non-exist customer", nonexist_list
+        """
+        c1_list = appModel.getVehicleList(c1_key)
+        print "list of vehicle owned by c1: " 
+        for i in c1_list:
+            print i
+        print 
+        c2_list = appModel.getVehicleList(c2_key)
+        print "list of vehicle owned by c2: "
+        for i in c2_list:
+            print i
+        print
         
         
 def main( ):
