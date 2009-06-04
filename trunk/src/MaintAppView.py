@@ -8,6 +8,7 @@ NEW_CUSTOMER = 1
 FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
 
+from MaintAppObjects import nz
 
 class MaintAppView(object):
     """ Class to implement the View part of the MVC implementation of the
@@ -235,54 +236,67 @@ class CustomerSubview(object):
             <td>
             <label for="first_name">First Name: </label>
             </td>
-            <td>
-            <input type="text" name="first_name" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="first_name" value="%s" />' %
+                                        nz(self.__customer.first_name))
+        reqhandler.response.out.write("""
             </td>
             <td>
             <label for="last_name" style="padding-left:10px">Last Name: </label>
             </td>
-            <td>
-            <input type="text" name="last_name" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="last_name" value="%s" />' %
+                                        nz(self.__customer.last_name))
+        reqhandler.response.out.write("""
             </td>
             </tr>
             <tr>
             <td>
             <label for="address1">Address1: </label>
             </td>
-            <td>
-            <input type="text" name="address1" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="address1" value="%s" />' %
+                                        nz(self.__customer.address1))
+        reqhandler.response.out.write("""
             </td>
             <td>
             <label for="city" style="padding-left:10px">City: </label>
             </td>
-            <td>
-            <input type="text" name="city" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="city" value="%s" />' %
+                                        nz(self.__customer.city))
+        reqhandler.response.out.write("""
             </td>
             </tr>
             <tr>
             <td>
             <label for="state">State: </label>
             </td>
-            <td>
-            <input type="text" name="state" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="state" value="%s" />' %
+                                        nz(self.__customer.state))
+        reqhandler.response.out.write("""
             </td>
             <td>
             <label for="zip" style="padding-left:10px">Zip: </label>
             </td>
-            <td>
-            <input type="text" name="zip" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="zip" value="%s" />' %
+                                        nz(self.__customer.zip))
+        reqhandler.response.out.write("""
             </td>
             </tr>
             <tr>
             <td>
             <label for="phone1">Primary Phone: </label>
             </td>
-            <td>
-            <input type="text" name="phone1" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="phone1" value="%s" />' %
+                                            nz(self.__customer.phone1))
+        reqhandler.response.out.write("""
             </td>
             <td></td><td></td>
-            </tr>            
-        """)
+            </tr>""")
         if not self.__searchMode:
             reqhandler.response.out.write("""
             <tr><td colspan="4"><br />
@@ -293,8 +307,7 @@ class CustomerSubview(object):
                 <input type="submit" name="submit_resetcust_0" value="Reset Customer Info" />
             </p>
             </td></tr>
-            </table>
-            """)
+            </table>""")
         else:
             reqhandler.response.out.write("""
             <tr><td colspan="4">
@@ -303,8 +316,7 @@ class CustomerSubview(object):
                 <input type="submit" name="submit_resetcust_1" value="Clear Customer Info" />
             </p>
             </td></tr>
-            </table>
-            """)
+            </table>""")
         return None
     
 class VehicleSubview(object):
@@ -313,6 +325,7 @@ class VehicleSubview(object):
     
     def _configure_content(self, vehicle_list):
         self.__vehicles = vehicle_list
+        self.__vehicle = self.__vehicles[0]
         return None
     
     def _serve_content(self, reqhandler):
@@ -327,41 +340,54 @@ class VehicleSubview(object):
             <td>
             <label for="make">Make: </label>
             </td>
-            <td>
-            <input type="text" name="make" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="make" value="%s" />' %
+                                        nz(self.__vehicle.make))
+        reqhandler.response.out.write("""
             </td>
             <td>
             <label for="model" style="padding-left:10px">Model: </label>
             </td>
-            <td>
-            <input type="text" name="model" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="model" value="%s" />' %
+                                        nz(self.__vehicle.model))
+        reqhandler.response.out.write("""
             </td>
             <td>
             <label for="year" style="padding-left:10px">Year: </label>
             </td>
-            <td>
-            <input type="text" name="year" size="8" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="year" size="8" value="%s" />' %
+                                        nz(self.__vehicle.year))
+        reqhandler.response.out.write("""
             </td>
             </tr>
             <tr>
             <td>
             <label for="license">License Plate: </label>
             </td>
-            <td>
-            <input type="text" name="license" value="" />
+            <td>""")
+        reqhandler.response.out.write('<input type="text" name="license" value="%s" />' %
+                                        nz(self.__vehicle.license))
+        reqhandler.response.out.write("""
             <input type="hidden" name="mileage" value="150000" />
             </td>
             <td>
             <label for="vin" style="padding-left:10px">VIN: </label>
             </td>
-            <td colspan="3">
-            <input type="text" name="vin" size="40" value="" />
+            <td colspan="3">""")
+        reqhandler.response.out.write('<input type="text" name="vin" size="40" value="%s" />' %
+                                        nz(self.__vehicle.vin))
+        reqhandler.response.out.write("""
             </td>
             </tr>
             <tr>
             <td colspan="6"><br />
             <label for="notes">Notes: </label><br />
-            <textarea name="notes" rows="3" cols="65"></textarea>
+            <textarea name="notes" rows="3" cols="65">""")
+        reqhandler.response.out.write(nz(self.__vehicle.notes))
+        reqhandler.response.out.write("""
+            </textarea>
             </td>
             </tr>            
         """)
