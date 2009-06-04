@@ -502,13 +502,16 @@ class MaintAppController(object):
         vehicle = Vehicle()
         vehicle.loadFromDictionary(self.__userValues)
         vehicle.setCustomerId(self.__activeCustomerId)
-        vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         errorList = self.__model.validateVehicleInfo(vehicle)
         if len(errorList) == 0:
             self.__activeVehicleId = self.__model.saveVehicleInfo(vehicle)
+            # Need to load the vehicle list after saving the vehicle so saved
+            # vehicle is in list.
+            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
             vehicleList.append(Vehicle())
         else:
             self.__view.configureErrorMessages(errorList)
+            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
             if self.__activeVehicleId == "-1":
                 # User was entering info for a new vehicle.  Just append the
                 # vehicle loaded from the UI to the end of the list as the
