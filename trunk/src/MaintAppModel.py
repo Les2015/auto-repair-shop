@@ -2,9 +2,14 @@
 Created on May 27, 2009
 
 @author: Wing Wong
+
+2009-06-05  Add customer Validation   Les Faby
+
 '''
 
 import os
+import re
+import datetime
 from google.appengine.ext import db
 from google.appengine.api import apiproxy_stub_map 
 from google.appengine.api import datastore_file_stub 
@@ -16,9 +21,91 @@ from WorkorderEnt import WorkorderEnt
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
 
+
+#================================================================
+class ValidationErrors(Exception):
+    def __init__(self, errTxt, badFldLst):
+        self.errTxt = errTxt
+        self.badFldLst = badFldLst
+    def __str__(self):
+        return self.errTxt
+    def getFieldsWithErrors(self):
+        return self.badFldLst
+#================================================================
+
+def isState(s):
+    #states, DX, possesions, territories and military bases
+    states =  ("WA", "VA", "DE", "DC", "WI", "WV", "HI", "AE", "FL", "FM", "WY", "NH", "NJ", "NM", "TX", "LA", "NC", "ND", "NE", "TN", "NY", "PA", "CA", "NV", "AA", "PW", "GU", "CO", "VI", "AK", "AL", "AP", "AS", "AR", "VT", "IL", "GA", "IN", "IA", "OK", "AZ", "ID", "CT", "ME", "MD", "MA", "OH", "UT", "MO", "MN", "MI", "MH", "RI", "KS", "MT", "MP", "MS", "PR", "SC", "KY", "OR", "SD")
+    if s in states:
+       return (True,"")
+    return (False,"Illegal State Name")
+   
+def isPhone(s):
+    """
+    Since phone num info is so variable little validation is done
+    More specific validation could be done if there is separate fields for extension and location (home, work, other)
+    """
+    #  return (True, "")
+    # after Example 7.16. Parsing Phone Numbers (Final Version), Diving into PYTHON
+    # note that we are allowing extra characters here because phone#s come in a myriad of formats
+    phonePat = re.compile(r'''
+                # don't match beginning of string, number can start anywhere
+    (\d{3})     # area code is 3 digits (e.g. '800')
+    \D*         # optional separator is any number of non-digits
+    (\d{3})     # trunk is 3 digits (e.g. '555')
+    \D*         # optional separator
+    (\d{4})     # rest of number is 4 digits (e.g. '1212')
+    \D*         # optional separator
+    (\d*)       # extension is optional and can be any number of digits
+                #$ end of string
+    ''', re.VERBOSE)
+    res = phonePat.search(s)
+    if res == None:
+       return  (False, "invalid phone number format")
+    parts = res.groups()
+    if (len(parts) < 3) | (len(parts) > 5): 
+       return (False, "invalid phone number format")
+    return (True, "")
+    
+
+def isZip(s):
+    aLen = len(s)
+    if (aLen == 5) | (aLen == 9):
+       if s.isdigit():
+          return (True,"")
+       else:
+          return (False,"bad zip code")
+    elif aLen != 10:
+         return (False,"bad zip code")
+    elif (s[:5].isdigit())  &  \
+       (s[5] == '-') & \
+       (s[6:].isdigit()):
+            return (True,"") 
+    return (False,"bad zip code")
+    
+def lenOK(s,minLen, maxLen):
+    if s == None:
+       return (False,"needs to have a length between %i and %i" % ( minLen, maxLen))
+    aLen = len(s)
+    if (aLen >= minLen) & (aLen <= maxLen): 
+       return (True, "")
+    else:
+       return (False, "needs to have a length between %i and %i" % ( minLen, maxLen))
+   
+def isMissing(s):
+       return (s == None) | (s == '')
+
 class MaintAppModel(object):
+    requiredCust = ('last_name', 'address1', 'city', 'state', 'zip', 'phone1')
+    OK, MISSING, INVALID = (0,1,2)
+    
     def __init__(self):
-        return None
+         self.__valid = True
+         self.missing = []
+         self.errTxt = ""
+         self.invFld = []
+         return
+
     
     def initialize(self):
         """ Set up the connection.  This is being done as a means of controlling
@@ -28,6 +115,87 @@ class MaintAppModel(object):
             the UI and the setup of the database.
         """
         pass
+     
+     #---------------------------- customer -----------------------------------------------
+    def chk_id(self,id):
+        return True
+    
+    def chk_first_name(self,first_name):
+        status, msg = lenOK(first_name,1,50)
+        return status
+    
+    def chk_last_name(self,last_name):
+        status, msg = lenOK(last_name,1,50)
+        return status
+    
+    def chk_address1(self,address):
+        status, msg = lenOK(address,1,50)
+        return status
+ 
+    def chk_address2(self,address):
+          status, msg = lenOK(address,1,50)
+          return status
+      
+    def chk_city(self,city):
+          status, msg = lenOK(city,1,50)
+          return status
+  
+    def chk_state(self,state):
+        status, msg = isState(state)
+        return status
+    
+    def chk_zip(self,zip):
+        status, msg = isZip(zip)
+        return status
+        
+    def chk_phone1(self,phone):
+        status, msg = isPhone(phone)
+        return status
+        
+    def chk_phone2(self,phone):
+        status, msg = isPhone(phone)
+        return status
+    
+    def chk_email(self,email):
+        status,msg = lenOK(email,1,50)
+        return status
+    
+    def chk_comments(self, comments):
+        status, msg = lenOK(comments,1,999)
+        return status
+    
+    def getInvFldNames(self):
+        """ 
+        returns a list of field names that need to be highlighted to indicate errors. 
+        Missing fields are also included.
+        """
+        resLst = self.invFld
+        resLst.extend(self.missing)
+        return resLst
+
+    def validateCust(self,customer):
+        """
+        given a customer instance,
+        returns boolean: True if valid else False
+        for each attribute, 
+             check the attribute by calling corresponding chk_attribute(customer.attribute)
+             Save a list of missing and invalid attributes and add errortext
+             for each missing or invalid field.
+        """
+        for a in customer.__dict__.keys():
+             check_attr_meth = getattr(self, 'chk_'+a, None)
+             if check_attr_meth == None: continue
+             anAttr = getattr(customer, a, None)
+             if isMissing(anAttr):
+                 if a in MaintAppModel.requiredCust:
+                     self.missing.append(a)
+                     self.errTxt = 'missing ' + a + '\n'
+                 else: pass
+             elif check_attr_meth(anAttr)  == False: 
+                  self.invFld.append(a)
+                  self.errTxt = 'invalid ' + a + '\n'    
+        # if there are no required missing fields  or invalid fields, everything is ok
+        return (len(self.missing) + len(self.invFld)) == 0
     
     def saveCustomerInfo(self, customer):
         """ Write customer object to data store.  If id in customer is '-1',
@@ -35,6 +203,10 @@ class MaintAppModel(object):
             primary key of the customer (the new one if creating, the existing
             one if updating.)
         """
+        if self.validateCust(customer) == False: 
+           resLst = self.getInvFldNames()
+           raise ValidationErrors(self.errTxt, resLst)
+       
         if customer.id == '-1':
             entity = None
         else:
@@ -42,7 +214,7 @@ class MaintAppModel(object):
                 entity = CustomerEnt.get(db.Key(customer.id))
             except Exception:
                 entity = None
-
+       
         if entity:
             entity.first_name = customer.first_name
             entity.last_name = customer.last_name
@@ -114,6 +286,81 @@ class MaintAppModel(object):
                             comments=entity.comments)
         else:
             return None
+        
+    #---------------------------- vehicle -----------------------------------------------
+    def chk_make(self, make):
+        if isMissing(zip):
+           self.missing.append('make')
+           return False
+        status,msg = lenOK(make,1,30)
+        if len(msg):
+            self.invFld.append('make')
+            self.errTxt += 'make ' + msg  + '\n'
+        return status
+      
+    def chk_model(self, model):
+        if isMissing(model):
+           self.missing.append('zip')
+           return False
+        status,msg = lenOK(model,1,30)
+        if len(msg):
+            self.invFld.append('model')
+            self.errTxt += 'model ' + msg  + '\n'
+        return status
+      
+    def chk_year(self, year):
+        if isMissing(zip):
+           self.missing.append('year')
+           return False
+        if (year.isdigit() == False):
+            self.invFld.append('year')
+            self.errTxt += 'year must be a 4-digit number\n'
+            return False
+        maxYr = datetime.today().year + 3
+        if (int(year) < 1925) | (int(year) > maxYr) :
+            self.invFld.append('year')
+            self.errTxt += 'year must be between 1925 and 2 years after current year\n'
+            return False
+        status,msg = lenOK(year,4,4)
+        if len(msg):
+            self.invFld.append('year')
+            self.errTxt += 'year ' + msg  + '\n'
+        return status
+      
+    def chk_license(self, license):
+        if isMissing(zip):
+           self.missing.append('license')
+           return False
+        status,msg = lenOK(license,1,30)
+        if len(msg):
+            self.invFld.append('liense')
+            self.errTxt += 'license ' + msg  + '\n'
+        return status
+      
+    def chk_vin(self, vin):
+        # Note:  see http://www.vinguard.org/vin.htm for the full story. This is not a complete check
+        # For example, the year is encoded (vin[9]) as well as a check digit (vin[8])
+        if isMissing(vin):
+            return True
+        if (vin.isalnum() == False):
+            self.invFld.append('vin')
+            self.errTxt += 'vin must be only numbers and letters\n'
+            return False
+        status,msg = lenOK(vin,16,17)
+        if len(msg):
+            self.invFld.append('vin')
+            self.errTxt += 'vin ' + msg  + '\n'
+        return status
+      
+    def chk_notes(self, notes):
+        if isMissing(notes):
+            return True
+        status,msg = lenOK(notes,1,999)
+        if len(msg):
+            self.invFld.append('notes')
+            self.errTxt += 'notes ' + msg  + '\n'
+        return status
+    
     
     def saveVehicleInfo(self, vehicle):
         """ Write vehicle object to data store.  If id in vehicle object is
@@ -240,7 +487,8 @@ class MaintAppModel(object):
         for customer_ent in customers:
             result.append(self.getCustomerFromCustomerEnt(customer_ent))
         return result
-    
+         
+    #---------------------------- work order -----------------------------------------------
     def saveWorkorder(self, workorder):
         """ Write contents of workorder object to data store.  If id in workorder
             object is -1, create the record; otherwise, update the existing record
@@ -419,10 +667,10 @@ class TestMaintAppModel(object):
         print "\n** testing customer retrieve..."
         print "c1_key = " + c1_key
         c1_retrived = appModel.getCustomer(c1_key)
-        print "c1_retrived: ", c1_retrived
+        print "c1_retrieved: ", c1_retrived
         print "c2_key = " + c2_key
         c2_retrived = appModel.getCustomer(c2_key)
-        print "c2_retrived: ", c2_retrived
+        print "c2_retrieved: ", c2_retrived
 
         print "\n** testing vehicle save..."
         v1 = Vehicle(id='-1',
@@ -467,13 +715,13 @@ class TestMaintAppModel(object):
         print "\n** testing vehicle retrieve..."
         print "v1_key = " + v1_key
         v1_retrived = appModel.getVehicle(v1_key)
-        print "v1_retrived: ", v1_retrived    
+        print "v1_retrieved: ", v1_retrived    
         print "v2_key = " + v2_key
         v2_retrived = appModel.getVehicle(v2_key)
-        print "v2_retrived: ", v2_retrived
+        print "v2_retrieved: ", v2_retrived
         print "v3_key = " + v3_key
         v3_retrived = appModel.getVehicle(v3_key)
-        print "v3_retrived: ", v3_retrived
+        print "v3_retrieved: ", v3_retrived
 
 
         print "\n** testing vehicleList retrieve..."
