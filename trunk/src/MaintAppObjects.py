@@ -120,7 +120,6 @@ class Vehicle(object):
         self.make = make
         self.model = model
         self.year = year
-        #self.mileage = mileage
         self.license = license
         self.vin = vin
         self.notes = notes
@@ -183,15 +182,21 @@ class Vehicle(object):
     
     
 class Workorder(object):
-    def __init__(self, id="-1", vehicle_id=None, mileage=None, 
-                 date_created=None, date_closed=None, etc=None):
+    def __init__(self, id="-1", vehicle_id=None, mileage=None,
+                 status=None, date_created=None, customer_request=None,
+                 mechanic=None, task_list=None, work_performed=None,
+                 notes=None, date_closed=None):
         self.id = id
         self.vehicle_id = vehicle_id
         self.mileage = mileage
         self.status = Workorder.OPEN
         self.date_created = date_created
+        self.customer_request=customer_request
+        self.mechanic=mechanic
+        self.task_list=task_list
+        self.work_performed=work_performed
+        self.notes=notes
         self.date_closed = date_closed
-        return None
     
     OPEN = 1
     COMPLETED = 2

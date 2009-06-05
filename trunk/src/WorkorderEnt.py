@@ -9,7 +9,7 @@ class SubTask:
 
 class WorkorderEnt(db.Model):
     #orderID = db.IntegerProperty(verbose_name = "Work Order ID", required=True, indexed=True)
-    vehicle_id = db.ReferenceProperty(VehicleEnt)
+    vehicle = db.ReferenceProperty(VehicleEnt)
     # could  have validator=checkMileage where this is a function?
     mileage = db.IntegerProperty(verbose_name = "Initial Mileage", required=True)
     status = db.IntegerProperty(verbose_name = "Work Order Status", required=True, choices=set([1,2,3]))

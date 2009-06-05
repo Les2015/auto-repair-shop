@@ -209,14 +209,14 @@ class MaintAppModel(object):
                                                 searchCriteria.getFirstName()
             In the future we may consider supporting wild card matching.
             A list of Customer objects corresponding to the customer records
-            Assumes last_name is always given
+            The objects in the list are ordered by last_name, then first_name
         """
         result = []
-        query_string = "WHERE last_name='"  + searchCriteria.last_name + "'"
+        query_string = ""
         if searchCriteria.first_name: 
             query_string += " AND first_name='" + searchCriteria.first_name + "'"
-#        if searchCriteria.last_name: 
-#            query_string += " AND last_name='" + searchCriteria.last_name + "'"
+        if searchCriteria.last_name: 
+            query_string += " AND last_name='" + searchCriteria.last_name + "'"
         if searchCriteria.address1: 
             query_string += " AND address1='" + searchCriteria.address1 + "'"
         if searchCriteria.city: 
@@ -229,14 +229,15 @@ class MaintAppModel(object):
             query_string += " AND phone1='" + searchCriteria.phone1 + "'"
         if searchCriteria.email: 
             query_string += " AND email='" + searchCriteria.email + "'"
-        query_string += " ORDER BY last_name"
+            
+        if query_string != "":
+            query_string = "WHERE " + query_string[5:] # replace the beginning AND by WHERE
+        query_string += " ORDER BY last_name, first_name"
         
         print "query_string: " + query_string
         query = CustomerEnt.gql(query_string)
         customers = query.fetch(10) 
         for customer_ent in customers:
-            #print "customer_ent:", customer_ent
-            #result.append(str(customer_ent.key()))
             result.append(self.getCustomerFromCustomerEnt(customer_ent))
         return result
     
@@ -253,7 +254,7 @@ class MaintAppModel(object):
             except Exception:
                 entity = None
 
-        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
+        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle))    
         if entity:
             entity.mileage = workorder.mileage
             entity.status = workorder.status
@@ -264,7 +265,7 @@ class MaintAppModel(object):
             entity.work_performed = workorder.work_performed
             entity.notes = workorder.notes
             entity.date_closed = workorder.date_closed
-            entity.vehicle_id = vehicle_ent
+            entity.vehicle = vehicle_ent
         else:    
             entity = WorkorderEnt(mileage=workorder.mileage,
                                   status=workorder.status,
@@ -275,7 +276,7 @@ class MaintAppModel(object):
                                   work_performed=workorder.work_performed,
                                   notes=workorder.notes,
                                   date_closed=workorder.date_closed,
-                                  vehicle_id = vehicle_ent)
+                                  vehicle = vehicle_ent)
         key = entity.put()
         return str(key)
     
@@ -321,7 +322,7 @@ class MaintAppModel(object):
         except Exception:
             return result
         
-        query = WorkorderEnt.gql("WHERE vehicle_id = :key", key=vehicle)
+        query = WorkorderEnt.gql("WHERE vehicle = :key", key=vehicle)
         workorders = query.fetch(10) # get at most 10 workorder for each customer
         for workorder_ent in workorders:
             result.append(self.getWorkorderFromWorkorderEnt(workorder_ent))
@@ -491,13 +492,26 @@ class TestMaintAppModel(object):
         print
         
         print "\n** testing customer search..."
-        searchCriteria = Customer(last_name='Wong')
+        searchCriteria = Customer()
         customer_list = appModel.searchForMatchingCustomers(searchCriteria)
-        print "customer_list:", customer_list
+        print "customer_list, searchCriteria is blank:", customer_list
+        for i in customer_list:
+            print i
+        print
+        searchCriteria = Customer(last_name='Wong', city='Santa Clara')
+        customer_list = appModel.searchForMatchingCustomers(searchCriteria)
+        print "customer_list, searchCriteria last_name='Wong', city='Santa Clara':", customer_list
+        for i in customer_list:
+            print i
+        print
+        searchCriteria = Customer(first_name='Brad')
+        customer_list = appModel.searchForMatchingCustomers(searchCriteria)
+        print "customer_list, searchCriteria first_name='Brad':", customer_list
         for i in customer_list:
             print i
         print
         
+
 def main( ):
     #run_wsgi_app(application)
     test = TestMaintAppModel()
