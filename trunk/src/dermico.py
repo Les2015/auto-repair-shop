@@ -13,7 +13,7 @@ from google.appengine.ext.webapp import template    # [1]
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from MaintAppView import MaintAppView
-from MaintAppModel import MaintAppModel
+from MaintAppModel import MaintAppModel, ValidationErrors
 from MaintAppObjects import Customer, Vehicle, Workorder
 
 
@@ -290,11 +290,17 @@ class MaintAppController(object):
     
     def __getHiddenIdFields(self):
         """ Extract the three active ids (customer_id, vehicle_id, and workorder_id) from
-            the dictionary of values returned from the hidden fields in the form.
+            the dictionary of values returned from the hidden fields in the form.  The
+            return information from clicking on the search results doesn't have the
+            hidden fields available.  Need to check this explicitly.
         """
-        self.__activeCustomerId  = self.__userValues['customer_id']
-        self.__activeVehicleId   = self.__userValues['vehicle_id']
-        self.__activeWorkorderId = self.__userValues['workorder_id']
+        if 'customer_id' in self.__userValues.keys():
+            self.__activeCustomerId  = self.__userValues['customer_id']
+            self.__activeVehicleId   = self.__userValues['vehicle_id']
+            self.__activeWorkorderId = self.__userValues['workorder_id']
+        else:
+            self.__clearHiddenIdFields()
+            
         return None
     
     def __configureHiddenIdFields(self):
@@ -434,9 +440,14 @@ class MaintAppController(object):
         """
         activeCustomer = Customer()
         activeCustomer.loadFromDictionary(self.__userValues)
-        errorList = self.__model.validateCustomerInfo(activeCustomer)
-        if len(errorList) == 0:
+        #errorList = self.__model.validateCustomerInfo(activeCustomer)
+        #if len(errorList) == 0:
+        try:
             customerDbId = self.__model.saveCustomerInfo(activeCustomer)
+        except ValidationErrors, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateCurrentView()
+        else:
             activeCustomer.setId(customerDbId)
             self.__view.configureCustomerContent(activeCustomer)
             
@@ -445,9 +456,6 @@ class MaintAppController(object):
             self.__activeCustomerId = customerDbId
             self.__configureSidePanel(0, "Save Customer Info")
             self.__view.set_customer_vehicle_mode()
-        else:
-            self.__view.configureErrorMessages(errorList)
-            self.__regenerateCurrentView()
         return None
     
     def setupCustomerSearch(self, reqhandler, tag):
@@ -482,10 +490,11 @@ class MaintAppController(object):
         """
         searchCriteria = Customer()
         searchCriteria.loadFromDictionary(self.__userValues)
+        self.__view.configureCustomerContent(searchCriteria)
         
         searchResults = self.__model.searchForMatchingCustomers(searchCriteria)
         self.__view.configureSearchResults(searchResults)
-        self.__configureSidePanel(2, "Search Results")
+        self.__configureSidePanel(2, "Search Results: %d" % len(searchResults))
         self.__view.set_search_results_mode()
         return None
     
@@ -727,12 +736,14 @@ class MaintAppController(object):
             Tell view to go into Customer/Vehicle mode.
             Tell the View to rerender.
         """
+        self.__activeCustomerId = tag
         customer = self.__model.getCustomer(self.__activeCustomerId)
         self.__view.configureCustomerContent(customer)
 
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
+        vehicleList.append(Vehicle())
         self.__view.configureVehicleContent(vehicleList)
-        self.__activeCustomerId = vehicleList[0].getId()
+        self.__activeVehicleId = vehicleList[0].getId()
         self.__configureSidePanel(0, "Showing Customer")
         self.__view.set_customer_vehicle_mode()
         return None
@@ -858,7 +869,7 @@ class MaintAppController(object):
             self.__view.set_workorder_mode()
         return None
    
-    def __regenerateCustomerView():
+    def __regenerateCustomerView(self):
         """ Restore the customer form fields to the state that the user left them
             when attempting to move to another configuration.
         """
