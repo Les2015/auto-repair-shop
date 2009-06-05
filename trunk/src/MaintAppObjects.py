@@ -13,7 +13,7 @@ Created on May 27, 2009
     will hold the database id of the record being edited. -- bdg
 """
 
-import time
+import datetime, time
 
 def nz(value):
 	return ("" if value is None else value)
@@ -183,20 +183,21 @@ class Vehicle(object):
     
 class Workorder(object):
     def __init__(self, id="-1", vehicle_id=None, mileage=None,
-                 status=None, date_created=None, customer_request=None,
+                 status=1, date_created=None, customer_request=None,
                  mechanic=None, task_list=None, work_performed=None,
                  notes=None, date_closed=None):
         self.id = id
         self.vehicle_id = vehicle_id
         self.mileage = mileage
-        self.status = Workorder.OPEN
+        self.status = status
+        self.customer_request = customer_request
+        self.mechanic = mechanic 
+        self.task_list = task_list 
+        self.work_performed = work_performed
+        self.notes = notes 
         self.date_created = date_created
-        self.customer_request=customer_request
-        self.mechanic=mechanic
-        self.task_list=task_list
-        self.work_performed=work_performed
-        self.notes=notes
         self.date_closed = date_closed
+       	return None
     
     OPEN = 1
     COMPLETED = 2
@@ -217,14 +218,16 @@ class Workorder(object):
         return self.vehicle_id
     
     def setDateCreated(self):
-        self.date_created = time.time()
+        self.date_created = \
+            datetime.datetime.fromtimestamp(time.time())
         
     def getDateCreated(self):
         """ Do we want to format this as a string or return it as a date/time type? """
         return self.date_created
     
     def setDateClosed(self):
-        self.date_closed = time.time()
+        self.date_closed = \
+            datetime.datetime.fromtimestamp(time.time())
         
     def getDateClosed(self):
         """ Do we want to format this as a string or return it as a date/time type? """
@@ -241,7 +244,10 @@ class Workorder(object):
             self.setId(None)
         else:
             self.setId(vehicle_id)
-            
+        self.customer_request = dictionary['customer_request']
+        self.mileage = dictionary['mileage']
+        self.mechanic = dictionary['mechanic']
+        
         return None
     
     def checkRequiredFieldsForCurrentState(self):
@@ -250,7 +256,7 @@ class Workorder(object):
             status.  This should only report errors that are beyond the
             ones reported by MaintAppModel.validateWorkorderInfo().
         """
-        if self.__status == Workorder.COMPLETED or self.__status == Workorder.CLOSED:
+        if self.status == Workorder.COMPLETED or self.status == Workorder.CLOSED:
             # Check the final required fields for the work order and
             # generate list.
             retVal=[('task_list', 'required')]
