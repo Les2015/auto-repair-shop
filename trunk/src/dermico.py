@@ -626,7 +626,7 @@ class MaintAppController(object):
               and the active work order index so that correct tab will be made active
         """
         workorder = Workorder()
-        workorder.loadFromDictionary(self.__activeWorkorderId)
+        workorder.loadFromDictionary(self.__userValues)
         errorList = self.__model.validateWorkorderInfo(workorder) + \
                     workorder.checkRequiredFieldsForCurrentState()
         if len(errorList) == 0:
