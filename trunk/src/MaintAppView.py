@@ -7,6 +7,7 @@ Created on May 25, 2009
 NEW_CUSTOMER = 1
 FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
+INPUT_WORKORDER = 4
 
 from MaintAppObjects import nz
 
@@ -35,6 +36,7 @@ class MaintAppView(object):
         self.__sidePanel = SidePanelSubview()
         self.__customerPanel = CustomerSubview()
         self.__vehiclePanel = VehicleSubview()
+        self.__workorderPanel = WorkorderSubview()
         self.__mainMode = NEW_CUSTOMER
         return None
     
@@ -47,22 +49,24 @@ class MaintAppView(object):
         self.__customerPanel._configure_search_mode()
         
     def set_search_results_mode(self):
-        pass
+        self.__mainMode = FIND_CUSTOMER
     
     def set_customer_vehicle_mode(self):
         self.__mainMode = INPUT_CUSTOMER
         self.__customerPanel._configure_input_mode()
         
     def set_workorder_mode(self):
-        pass
+        self.__mainMode = INPUT_WORKORDER
         
     def configureHiddenFields(self, customer_id, vehicle_id, workorder_id):
         self.__sidePanel._configure_hidden_fields(customer_id, vehicle_id, workorder_id)
+        self.__vehiclePanel._configureActiveVehicle(vehicle_id)
         
-    def configureErrorMessages(self, errors):
+    def configureErrorMessages(self, errorObj):
         """ Errors is a list of (field name, error type) tuples to be used to format
             errors and highlighting fields where data validation errors were detected.
         """
+        self.__sidePanel._configureErrorMessages(errorObj)
         pass
         
     def configureSidePanelContent(self, activeElement,
@@ -84,7 +88,7 @@ class MaintAppView(object):
         self.__vehiclePanel._configure_content(vehicle_list)
         
     def configureWorkorderHeader(self, customer, vehicle):
-        pass
+        self.__workorderPanel._configureHeader(customer, vehicle)
     
     def configureWorkorderContent(self, workorder_list):
         pass
@@ -118,23 +122,27 @@ class MaintAppView(object):
                   </td>
                   <td class="my_tright">""")
         
-        if self.__customerPanel is not None:
-            self.__customerPanel._serve_content(reqhandler)
-        reqhandler.response.out.write("""
-                  </td>
-                </tr>
-                """)
-        
-        if self.__mainMode == INPUT_CUSTOMER:
-            reqhandler.response.out.write("""
-                    <tr>
-                      <td class="my_tright_bottom">""")
-            if self.__vehiclePanel is not None:
-                self.__vehiclePanel._serve_content(reqhandler)
+        if self.__mainMode == INPUT_WORKORDER:
+            if self.__workorderPanel is not None:
+                self.__workorderPanel._serve_content(reqhandler)
+        else:
+            if self.__customerPanel is not None:
+                self.__customerPanel._serve_content(reqhandler)
             reqhandler.response.out.write("""
                       </td>
                     </tr>
                     """)
+            
+            if self.__mainMode == INPUT_CUSTOMER:
+                reqhandler.response.out.write("""
+                        <tr>
+                          <td class="my_tright_bottom">""")
+                if self.__vehiclePanel is not None:
+                    self.__vehiclePanel._serve_content(reqhandler)
+        reqhandler.response.out.write("""
+                  </td>
+                </tr>
+                """)
             
         reqhandler.response.out.write("""
               </table>
@@ -165,6 +173,7 @@ class SidePanelSubview(object):
         self.__customerId = "-1"
         self.__vehicleId = "-1"
         self.__workorderId = "-1"
+        self.__errorObj = None
         return None
     
     def _configure_selection(self, whichItem):
@@ -188,18 +197,28 @@ class SidePanelSubview(object):
         self.__workorderId = workorder_id
         return None
     
+    def _configureErrorMessages(self, errorObj):
+        self.__errorObj = errorObj
+        
     def _serve_content(self, reqhandler):
         linkClass = "s_side_links"
         activeLinkClass = "s_active_side_links"
         
-        reqhandler.response.out.write('<p>Customer Input:</p>')
+        reqhandler.response.out.write('<p><strong>Customer Input:</strong></p>')
         css_class = activeLinkClass if (self.__itemSelected == 1) else linkClass
         reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_newcust" value="Add New Customer" /></p>' % css_class)
         css_class = activeLinkClass if (self.__itemSelected == 2) else linkClass
         reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_findcust" value="Find Customer" /></p>' % css_class)
-        reqhandler.response.out.write('<p>Open Work Orders:</p>')
-        reqhandler.response.out.write('<p>%s</p>' % self.__comments)
-        reqhandler.response.out.write('<p>Work Completed:</p>')
+        reqhandler.response.out.write('<p><strong>Open Work Orders:</strong></p>')
+        reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
+        reqhandler.response.out.write('<p><strong>Work Completed:</strong></p>')
+        reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
+        reqhandler.response.out.write('<hr />')
+        reqhandler.response.out.write('<p><strong>App Info:</strong></p>')
+        reqhandler.response.out.write('<p style="margin-left:15px;">%s</p>' % self.__comments)
+        if self.__errorObj is not None:
+            reqhandler.response.out.write('<p style="margin-left:15px; color:red;">%s</p>' % \
+                                          str(self.__errorObj))        
         reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
         reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
         reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
@@ -210,6 +229,7 @@ class CustomerSubview(object):
     def __init__(self):
         self.__customer = None
         self.__searchMode = False
+        self.__searchResults = None
         return None
     
     def _configure_content(self, customerInfo):
@@ -317,24 +337,62 @@ class CustomerSubview(object):
             </p>
             </td></tr>
             </table>""")
+            if self.__searchResults is not None:
+                reqhandler.response.out.write("<hr \>")
+                if len(self.__searchResults) == 0:
+                    reqhandler.response.out.write("""
+                    <p><strong>No customers match the search you requested.
+                    </strong></p>""")
+                else:
+                    for customer in self.__searchResults:
+                        link = "/Search?cid=%s" % customer.getId()
+                        reqhandler.response.out.write( \
+                            '<p><a href="%s">%s %s</a></p>' % \
+                            (link, nz(customer.first_name), nz(customer.last_name)))
         return None
     
 class VehicleSubview(object):
     def __init__(self):
         return None
     
+    def _configureActiveVehicle(self, vehicle_id):
+        self.__activeVehicleId = vehicle_id
+    
     def _configure_content(self, vehicle_list):
         self.__vehicles = vehicle_list
         self.__vehicle = self.__vehicles[0]
         return None
     
+    def _retrieveActiveVehicle(self):
+        for eachVehicle in self.__vehicles:
+            if eachVehicle.getId() == self.__activeVehicleId:
+                self.__vehicle = eachVehicle
+                break
+        return None
+    
     def _serve_content(self, reqhandler):
+        self._retrieveActiveVehicle()
+        reqhandler.response.out.write('<div style="width:100%">')
+        tabNum = -1
+        for eachVehicle in self.__vehicles:
+            tabNum += 1
+            if eachVehicle.getId() == self.__activeVehicleId:
+                style = "selected_tab_button"
+            else:
+                style = "tab_button"
+            if eachVehicle.getId() == "-1":
+                reqhandler.response.out.write( \
+                    '<input class="%s" type="submit" name="submit_vtab_%d" value="New Vehicle" />' % \
+                    (style, tabNum, ))
+            else:
+                reqhandler.response.out.write( \
+                    '<input class="%s" type="submit" name="submit_vtab_%d" value="%s" />' % \
+                    (style, tabNum, str(eachVehicle.year)))
+        #<input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
+        #<input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
         reqhandler.response.out.write("""
-            <p>
-            <input class="tab_button" type="submit" name="submit_vtab_0" value="1999 Honda Accord" />
-            <input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
-            <input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
-            </p>
+            <hr style="width=102%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
+            </div>
             <table style="margin-top:15px; width:90%; margin-left:auto; margin-right:auto;">
             <tr>
             <td>
@@ -405,5 +463,128 @@ class VehicleSubview(object):
             </td></tr>
             </table>
             """)
+        return None
+    
+class WorkorderSubview(object):
+    def __init__(self):
+        return None
+    
+    def _configureHeader(self, customer, vehicle):
+        self.__customer = customer
+        self.__vehicle = vehicle
+        return None
+
+    def _serve_content(self, reqhandler):
+        self.__output_workorder_header(reqhandler)
+        self.__output_workorder_form(reqhandler)
+        return None
+    
+    def __output_workorder_header(self, reqhandler):
+        reqhandler.response.out.write("""
+            <table>
+            <tr>
+                <td>
+                    Customer info:
+                </td>
+                <td>""")
+        reqhandler.response.out.write("%s %s; Contact: %s" %
+                                      (nz(self.__customer.first_name),
+                                       nz(self.__customer.last_name),
+                                       nz(self.__customer.phone1)))
+        reqhandler.response.out.write("""
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Vehicle info:
+                </td>
+                <td>""")
+        reqhandler.response.out.write("%s %s %s; License: %s" %
+                                      (nz(self.__vehicle.year),
+                                       nz(self.__vehicle.make),
+                                       nz(self.__vehicle.model),
+                                       nz(self.__vehicle.license)))
+        reqhandler.response.out.write("""
+                </td>
+            </tr>
+            </table>""")
+        return None
+    
+    def __output_workorder_form(self, reqhandler):
+        reqhandler.response.out.write("""<div style="width:100%">
+            <input style="margin-top:25px;" class="selected_tab_button" type="submit" name="submit_wotab_0" value="New Workorder" />
+            <input class="tab_button" type="submit" name="submit_wotab_1" value="12-Dec-2008" />
+            <input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
+            <hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
+        </div>""")
+        reqhandler.response.out.write("""
+            <table style="margin-top:30px;">
+                <tr>
+                    <td>
+                        Customer's Service Request:
+                    </td>
+                    <td style="text-align:right;">
+                        <label for="mileage">Odometer Reading:</label>
+                        <input type="text" name="mileage" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <textarea name="customer_request" rows="3" cols="85">
+                        </textarea>
+                    </td>
+                </tr>
+                <tr><td colspan="2"><hr /></td></tr>
+                <tr>
+                    <td>
+                        Work Order Date: June 8, 2009
+                    </td>
+                    <td style="text-align:right;">
+                        <label for "mechanic">Mechanic:</label>
+                        <select name="mechanic">
+                        <option value="mechanic_0">Select...</option>
+                        <option value="mechanic_1">Jerome Calvo</option>
+                        <option value="mechanic_2">Les Faby</option>
+                        <option value="mechanic_3">Brad Gaiser</option>
+                        <option value="mechanic_4">Wing Wong</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for "mechanics_tasks">Mechanics Tasks:</label><br />
+                        <textarea name="mechanics_tasks" rows="7" cols="40">
+                        </textarea>
+                    </td>
+                    <td>
+                        <label for "work_done">Work Performed:</label><br />
+                        <textarea name="work_done" rows="7" cols="40">
+                        </textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <label for "next_service">Notes and next service recommendations:</label><br />
+                        <textarea name="next_service" rows="4" cols="85">
+                        </textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align:center;">
+                        <label for "status">Work Order Status:</label>
+                        <input style="margin-left:15px;" type="radio" name="status" value="Open" checked="checked" /> Open
+                        <input style="margin-left:25px;" type="radio" name="status" value="Completed" /> Completed
+                        <input style="margin-left:15px;" type="radio" name="status" value="Closed" /> Closed
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <p style="width:100%; text-align:center;">
+                        <input type="submit" name="submit_savewo" value="Save Work Order" />
+                        <input type="submit" name="submit_rstrwo" value="Restore Work Order" />
+                        </p>
+                    </td>
+                </tr>
+            </table>""")
         return None
     
