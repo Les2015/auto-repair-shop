@@ -111,6 +111,7 @@ body
 .tab_button
 {
     position: relative;
+    border-color: #EEEEEE #EEEEEE #000000 #EEEEEE;
     border-style: solid;
     font-family: Arial, Helvetica, sans-serif;
     font-size: x-small;
@@ -118,10 +119,11 @@ body
     border-width: thin;
     width: 15em;
     background-color: #C0C0C0;
+    margin-left: .5ex;
     padding-left: .5ex;
     padding-right: .5ex;
     text-decoration: none;
-    bottom: -1px;
+    bottom: 0px;
 }
 
 .selected_tab_button
@@ -135,6 +137,7 @@ body
     border-width: thin;
     width: 15em;
     background-color: #EEEEEE;
+    margin-left: .5ex;
     padding-left: .5ex;
     padding-right: .5ex;
     text-decoration: none;
