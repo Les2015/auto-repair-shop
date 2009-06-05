@@ -3,11 +3,13 @@
     This module provides the main routine and the implementation of the
     Contoller class in the MVC implementation of the Auto Shop Maintenance
     Records System.
+    06/04/09  Added support for templates via import ~ Jerome Calvo [1]
 """
 
 import sys
 
 from google.appengine.ext import webapp
+from google.appengine.ext.webapp import template    # [1]
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from MaintAppView import MaintAppView

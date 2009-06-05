@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<!-- skeleton for the main view 
+		06/04/09  This skeleton template contains all the common elements of the main UI and defines
+		blocks that other templates can override based on the mode selected by user at a given time
+		That is still preliminary work that need to be tweaked.
+		Look and feel may be beautified later via style sheets and static graphic elements
+		if time permits ~ Jerome Calvo
+		
+		TBD ~jjc :
+		
+		<link rel="shortcut icon" href="/favicon.ico"
+			type="image/x-icon" />     
+			
+		-->
+		
+		<link rel="stylesheet" type="text/css"
+			href="/stylesheets/dermico.css" />
+		<title>
+			{% block title %}
+				{# Placeholder #}
+			{% endblock title %}
+		</title>
+	</head>
+	
+	<body>
+		<!-- common header for all pages -->
+		<div id="header">	
+			<!--  TBD ~jjc
+			
+			<img src="/images/DermicoAuto_logo.gif"
+			   border="0" width="40" height="40"
+			   align="left" />
+			   
+			 -->
+			 
+			<h1>Dermico Auto Maintenance Record System </h1>
+		</div>
+		
+		<div id="navigation">
+			{% include "navigation.html" %}
+		</div>
+		
+		<div id="customerSubview">
+			{% block customerSubview %}
+			{% endblock customerSubview %}
+		</div>
+		
+		<div id="workorderSubview">
+			{% block workorderSubview %}
+			{% endblock workorderSubview %}
+		</div>
+		
+		<!-- common footer -->
+		<div id="footer">
+		</div>
+	</body>
+</html>
+
