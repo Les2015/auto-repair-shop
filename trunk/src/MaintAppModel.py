@@ -1,16 +1,14 @@
 '''
 Created on May 27, 2009
 
-@author: 
+@author: Wing Wong
 '''
 
 import os
 from google.appengine.ext import db
 from google.appengine.api import apiproxy_stub_map 
 from google.appengine.api import datastore_file_stub 
-from MaintAppObjects import Customer 
-from MaintAppObjects import Vehicle 
-from MaintAppObjects import Workorder 
+from MaintAppObjects import Customer, Vehicle, Workorder 
 from CustomerEnt import CustomerEnt
 from VehicleEnt import VehicleEnt
 from WorkorderEnt import WorkorderEnt
@@ -32,7 +30,7 @@ class MaintAppModel(object):
         pass
     
     def saveCustomerInfo(self, customer):
-        """ Write customer object to data store.  If id in customer is None,
+        """ Write customer object to data store.  If id in customer is '-1',
             create the record; otherwise, update the record.  Return the 
             primary key of the customer (the new one if creating, the existing
             one if updating.)
@@ -46,7 +44,6 @@ class MaintAppModel(object):
                 entity = None
 
         if entity:
-            #print "Entity is not None"
             entity.first_name = customer.first_name
             entity.last_name = customer.last_name
             entity.address1 = customer.address1
@@ -59,7 +56,6 @@ class MaintAppModel(object):
             entity.email = customer.email
             entity.comments = customer.comments
         else:    
-            #print "Entity is None"        
             entity = CustomerEnt(first_name=customer.first_name,
                                  last_name=customer.last_name,
                                  address1=customer.address1,
@@ -74,6 +70,25 @@ class MaintAppModel(object):
         key = entity.put()
         return str(key)
             
+    def getCustomerFromCustomerEnt(self, customer_ent):
+        """ Create a Customer object from a CustomerEnt; this is a helper method for searchForMatchingCustomers
+        """
+        if customer_ent:
+            return Customer(id=str(customer_ent.key()), 
+                            first_name=customer_ent.first_name, 
+                            last_name=customer_ent.last_name,
+                            address1=customer_ent.address1,
+                            address2=customer_ent.address2,
+                            city=customer_ent.city,
+                            state=customer_ent.state,
+                            zip=customer_ent.zip,
+                            phone1=customer_ent.phone1,
+                            phone2=customer_ent.phone2,
+                            email=customer_ent.email,
+                            comments=customer_ent.comments)
+        else:
+            return None
+
     def getCustomer(self, customer_id):
         """ Retrieve the customer record from the database whose primary key
             is the customer_id passed in.
@@ -167,34 +182,17 @@ class MaintAppModel(object):
         except Exception:
             entity = None
         return self.getVehicleFromVehicleEnt(entity)
-    
-        """
-        if entity:
-            if entity.customer:
-                customer_key = str(entity.customer.key())
-                
-            #print "--In getVehicle, customer_key: " + customer_key    
-            #print "--In getVehicle, customer object:", entity.customer    
-            return Vehicle(id=vehicle_id, 
-                           make=entity.make, 
-                           model=entity.model, 
-                           year=entity.year,
-                           license=entity.license,
-                           vin=entity.vin,
-                           notes=entity.notes,
-                           customer_id=customer_key)
-        else:
-            return None
-        """
-        
+            
     def getVehicleList(self, customer_id):
         """ This method queries the database for vehicles records belonging
             to the customer identified by customer_id. Return an empty list
             if no vehicles are found.
         """
         result = []
-        #print "customer_id: " + str(customer_id)
-        customer = CustomerEnt.get(db.Key(customer_id))
+        try:
+            customer = CustomerEnt.get(db.Key(customer_id))
+        except Exception:
+            return result
         
         query = VehicleEnt.gql("WHERE customer = :key", key=customer)
         vehicles = query.fetch(10) # get at most 10 vehicle for each customer
@@ -211,28 +209,123 @@ class MaintAppModel(object):
                                                 searchCriteria.getFirstName()
             In the future we may consider supporting wild card matching.
             A list of Customer objects corresponding to the customer records
-            that were retrieved are returned to the caller.
+            Assumes last_name is always given
         """
-        return []
+        result = []
+        query_string = "WHERE last_name='"  + searchCriteria.last_name + "'"
+        if searchCriteria.first_name: 
+            query_string += " AND first_name='" + searchCriteria.first_name + "'"
+#        if searchCriteria.last_name: 
+#            query_string += " AND last_name='" + searchCriteria.last_name + "'"
+        if searchCriteria.address1: 
+            query_string += " AND address1='" + searchCriteria.address1 + "'"
+        if searchCriteria.city: 
+            query_string += " AND city='" + searchCriteria.city + "'"
+        if searchCriteria.state: 
+            query_string += " AND state='" + searchCriteria.state + "'"
+        if searchCriteria.zip: 
+            query_string += " AND zip='" + searchCriteria.zip + "'"
+        if searchCriteria.phone1: 
+            query_string += " AND phone1='" + searchCriteria.phone1 + "'"
+        if searchCriteria.email: 
+            query_string += " AND email='" + searchCriteria.email + "'"
+        query_string += " ORDER BY last_name"
+        
+        print "query_string: " + query_string
+        query = CustomerEnt.gql(query_string)
+        customers = query.fetch(10) 
+        for customer_ent in customers:
+            #print "customer_ent:", customer_ent
+            #result.append(str(customer_ent.key()))
+            result.append(self.getCustomerFromCustomerEnt(customer_ent))
+        return result
     
     def saveWorkorder(self, workorder):
         """ Write contents of workorder object to data store.  If id in workorder
             object is -1, create the record; otherwise, update the existing record
             in the database.  Return primary key of the workorder.
         """
-        return 10344
+        if workorder.id == '-1':
+            entity = None
+        else:
+            try:
+                entity = WorkorderEnt.get(db.Key(workorder.id))
+            except Exception:
+                entity = None
+
+        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
+        if entity:
+            entity.mileage = workorder.mileage
+            entity.status = workorder.status
+            entity.date_created = workorder.date_created
+            entity.customer_request = workorder.customer_request
+            entity.mechanic = workorder.mechanic
+            entity.task_list = workorder.task_list
+            entity.work_performed = workorder.work_performed
+            entity.notes = workorder.notes
+            entity.date_closed = workorder.date_closed
+            entity.vehicle_id = vehicle_ent
+        else:    
+            entity = WorkorderEnt(mileage=workorder.mileage,
+                                  status=workorder.status,
+                                  date_created=workorder.date_created,
+                                  customer_request=workorder.customer_request,
+                                  mechanic=workorder.mechanic,
+                                  task_list=workorder.task_list,
+                                  work_performed=workorder.work_performed,
+                                  notes=workorder.notes,
+                                  date_closed=workorder.date_closed,
+                                  vehicle_id = vehicle_ent)
+        key = entity.put()
+        return str(key)
     
+    def getWorkorderFromWorkorderEnt(self, workorder_ent):
+        """ Create a Workorder object from a WorkorderEnt; this is a helper method for getWorkorferList
+        """
+        vehicle_key = '-1'
+        if workorder_ent:
+            if workorder_ent.vehicle:
+                vehicle_key = str(workorder_ent.vehicle.key())
+                
+            return Workorder(id=str(workorder_ent.key()), 
+                             mileage=workorder_ent.mileage, 
+                             status=workorder_ent.status, 
+                             date_created=workorder_ent.date_created,
+                             customer_request=workorder_ent.customer_request,
+                             mechanic=workorder_ent.mechanic,
+                             task_list=workorder_ent.task_list,
+                             work_performed=workorder_ent.work_performed,
+                             notes=workorder_ent.notes,
+                             date_closed=workorder_ent.date_closed,
+                             vehicle_id=vehicle_key)
+        else:
+            return None
+
     def getWorkorder(self, workorder_id):
         """ Return the workorder record whose id is given by the workorder_id
             parameter.
         """
-        return Workorder(id=workorder_id)
+        try:
+            entity = WorkorderEnt.get(db.Key(workorder_id))
+        except Exception:
+            entity = None
+        return self.getWorkorderFromWorkorderEnt(entity)
     
     def getWorkorderList(self, vehicle_id):
         """ Return the list of workorders belonging to the vehicle identified
             by vehicle_id.  Return an empty list if no workorders are found.
         """
-        return []
+        result = []
+        try:
+            vehicle = VehicleEnt.get(db.Key(vehicle_id))
+        except Exception:
+            return result
+        
+        query = WorkorderEnt.gql("WHERE vehicle_id = :key", key=vehicle)
+        workorders = query.fetch(10) # get at most 10 workorder for each customer
+        for workorder_ent in workorders:
+            result.append(self.getWorkorderFromWorkorderEnt(workorder_ent))
+        return result
     
     def getOpenWorkorders(self):
         """ Query the database for all work orders where the work order status
@@ -383,21 +476,27 @@ class TestMaintAppModel(object):
 
 
         print "\n** testing vehicleList retrieve..."
-        """
         nonexist_list = appModel.getVehicleList('-1')
-        print "list of vehicle owned by non-exist customer", nonexist_list
-        """
+        print "list of vehicle owned by non-exist customer:", nonexist_list
+        
         c1_list = appModel.getVehicleList(c1_key)
-        print "list of vehicle owned by c1: " 
+        print "list of vehicle owned by c1:", c1_list 
         for i in c1_list:
             print i
         print 
         c2_list = appModel.getVehicleList(c2_key)
-        print "list of vehicle owned by c2: "
+        print "list of vehicle owned by c2:", c2_list
         for i in c2_list:
             print i
         print
         
+        print "\n** testing customer search..."
+        searchCriteria = Customer(last_name='Wong')
+        customer_list = appModel.searchForMatchingCustomers(searchCriteria)
+        print "customer_list:", customer_list
+        for i in customer_list:
+            print i
+        print
         
 def main( ):
     #run_wsgi_app(application)
