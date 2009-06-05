@@ -267,7 +267,7 @@ class MaintAppModel(object):
             entity.date_closed = workorder.date_closed
             entity.vehicle = vehicle_ent
         else:    
-            entity = WorkorderEnt(mileage=workorder.mileage,
+            entity = WorkorderEnt(mileage=int(workorder.mileage),
                                   status=workorder.status,
                                   date_created=workorder.date_created,
                                   customer_request=workorder.customer_request,
