@@ -559,7 +559,7 @@ class MaintAppController(object):
         
         customer = Customer()
         customer.loadFromDictionary(self.__userValues)
-        self.__view.configureCustomerContent(Customer())
+        self.__view.configureCustomerContent(customer)
 
         self.__view.configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Vehicle Tab Change")
