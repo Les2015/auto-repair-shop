@@ -483,7 +483,7 @@ class MaintAppModel(object):
         
         print "query_string: " + query_string
         query = CustomerEnt.gql(query_string)
-        customers = query.fetch(10) 
+        customers = query.fetch(20) 
         for customer_ent in customers:
             result.append(self.getCustomerFromCustomerEnt(customer_ent))
         return result
@@ -666,11 +666,11 @@ class TestMaintAppModel(object):
         
         print "\n** testing customer retrieve..."
         print "c1_key = " + c1_key
-        c1_retrived = appModel.getCustomer(c1_key)
-        print "c1_retrieved: ", c1_retrived
+        c1_retrieved = appModel.getCustomer(c1_key)
+        print "c1_retrieved: ", c1_retrieved
         print "c2_key = " + c2_key
-        c2_retrived = appModel.getCustomer(c2_key)
-        print "c2_retrieved: ", c2_retrived
+        c2_retrieved = appModel.getCustomer(c2_key)
+        print "c2_retrieved: ", c2_retrieved
 
         print "\n** testing vehicle save..."
         v1 = Vehicle(id='-1',
@@ -714,14 +714,14 @@ class TestMaintAppModel(object):
     
         print "\n** testing vehicle retrieve..."
         print "v1_key = " + v1_key
-        v1_retrived = appModel.getVehicle(v1_key)
-        print "v1_retrieved: ", v1_retrived    
+        v1_retrieved = appModel.getVehicle(v1_key)
+        print "v1_retrieved: ", v1_retrieved    
         print "v2_key = " + v2_key
-        v2_retrived = appModel.getVehicle(v2_key)
-        print "v2_retrieved: ", v2_retrived
+        v2_retrieved = appModel.getVehicle(v2_key)
+        print "v2_retrieved: ", v2_retrieved
         print "v3_key = " + v3_key
-        v3_retrived = appModel.getVehicle(v3_key)
-        print "v3_retrieved: ", v3_retrived
+        v3_retrieved = appModel.getVehicle(v3_key)
+        print "v3_retrieved: ", v3_retrieved
 
 
         print "\n** testing vehicleList retrieve..."
