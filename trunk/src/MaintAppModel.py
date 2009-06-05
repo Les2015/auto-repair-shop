@@ -189,11 +189,11 @@ class MaintAppModel(object):
              if isMissing(anAttr):
                  if a in MaintAppModel.requiredCust:
                      self.missing.append(a)
-                     self.errTxt = 'missing ' + a + '\n'
+                     self.errTxt += 'missing ' + a + '\n'
                  else: pass
              elif check_attr_meth(anAttr)  == False: 
                   self.invFld.append(a)
-                  self.errTxt = 'invalid ' + a + '\n'    
+                  self.errTxt += 'invalid ' + a + '\n'    
         # if there are no required missing fields  or invalid fields, everything is ok
         return (len(self.missing) + len(self.invFld)) == 0
     
