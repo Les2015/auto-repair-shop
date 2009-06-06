@@ -9,7 +9,9 @@ FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
 INPUT_WORKORDER = 4
 
+from datetime import datetime
 from MaintAppObjects import nz
+from MaintAppObjects import Workorder
 
 class MaintAppView(object):
     """ Class to implement the View part of the MVC implementation of the
@@ -61,6 +63,7 @@ class MaintAppView(object):
     def configureHiddenFields(self, customer_id, vehicle_id, workorder_id):
         self.__sidePanel._configure_hidden_fields(customer_id, vehicle_id, workorder_id)
         self.__vehiclePanel._configureActiveVehicle(vehicle_id)
+        self.__workorderPanel._configureActiveWorkorder(workorder_id)
         
     def configureErrorMessages(self, errorObj):
         """ Errors is a list of (field name, error type) tuples to be used to format
@@ -91,7 +94,7 @@ class MaintAppView(object):
         self.__workorderPanel._configureHeader(customer, vehicle)
     
     def configureWorkorderContent(self, workorder_list):
-        pass
+        self.__workorderPanel._configureWorkorderContent(workorder_list)
     
     def showSaveDialog(self, request_button, request_tag):
         """ This method is called to set the UI up to display a save dialog
@@ -363,7 +366,7 @@ class VehicleSubview(object):
         self.__vehicle = self.__vehicles[0]
         return None
     
-    def _retrieveActiveVehicle(self):
+    def __retrieveActiveVehicle(self):
         for eachVehicle in self.__vehicles:
             if eachVehicle.getId() == self.__activeVehicleId:
                 self.__vehicle = eachVehicle
@@ -371,7 +374,7 @@ class VehicleSubview(object):
         return None
     
     def _serve_content(self, reqhandler):
-        self._retrieveActiveVehicle()
+        self.__retrieveActiveVehicle()
         reqhandler.response.out.write('<div style="width:100%">')
         tabNum = -1
         for eachVehicle in self.__vehicles:
@@ -467,14 +470,35 @@ class VehicleSubview(object):
     
 class WorkorderSubview(object):
     def __init__(self):
+        self.__customer = None
+        self.__vehicle = None
+        self.__activeWorkorderId = None
+        self.__workorders = None
+        self.__workorder = None
         return None
     
     def _configureHeader(self, customer, vehicle):
         self.__customer = customer
         self.__vehicle = vehicle
         return None
+    
+    def _configureActiveWorkorder(self, workorder_id):
+        self.__activeWorkorderId = workorder_id
+        return None
 
+    def _configureWorkorderContent(self, workorder_list):
+        self.__workorders = workorder_list
+        return None
+    
+    def __retrieveActiveWorkorder(self):
+        for eachWorkorder in self.__workorders:
+            if eachWorkorder.getId() == self.__activeWorkorderId:
+                self.__workorder = eachWorkorder
+                break
+        return None
+    
     def _serve_content(self, reqhandler):
+        self.__retrieveActiveWorkorder()
         self.__output_workorder_header(reqhandler)
         self.__output_workorder_form(reqhandler)
         return None
@@ -510,13 +534,31 @@ class WorkorderSubview(object):
             </table>""")
         return None
     
+    def __format_tabs(self, reqhandler):
+        woIndex = -1
+        for workorder in self.__workorders:
+            woIndex += 1
+            selClass = "selected_tab_button" if workorder.id==self.__activeWorkorderId \
+                                             else "tab_button"
+            if workorder.id == "-1":
+                label = "New Work Order"
+            else:
+                label = workorder.date_created.strftime("%b %d, %Y")
+            reqhandler.response.out.write( \
+                '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
+                    (selClass, woIndex, label))
+    
     def __output_workorder_form(self, reqhandler):
-        reqhandler.response.out.write("""<div style="width:100%">
-            <input style="margin-top:25px;" class="selected_tab_button" type="submit" name="submit_wotab_0" value="New Workorder" />
-            <input class="tab_button" type="submit" name="submit_wotab_1" value="12-Dec-2008" />
-            <input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
-            <hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
-        </div>""")
+        reqhandler.response.out.write('<div style="width:100%">')
+        self.__format_tabs(reqhandler)
+        #<input style="margin-top:25px;" class="selected_tab_button" type="submit" name="submit_wotab_0" value="New Workorder" />
+        #<input class="tab_button" type="submit" name="submit_wotab_1" value="12-Dec-2008" />
+        #<input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
+        reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
+        reqhandler.response.out.write('</div>')
+        reqhandler.response.out.write( \
+            '<input type="hidden" name="date_created" value="%s" />' % \
+            self.__workorder.getDateCreated())
         reqhandler.response.out.write("""
             <table style="margin-top:30px;">
                 <tr>
@@ -524,57 +566,86 @@ class WorkorderSubview(object):
                         Customer's Service Request:
                     </td>
                     <td style="text-align:right;">
-                        <label for="mileage">Odometer Reading:</label>
-                        <input type="text" name="mileage" value="" />
+                        <label for="mileage">Odometer Reading:</label>""")
+        reqhandler.response.out.write( \
+            '<input type="text" name="mileage" value="%s" />' % \
+            nz(self.__workorder.mileage))
+        reqhandler.response.out.write("""
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <textarea name="customer_request" rows="3" cols="85">
+                        <textarea name="customer_request" rows="3" cols="85">""")
+        reqhandler.response.out.write(nz(self.__workorder.customer_request))
+        reqhandler.response.out.write("""
                         </textarea>
                     </td>
                 </tr>
                 <tr><td colspan="2"><hr /></td></tr>
                 <tr>
-                    <td>
-                        Work Order Date: June 8, 2009
+                    <td>""")
+        reqhandler.response.out.write( \
+            "Work Order Date: %s" % self.__workorder.getDateCreated())
+        reqhandler.response.out.write("""
                     </td>
                     <td style="text-align:right;">
                         <label for "mechanic">Mechanic:</label>
                         <select name="mechanic">
-                        <option value="mechanic_0">Select...</option>
-                        <option value="mechanic_1">Jerome Calvo</option>
-                        <option value="mechanic_2">Les Faby</option>
-                        <option value="mechanic_3">Brad Gaiser</option>
-                        <option value="mechanic_4">Wing Wong</option>
+                        <option value="mechanic_0">Select...</option>""")
+        reqhandler.response.out.write( \
+            '<option value="mechanic_1"%s>Jerome Calvo</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="mechanic_1" else ""))
+        reqhandler.response.out.write( \
+            '<option value="mechanic_2"%s>Les Faby</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="mechanic_2" else ""))
+        reqhandler.response.out.write( \
+            '<option value="mechanic_3"%s>Brad Gaiser</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="mechanic_3" else ""))
+        reqhandler.response.out.write( \
+            '<option value="mechanic_4"%s>Wing Wong</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="mechanic_4" else ""))
+        reqhandler.response.out.write("""
                         </select>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label for "mechanics_tasks">Mechanics Tasks:</label><br />
-                        <textarea name="mechanics_tasks" rows="7" cols="40">
+                        <textarea name="task_list" rows="7" cols="40">""")
+        reqhandler.response.out.write(nz(self.__workorder.task_list))
+        reqhandler.response.out.write("""
                         </textarea>
                     </td>
                     <td>
                         <label for "work_done">Work Performed:</label><br />
-                        <textarea name="work_done" rows="7" cols="40">
+                        <textarea name="work_performed" rows="7" cols="40">""")
+        reqhandler.response.out.write(nz(self.__workorder.work_performed))
+        reqhandler.response.out.write("""
                         </textarea>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
                         <label for "next_service">Notes and next service recommendations:</label><br />
-                        <textarea name="next_service" rows="4" cols="85">
+                        <textarea name="notes" rows="4" cols="85">""")
+        reqhandler.response.out.write(nz(self.__workorder.notes))
+        reqhandler.response.out.write("""
                         </textarea>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2" style="text-align:center;">
-                        <label for "status">Work Order Status:</label>
-                        <input style="margin-left:15px;" type="radio" name="status" value="Open" checked="checked" /> Open
-                        <input style="margin-left:25px;" type="radio" name="status" value="Completed" /> Completed
-                        <input style="margin-left:15px;" type="radio" name="status" value="Closed" /> Closed
+                        <label for "status">Work Order Status:</label>""")
+        reqhandler.response.out.write( \
+            '<input style="margin-left:15px;" type="radio" name="status" value="Open" %s /> Open' % \
+                ('checked="checked"' if self.__workorder.status == Workorder.OPEN else ''))
+        reqhandler.response.out.write( \
+            '<input style="margin-left:25px;" type="radio" name="status" value="Completed" %s /> Completed' % \
+                ('checked="checked"' if self.__workorder.status == Workorder.COMPLETED else ''))
+        reqhandler.response.out.write( \
+            '<input style="margin-left:15px;" type="radio" name="status" value="Closed" %s /> Closed' % \
+                ('checked="checked"' if self.__workorder.status == Workorder.CLOSED else ''))
+        reqhandler.response.out.write("""
                     </td>
                 </tr>
                 <tr>
