@@ -679,7 +679,7 @@ class MaintAppController(object):
               not and whether it is cached by the view or by the controller.
         """
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
-        self.__activeWorkorderId = workorders[0].getId()
+        self.__activeWorkorderId = workorders[int(tag)].getId()
         self.__configureWorkorderCustomerVehicleInfo()
         self.__view.configureWorkorderContent(workorders)
         self.__configureSidePanel(3, "Workorder Tab Change")
