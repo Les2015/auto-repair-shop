@@ -642,7 +642,7 @@ class MaintAppController(object):
             if self.__activeWorkorderId == "-1": # New workorder to be saved.
                 workorder.setDateCreated()
                 workorder.setVehicleId(self.__activeVehicleId)
-            elif workorder.getState() == Workorder.CLOSED and \
+            elif workorder.status == Workorder.CLOSED and \
                     workorder.getDateClosed() is not None:
                 workorder.setDateClosed()
             self.__activeWorkorderId = self.__model.saveWorkorder(workorder)
