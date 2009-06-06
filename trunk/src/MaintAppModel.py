@@ -502,7 +502,7 @@ class MaintAppModel(object):
             except Exception:
                 entity = None
 
-        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle))    
+        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
         if entity:
             entity.mileage = workorder.mileage
             entity.status = workorder.status
