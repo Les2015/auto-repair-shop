@@ -12,8 +12,8 @@ Created on May 27, 2009
     will be -1, for existing ones being edited, I assume the hidden form field
     will hold the database id of the record being edited. -- bdg
 """
-
-import datetime, time
+from datetime import *
+from time import *
 
 def nz(value):
 	return ("" if value is None else value)
@@ -182,8 +182,12 @@ class Vehicle(object):
     
     
 class Workorder(object):
+    OPEN = 1; COMPLETED = 2; CLOSED = 3
+    _status_map = { 'open':OPEN, 'completed':COMPLETED, 'closed':CLOSED }
+    DATE_FORMAT = "%b %d, %Y  %H:%M:%S"
+    
     def __init__(self, id="-1", vehicle_id=None, mileage=None,
-                 status=1, date_created=None, customer_request=None,
+                 status=OPEN, date_created=None, customer_request=None,
                  mechanic=None, task_list=None, work_performed=None,
                  notes=None, date_closed=None):
         self.id = id
@@ -198,10 +202,6 @@ class Workorder(object):
         self.date_created = date_created
         self.date_closed = date_closed
        	return None
-    
-    OPEN = 1
-    COMPLETED = 2
-    CLOSED = 3
     
     """ Getters & setters go next. """
     
@@ -219,15 +219,15 @@ class Workorder(object):
     
     def setDateCreated(self):
         self.date_created = \
-            datetime.datetime.fromtimestamp(time.time())
+            datetime.fromtimestamp(time())
         
     def getDateCreated(self):
         """ Do we want to format this as a string or return it as a date/time type? """
-        return self.date_created
+        return self.date_created.strftime(Workorder.DATE_FORMAT)
     
     def setDateClosed(self):
         self.date_closed = \
-            datetime.datetime.fromtimestamp(time.time())
+            datetime.fromtimestamp(time())
         
     def getDateClosed(self):
         """ Do we want to format this as a string or return it as a date/time type? """
@@ -241,12 +241,18 @@ class Workorder(object):
         # Load fields similarly to method sketched out in Customer class
         vehicle_id = dictionary['vehicle_id']
         if vehicle_id == '-1':
-            self.setId(None)
+            self.setVehicleId(None)
         else:
-            self.setId(vehicle_id)
+            self.setVehicleId(vehicle_id)
         self.customer_request = dictionary['customer_request']
         self.mileage = dictionary['mileage']
+        self.date_created = \
+            datetime.strptime(dictionary['date_created'], Workorder.DATE_FORMAT)
         self.mechanic = dictionary['mechanic']
+        self.status = self._status_map[dictionary['status'].lower()]
+        self.task_list = dictionary['task_list'] 
+        self.work_performed = dictionary['work_performed']
+        self.notes = dictionary['notes'] 
         
         return None
     
@@ -259,7 +265,7 @@ class Workorder(object):
         if self.status == Workorder.COMPLETED or self.status == Workorder.CLOSED:
             # Check the final required fields for the work order and
             # generate list.
-            retVal=[('task_list', 'required')]
+            retVal=[]
         else:
             # In the open state, the database validation is sufficient so this
             # routine does not need to generate additional errors.
