@@ -239,6 +239,12 @@ class Workorder(object):
             javascript.
         """
         # Load fields similarly to method sketched out in Customer class
+        workorder_id = dictionary['workorder_id']
+        if workorder_id == '-1':
+            self.setId(None)
+        else:
+            self.setId(workorder_id)
+            
         vehicle_id = dictionary['vehicle_id']
         if vehicle_id == '-1':
             self.setVehicleId(None)
