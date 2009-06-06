@@ -9,7 +9,7 @@ Wing just updated the Customer, Vehicle, Workorder wrapper classes in the code r
 
 The conflict here occurs for the following reason:
 
-  * On the database side, we want to store empty fields with the None value rather than with emtpy strings.
+  * On the database side, we want to store empty fields with the None value rather than with empty strings.
   * On the UI level, html doesn't understand None, so will need empty strings.
 
 Because of this conflict, we need to agree on a design for the internal representation of empty fields in the wrapper objects and on a technique for providing the correct representation for each side.
