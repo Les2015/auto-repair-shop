@@ -504,7 +504,7 @@ class MaintAppModel(object):
 
         vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
         if entity:
-            entity.mileage = workorder.mileage
+            entity.mileage = int(workorder.mileage)
             entity.status = workorder.status
             entity.date_created = workorder.date_created
             entity.customer_request = workorder.customer_request
