@@ -68,18 +68,6 @@ class CustomerInput(webapp.RequestHandler):
         return button_info
     
             
-class SaveDialogHandler(webapp.RequestHandler):
-    def put(self):
-        """ Callback for 'put' events from form buttons on Save Data dialog.
-        """
-        response = self.request.get('submit')
-        whichButton = self.request.get('request_button')
-        tag = self.request.get('request_tag')
-        MaintAppController.theController().handle_dialog_event(self, response, 
-                                                               whichButton, tag)
-        return None
-    
-    
 class MaintAppController(object):
     __theController = None
     
@@ -89,8 +77,7 @@ class MaintAppController(object):
         self.__app = webapp.WSGIApplication(
                                             [('/',         DefaultConfiguration),
                                              ('/Customer', CustomerInput),
-                                             ('/Search',   SearchLinkHandler),
-                                             ('/Dialog',   SaveDialogHandler)],
+                                             ('/Search',   SearchLinkHandler)],
                                              debug=True)
 
         self.__dispatch_table = {"newcust"   : MaintAppController.addNewCustomer,
@@ -872,6 +859,10 @@ class MaintAppController(object):
         self.__view.configureWorkorderContent(workorders)
         return None
 
+    # The following method is not active in any way.  It was put together as
+    # a way of 'thinking' about how we might handle a situation that would
+    # require a full-blown dialog.  The need to keep track of this is still
+    # important, so I'm leaving this in for now.
     def handle_dialog_event(self, reqhandler, response, whichButton, tag):
         """ User requested context change that required a confirmation dialog for
             saving or not before leaving the current context.  Based on the response,

@@ -1,7 +1,13 @@
 '''
 Created on May 27, 2009
 
-@author: 
+@author: Brad Gaiser, Wing Wong
+
+This module implements a set of light weight objects for carrying information
+back and forth between the View and the Model.  As such, it has to have some
+knowledge of the data requirements on both sides in order to minimize the
+need for special code on each side for reformatting data to meet either the
+requirements of the UI or of the Data Store.
 '''
 
 """ Wing, notice that I changed the Id value from None to -1 to indicate that
@@ -19,9 +25,10 @@ def nz(value):
 	return ("" if value is None else value)
 
 class Customer(object):
-    def __init__(self, id="-1", first_name="", last_name="",
-                 address1="", address2="", city="", state="", zip="",
-                 phone1="", phone2="", email="", comments=""):
+    """ Light weight class for passing the customer data around. """
+    def __init__(self, id="-1", first_name=None, last_name=None,
+                 address1=None, address2=None, city=None, state=None, zip=None,
+                 phone1=None, phone2=None, email=None, comments=None):
         self.id = id
         self.first_name = first_name
         self.last_name = last_name
@@ -113,6 +120,7 @@ class Customer(object):
     
     
 class Vehicle(object):
+    """ Light weight class for passing the vehicle data around. """
     def __init__(self, id="-1", customer_id=None, make=None, model=None,
                  year=None, license=None, vin=None, notes=None):
         self.id = id
@@ -182,6 +190,8 @@ class Vehicle(object):
     
     
 class Workorder(object):
+    """ Light weight class for passing the workorder data around. """
+    
     OPEN = 1; COMPLETED = 2; CLOSED = 3
     _status_map = { 'open':OPEN, 'completed':COMPLETED, 'closed':CLOSED }
     DATE_FORMAT = "%b %d, %Y  %H:%M:%S"

@@ -1,7 +1,19 @@
 '''
 Created on May 25, 2009
 
-@author: bradg
+@author: Brad Gaiser
+
+This module provides a prototype implementation of the View in the MVC
+implementation of the Maintenance Records System for Dermico Auto.  The
+UI code is a bit more complex, so has taken more time to get into place
+than anticipated.  As a consequence, this quick & dirty code was written
+to provide a framework for integration testing and making sure that the
+control flow managed by the Controller classes works.
+
+This also is providing a 'spec' for the full implementation of the UI
+using Django templates to be provided by Jerome Calvo.  This code has
+been written with the intent that all if not most of the code will be
+replaced.  As such, minimal effort has been put into documention.
 '''
 
 NEW_CUSTOMER = 1
