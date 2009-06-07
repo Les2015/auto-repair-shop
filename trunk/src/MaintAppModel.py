@@ -284,6 +284,48 @@ class MaintAppModel(object):
         else:
             return None
         
+    def searchForMatchingCustomers(self, searchCriteria):
+        """ The model forms a query based on AND logic for the various
+            fields that have been entered into the searchCriteria object.
+            The searchCriteria object is an instance of the Customer class.
+            For now we will assume exact matches:
+                e.g., 'SELECT .... WHERE (customer_table.first_name=%d)' %
+                                                searchCriteria.getFirstName()
+            In the future we may consider supporting wild card matching.
+            A list of Customer objects corresponding to the customer records
+            The objects in the list are ordered by last_name, then first_name
+        """
+        result = []
+        limit = 50 # return at most 50 customers matching the search criteria
+        query_string = ""
+        if searchCriteria.first_name: 
+            query_string += " AND first_name='" + searchCriteria.first_name + "'"
+        if searchCriteria.last_name: 
+            query_string += " AND last_name='" + searchCriteria.last_name + "'"
+        if searchCriteria.address1: 
+            query_string += " AND address1='" + searchCriteria.address1 + "'"
+        if searchCriteria.city: 
+            query_string += " AND city='" + searchCriteria.city + "'"
+        if searchCriteria.state: 
+            query_string += " AND state='" + searchCriteria.state + "'"
+        if searchCriteria.zip: 
+            query_string += " AND zip='" + searchCriteria.zip + "'"
+        if searchCriteria.phone1: 
+            query_string += " AND phone1='" + searchCriteria.phone1 + "'"
+        if searchCriteria.email: 
+            query_string += " AND email='" + searchCriteria.email + "'"
+            
+        if query_string != "":
+            query_string = "WHERE " + query_string[5:] # replace the beginning AND by WHERE
+        query_string += " ORDER BY last_name, first_name"
+        
+        #print "query_string: " + query_string
+        query = CustomerEnt.gql(query_string)
+        customers = query.fetch(limit) 
+        for customer_ent in customers:
+            result.append(self.getCustomerFromCustomerEnt(customer_ent))
+        return result
+         
     #---------------------------- vehicle -----------------------------------------------
     def chk_make(self, make):
         if isMissing(zip):
@@ -445,48 +487,6 @@ class MaintAppModel(object):
             result.append(self.getVehicleFromVehicleEnt(vehicle_ent))
         return result
     
-    def searchForMatchingCustomers(self, searchCriteria):
-        """ The model forms a query based on AND logic for the various
-            fields that have been entered into the searchCriteria object.
-            The searchCriteria object is an instance of the Customer class.
-            For now we will assume exact matches:
-                e.g., 'SELECT .... WHERE (customer_table.first_name=%d)' %
-                                                searchCriteria.getFirstName()
-            In the future we may consider supporting wild card matching.
-            A list of Customer objects corresponding to the customer records
-            The objects in the list are ordered by last_name, then first_name
-        """
-        result = []
-        limit = 50 # return at most 50 customers matching the search criteria
-        query_string = ""
-        if searchCriteria.first_name: 
-            query_string += " AND first_name='" + searchCriteria.first_name + "'"
-        if searchCriteria.last_name: 
-            query_string += " AND last_name='" + searchCriteria.last_name + "'"
-        if searchCriteria.address1: 
-            query_string += " AND address1='" + searchCriteria.address1 + "'"
-        if searchCriteria.city: 
-            query_string += " AND city='" + searchCriteria.city + "'"
-        if searchCriteria.state: 
-            query_string += " AND state='" + searchCriteria.state + "'"
-        if searchCriteria.zip: 
-            query_string += " AND zip='" + searchCriteria.zip + "'"
-        if searchCriteria.phone1: 
-            query_string += " AND phone1='" + searchCriteria.phone1 + "'"
-        if searchCriteria.email: 
-            query_string += " AND email='" + searchCriteria.email + "'"
-            
-        if query_string != "":
-            query_string = "WHERE " + query_string[5:] # replace the beginning AND by WHERE
-        query_string += " ORDER BY last_name, first_name"
-        
-        #print "query_string: " + query_string
-        query = CustomerEnt.gql(query_string)
-        customers = query.fetch(limit) 
-        for customer_ent in customers:
-            result.append(self.getCustomerFromCustomerEnt(customer_ent))
-        return result
-         
     #---------------------------- work order -----------------------------------------------
     def saveWorkorder(self, workorder):
         """ Write contents of workorder object to data store.  If id in workorder
