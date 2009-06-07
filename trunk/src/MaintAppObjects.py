@@ -223,7 +223,10 @@ class Workorder(object):
         
     def getDateCreated(self):
         """ Do we want to format this as a string or return it as a date/time type? """
-        return self.date_created.strftime(Workorder.DATE_FORMAT)
+        if self.date_created == None:
+            return None
+        else:
+            return self.date_created.strftime(Workorder.DATE_FORMAT)
     
     def setDateClosed(self):
         self.date_closed = \
@@ -252,8 +255,12 @@ class Workorder(object):
             self.setVehicleId(vehicle_id)
         self.customer_request = dictionary['customer_request']
         self.mileage = dictionary['mileage']
-        self.date_created = \
-            datetime.strptime(dictionary['date_created'], Workorder.DATE_FORMAT)
+        strDate = dictionary['date_created']
+        if strDate == "":
+            self.date_created = None
+        else:
+            self.date_created = \
+                datetime.strptime(strDate, Workorder.DATE_FORMAT)
         self.mechanic = dictionary['mechanic']
         self.status = self._status_map[dictionary['status'].lower()]
         self.task_list = dictionary['task_list'] 

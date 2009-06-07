@@ -25,8 +25,7 @@ class DefaultConfiguration(webapp.RequestHandler):
         MaintAppController.theController().handle_button_events(self, "newcust", "STARTUP")
         return None
 
-    
-    
+
 class SearchLinkHandler(webapp.RequestHandler):
     def get(self):
         """ Callback for 'get' events from user clicking on hyperlinks generated
@@ -154,36 +153,6 @@ class MaintAppController(object):
             self.__view.serve_content(reqhandler)
         return None
     
-    def handle_dialog_event(self, reqhandler, response, whichButton, tag):
-        """ User requested context change that required a confirmation dialog for
-            saving or not before leaving the current context.  Based on the response,
-            perform the save operation, ignore it, or cancel the operation and
-            stay in current context.  If save is successful, change to the context
-            specified by the requested_change string.
-        """
-        if response == "Yes":
-            # Do the save.  The only tricky issue here is what to do if the
-            # save operation cannot be performed because of bad data...
-            self.__saveOk = True
-            if self.__customerFieldsChanged():
-                # QQQQ Do customer save operation
-                pass
-            if self.__saveOk and self.__vehicleFieldsChanged():
-                # QQQQ Do vehicle save operation
-                pass
-            if self.__saveOk and self.__workorderFieldsChanged():
-                # QQQQ Do workorder save operation
-                pass
-            if self.__saveOk:
-                self.handle_button_events(reqhandler, whichButton, tag)
-            else:
-                self.__regenerateCurrentView()
-        elif response == "No":
-            # Continue on to originally required context.  Edits will be lost.
-            self.handle_button_events(reqhandler, whichButton, tag)
-        else: # response == "Cancel"
-            self.__regenerateCurrentView()
-        
     # Misc. helper functions.
     
     def __getValues(self, reqhandler):
@@ -354,11 +323,8 @@ class MaintAppController(object):
         """
         openWorkorders = self.__model.getOpenWorkorders()
         completedWorkorders = self.__model.getCompletedWorkorders()
-        
-        self.__view.configureSidePanelContent(activeElement,
-                                              openWorkorders,
-                                              completedWorkorders,
-                                              debug_message)
+        self.__view.configureSidePanelContent( \
+               activeElement, openWorkorders, completedWorkorders, debug_message)
         return None
     
     def __configureVehicleInfo(self):
@@ -406,7 +372,6 @@ class MaintAppController(object):
         vehicle = self.__model.getVehicle(self.__activeVehicleId)
         self.__view.configureWorkorderHeader(customer, vehicle)
         return None
-    
     
     ##############################################################################
     # Button event handlers follow.
@@ -907,6 +872,36 @@ class MaintAppController(object):
         self.__view.configureWorkorderContent(workorders)
         return None
 
+    def handle_dialog_event(self, reqhandler, response, whichButton, tag):
+        """ User requested context change that required a confirmation dialog for
+            saving or not before leaving the current context.  Based on the response,
+            perform the save operation, ignore it, or cancel the operation and
+            stay in current context.  If save is successful, change to the context
+            specified by the requested_change string.
+        """
+        if response == "Yes":
+            # Do the save.  The only tricky issue here is what to do if the
+            # save operation cannot be performed because of bad data...
+            self.__saveOk = True
+            if self.__customerFieldsChanged():
+                # QQQQ Do customer save operation
+                pass
+            if self.__saveOk and self.__vehicleFieldsChanged():
+                # QQQQ Do vehicle save operation
+                pass
+            if self.__saveOk and self.__workorderFieldsChanged():
+                # QQQQ Do workorder save operation
+                pass
+            if self.__saveOk:
+                self.handle_button_events(reqhandler, whichButton, tag)
+            else:
+                self.__regenerateCurrentView()
+        elif response == "No":
+            # Continue on to originally required context.  Edits will be lost.
+            self.handle_button_events(reqhandler, whichButton, tag)
+        else: # response == "Cancel"
+            self.__regenerateCurrentView()
+        
     def run(self):
         run_wsgi_app(self.__app)
 

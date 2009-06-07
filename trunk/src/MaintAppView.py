@@ -556,9 +556,10 @@ class WorkorderSubview(object):
         #<input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
         reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
         reqhandler.response.out.write('</div>')
+        dateText = nz(self.__workorder.getDateCreated())
         reqhandler.response.out.write( \
             '<input type="hidden" name="date_created" value="%s" />' % \
-            self.__workorder.getDateCreated())
+            dateText)
         reqhandler.response.out.write("""
             <table style="margin-top:30px;">
                 <tr>
@@ -585,7 +586,7 @@ class WorkorderSubview(object):
                 <tr>
                     <td>""")
         reqhandler.response.out.write( \
-            "Work Order Date: %s" % self.__workorder.getDateCreated())
+            "Work Order Date: %s" % dateText)
         reqhandler.response.out.write("""
                     </td>
                     <td style="text-align:right;">
