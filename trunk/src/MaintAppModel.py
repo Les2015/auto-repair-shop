@@ -15,12 +15,9 @@ from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import datastore_file_stub 
 from MaintAppObjects import Customer, Vehicle, Workorder 
 from DatastoreModels import CustomerEnt, VehicleEnt, WorkorderEnt
-#from VehicleEnt import VehicleEnt
-#from WorkorderEnt import WorkorderEnt
 
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
-
 
 #================================================================
 class ValidationErrors(Exception):
@@ -436,13 +433,14 @@ class MaintAppModel(object):
             if no vehicles are found.
         """
         result = []
+        limit = 10 # get at most 10 vehicle for each customer
         try:
             customer = CustomerEnt.get(db.Key(customer_id))
         except Exception:
             return result
         
         query = VehicleEnt.gql("WHERE customer = :key", key=customer)
-        vehicles = query.fetch(10) # get at most 10 vehicle for each customer
+        vehicles = query.fetch(limit) 
         for vehicle_ent in vehicles:
             result.append(self.getVehicleFromVehicleEnt(vehicle_ent))
         return result
@@ -459,6 +457,7 @@ class MaintAppModel(object):
             The objects in the list are ordered by last_name, then first_name
         """
         result = []
+        limit = 50 # return at most 50 customers matching the search criteria
         query_string = ""
         if searchCriteria.first_name: 
             query_string += " AND first_name='" + searchCriteria.first_name + "'"
@@ -481,9 +480,9 @@ class MaintAppModel(object):
             query_string = "WHERE " + query_string[5:] # replace the beginning AND by WHERE
         query_string += " ORDER BY last_name, first_name"
         
-        print "query_string: " + query_string
+        #print "query_string: " + query_string
         query = CustomerEnt.gql(query_string)
-        customers = query.fetch(20) 
+        customers = query.fetch(limit) 
         for customer_ent in customers:
             result.append(self.getCustomerFromCustomerEnt(customer_ent))
         return result
@@ -565,13 +564,14 @@ class MaintAppModel(object):
             by vehicle_id.  Return an empty list if no workorders are found.
         """
         result = []
+        limit = 10 # get at most 10 workorder for each vehicle
         try:
             vehicle = VehicleEnt.get(db.Key(vehicle_id))
         except Exception:
             return result
         
         query = WorkorderEnt.gql("WHERE vehicle = :key", key=vehicle)
-        workorders = query.fetch(10) # get at most 10 workorder for each customer
+        workorders = query.fetch(limit) 
         for workorder_ent in workorders:
             result.append(self.getWorkorderFromWorkorderEnt(workorder_ent))
         return result
@@ -615,7 +615,6 @@ class MaintAppModel(object):
     
 
 class TestMaintAppModel(object):
-    #def setUp(self): 
     def __init__(self): 
         # Start with a fresh api proxy. 
         apiproxy_stub_map.apiproxy = apiproxy_stub_map.APIProxyStubMap() 
@@ -761,7 +760,6 @@ class TestMaintAppModel(object):
         
 
 def main( ):
-    #run_wsgi_app(application)
     test = TestMaintAppModel()
     test.testSaveAndGet()
 

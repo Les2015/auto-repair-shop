@@ -1,6 +1,7 @@
 from google.appengine.ext import db
 
 class CustomerEnt(db.Model):
+    """ Datastore model for Customer """
     first_name = db.StringProperty(verbose_name = "First Name", required=False)
     last_name = db.StringProperty(verbose_name = "Last Name", required=True)
     address1 = db.StringProperty(verbose_name = "Address 1", required=True)
@@ -14,6 +15,7 @@ class CustomerEnt(db.Model):
     comments = db.TextProperty(verbose_name = "Comments", required=False) 
 
 class VehicleEnt(db.Model):
+    """ Datastore model for Vehicle """
     make = db.StringProperty(verbose_name = "Make", required=True)
     model = db.StringProperty(verbose_name = "Model", required=True)
     year = db.IntegerProperty(verbose_name = "Year", required=True)
@@ -23,6 +25,7 @@ class VehicleEnt(db.Model):
     customer = db.ReferenceProperty(CustomerEnt)
 
 class WorkorderEnt(db.Model):
+    """ Datastore model for Workorder """
     vehicle = db.ReferenceProperty(VehicleEnt)
     mileage = db.IntegerProperty(verbose_name = "Initial Mileage", required=True)
     status = db.IntegerProperty(verbose_name = "Work Order Status", required=True, choices=set([1,2,3]))
