@@ -17,14 +17,50 @@ indexes:
   - name: last_name
   - name: first_name
 
-# Used once in query history.
+# Used 2 times in query history.
 - kind: CustomerEnt
   properties:
   - name: first_name
   - name: last_name
 
+# Used 3 times in query history.
+- kind: CustomerEnt
+  properties:
+  - name: last_name
+  - name: first_name
+
 # Used once in query history.
 - kind: CustomerEnt
   properties:
+  - name: last_name
+  - name: state
+  - name: zip
+  - name: first_name
+
+# Used once in query history.
+- kind: CustomerEnt
+  properties:
+  - name: last_name
+  - name: zip
+  - name: first_name
+
+# Used once in query history.
+- kind: CustomerEnt
+  properties:
+  - name: phone1
+  - name: last_name
+  - name: first_name
+
+# Used 2 times in query history.
+- kind: CustomerEnt
+  properties:
+  - name: state
+  - name: last_name
+  - name: first_name
+
+# Used 2 times in query history.
+- kind: CustomerEnt
+  properties:
+  - name: zip
   - name: last_name
   - name: first_name

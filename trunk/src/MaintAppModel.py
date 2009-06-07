@@ -14,9 +14,9 @@ from google.appengine.ext import db
 from google.appengine.api import apiproxy_stub_map 
 from google.appengine.api import datastore_file_stub 
 from MaintAppObjects import Customer, Vehicle, Workorder 
-from CustomerEnt import CustomerEnt
-from VehicleEnt import VehicleEnt
-from WorkorderEnt import WorkorderEnt
+from DatastoreModels import CustomerEnt, VehicleEnt, WorkorderEnt
+#from VehicleEnt import VehicleEnt
+#from WorkorderEnt import WorkorderEnt
 
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
