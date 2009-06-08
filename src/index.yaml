@@ -10,26 +10,33 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-# Used 3 times in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: city
   - name: last_name
   - name: first_name
 
+# Used 30 times in query history.
+- kind: CustomerEnt
+  properties:
+  - name: first_name
+  - name: last_name
+
 # Used 2 times in query history.
 - kind: CustomerEnt
   properties:
   - name: first_name
+  - name: phone1
   - name: last_name
 
-# Used 3 times in query history.
+# Used 6 times in query history.
 - kind: CustomerEnt
   properties:
   - name: last_name
   - name: first_name
 
-# Used once in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: last_name
@@ -37,28 +44,28 @@ indexes:
   - name: zip
   - name: first_name
 
-# Used once in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: last_name
   - name: zip
   - name: first_name
 
-# Used once in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: phone1
   - name: last_name
   - name: first_name
 
-# Used 2 times in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: state
   - name: last_name
   - name: first_name
 
-# Used 2 times in query history.
+# Unused in query history -- copied from input.
 - kind: CustomerEnt
   properties:
   - name: zip
