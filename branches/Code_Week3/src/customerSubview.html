@@ -1,0 +1,111 @@
+<!-- Customer Subview 
+	06/04/09 Inherit from mainview.html; add a sidePanelSubview and a customerSubview.
+	The navigation via the sidePanel doesn't seem correct. 	
+	~ Jerome Calvo
+-->
+
+{% extends "mainview.html" %}
+
+{% block title %} 
+	Dermico Auto Maintenance Records System
+{% endblock title %}
+
+{% block sidePanelSubview %}
+	<p>Customer Input:</p>
+	<p><input class="{{ css_class }}" type="submit" name="submit_newcust" value="Add New Customer" /></p>
+	<p><input class="{{ css_class }}" type="submit" name="submit_findcust" value="Find Customer" /></p>
+	<p>Open Work Orders:</p>
+	<p> {# comments #} </p>
+	<p>Work Completed:</p>
+	<input type="hidden" name="customer_id"  value="{{ customerId }}" />
+	<input type="hidden" name="vehicle_id"   value="{{ vehiculeId }}" />
+	<input type="hidden" name="workorder_id" value="{{ workorderID }}" />
+{% endblock sidePanelSubview %}
+
+{% block customerSubview %}
+	<h2>Customer Information</h2>
+	<form action="/Customer" method="post">
+		<table style="margin-top:15px; margin-left:auto; margin-right:auto;">
+			<tr>
+				<td>
+					<label for="first_name">First Name: </label>
+				</td>
+				<td>
+					<input type="text" name="first_name" value="{{ customer.first_name }}" />
+				</td>
+				<td>
+					<label for="last_name" style="padding-left:10px">Last Name: </label>
+				</td>
+				<td>
+					<input type="text" name="last_name" value="{{ customer.last_name }}" />
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label for="address1">Address1: </label>
+				</td>
+				<td>
+					<input type="text" name="address1" value="{{ customer.address1 }}" />
+				</td>
+				<td>
+					<label for="phone1" style="padding-left:10px">Primary Phone: </label>
+				</td>
+				<td>
+					<input type="text" name="phone1" value="{{ customer.phone1 }}" />
+				</td>
+			</tr>
+			<tr>	
+				<td>
+					<label for="address1">Address2: </label>
+				</td>
+				<td>
+					<input type="text" name="address2" value="{{ customer.address2 }}" />
+				</td>
+				<td>
+					<label for="phone2" style="padding-left:10px">Secondary Phone: </label>
+				</td>
+				<td>
+					<input type="text" name="phone2" value="{{ customer.phone2 }}" />
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label for="city">City: </label>
+				</td>
+				<td>
+					<input type="text" name="city" value="{{ customer.city }}" />
+				</td>
+				<td>
+					<label for="email" style="padding-left:10px">Email: </label>
+				</td>
+				<td>
+					<input type="text" name="email" value="{{ customer.email }}" />
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label for="state">State: </label>
+				</td>
+				<td>
+					<input type="text" name="state" value="{{ customer.state }}" />
+				</td>
+				<td>
+					<label for="zip" style="padding-left:10px">Zip: </label>
+				</td>
+				<td>
+					<input type="text" name="zip" value="{{ customer.zip }}" />
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4">
+					<br /><label for="comments">Comments:</label><br />
+					<textarea name="comments" rows="3" cols="60"> {{ customer.comments|escape|linebreaks }} </textarea>
+					<p style="width:100%; text-align:center;">
+						<input type="submit" name="submit_savecust" value="Save Customer Info" />
+						<input type="submit" name="submit_resetcust_0" value="Reset Customer Info" />
+					</p>
+				</td>
+			</tr>
+		</table>  
+	</form>
+{% endblock customerSubview %}
