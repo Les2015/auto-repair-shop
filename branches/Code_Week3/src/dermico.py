@@ -69,6 +69,9 @@ class CustomerInput(webapp.RequestHandler):
     
             
 class MaintAppController(object):
+    """ Main class for implementing the Controller portion of MVC implementation
+        of the Maintenance Records System.
+    """
     __theController = None
     
     def __init__(self):
@@ -140,7 +143,10 @@ class MaintAppController(object):
             self.__view.serve_content(reqhandler)
         return None
     
-    # Misc. helper functions.
+    ##############################################################################
+    # The following are utility functions for setting and retrieving specific
+    # form fields.  The 'hiddenId' methods are provided to simplify the management
+    # of the hidden fields used to keep track of the currently displayed data.
     
     def __getValues(self, reqhandler):
         """ Generates a dictionary of the values that were passed to the server
@@ -154,96 +160,6 @@ class MaintAppController(object):
         self.__userValues = values
         return None
         
-    def __fieldsNeedSaving(self):
-        """ Compare the form fields on the screen with the version saved in the
-            database (or against an empty record if creating a new item).  Return
-            True if any field has changed.  False otherwise.
-        """
-        # return self.__customerFieldsChanged() or \
-        #        self.__vehicleFieldsChanged() or \
-        #        self.__workorderFieldsChanged()
-        return False # Stub this out so we don't go through the save dialog path for now.
-    
-    def __customerFieldsChanged(self):
-        """ Compares the form fields for the customer section against the 
-            corresponding database information or against an empty Customer
-            record if entering a new customer to see if any edits have been
-            made.  Return True if edits have been made, False otherwise.
-            Also, returns False if the customer form fields are not active.
-        """
-        if self.__customerActive():
-            if self.__activeCustomerId == "-1":
-                compCust = Customer()
-            else:
-                compCust = self.__model.getCustomer(self.__activeCustomerId)
-            activeCust = Customer()
-            activeCust.loadFromDictionary(self.__userValues)
-            retVal = (compCust == activeCust)
-        else:
-            retVal = False
-            
-        return retVal
-    
-    def __vehicleFieldsChanged(self):
-        """ Compares the form fields for the customer section against the 
-            corresponding database information or against an empty Vehicle
-            record if entering a new vehicle to see if any edits have been
-            made.  Return True if edits have been made, False otherwise.
-            Also, returns False if the customer or vehicle form fields are
-            not active.
-        """
-        if self.__vehicleActive():
-            if self.__activeVehicleId == "-1":
-                compVehicle = Vehicle()
-            else:
-                compVehicle = self.__model.getCustomer(self.__activeVehicleId)
-            activeVehicle = Vehicle()
-            activeVehicle.loadFromDictionary(self.__userValues)
-            retVal = (compVehicle == activeVehicle)
-        else:
-            retVal = False
-            
-        return retVal
-    
-    def __workorderFieldsChanged(self):
-        """ Compares the form fields for the work order section against the 
-            corresponding database information or against an empty Workorder
-            record if entering a new customer to see if any edits have been
-            made.  Return True if edits have been made, False otherwise.
-            Also, returns False if the work order view is not active.
-        """
-        if self.__workorderActive():
-            if self.__activeWorkorderId == "-1":
-                compWorkorder = Workorder()
-            else:
-                compWorkorder = self.__model.getCustomer(self.__activeWorkorderId)
-            activeWorkorder = Workorder()
-            activeWorkorder.loadFromDictionary(self.__userValues)
-            retVal = (compWorkorder == activeWorkorder)
-        else:
-            retVal = False
-            
-        return retVal
-    
-    def __customerActive(self):
-        """ See if the 'first_name' form field for the customer was submitted.  If
-            it is, the form is active (return True, False otherwise).
-        """
-        return ('first_name' in self.__userValues.keys())
-    
-    def __vehicleActive(self):
-        """ See if the 'model' form field for the vehicle was submitted.  If
-            it is, the form is active (return True, False otherwise).
-        """
-        return ('model' in self.__userValues.keys())
-    
-    def __workorderActive(self):
-        """ Determine whether or not the work order is active.  Since the work order
-            is never on the screen when the customer fields are active, we negate
-            the customerActive test.
-        """
-        return not self.__customerActive()
-    
     def __getHiddenIdFields(self):
         """ Extract the three active ids (customer_id, vehicle_id, and workorder_id) from
             the dictionary of values returned from the hidden fields in the form.  The
@@ -274,6 +190,10 @@ class MaintAppController(object):
         self.__activeVehicleId = "-1"
         self.__activeWorkorderId = "-1"
         return None
+    
+    ##############################################################################
+    # A couple of helper functions for getting the active vehicle or workorder
+    # from the list of these items typically as returned by the Model.
 
     def __findActiveVehicle(self, vehicleList):
         """ Search the list of vehicles for the entry whose primary key matches
@@ -297,6 +217,11 @@ class MaintAppController(object):
                 retWorkorder = workorder
                 break
         return retWorkorder
+
+    ##############################################################################
+    # The following three functions are refactored code that was repeated a
+    # number of times when setting up the contents of the various panels in
+    # the View.
     
     def __configureSidePanel(self, activeElement, debug_message):
         """ Retrieve the open work order list and completed work order list
@@ -392,8 +317,6 @@ class MaintAppController(object):
         """
         activeCustomer = Customer()
         activeCustomer.loadFromDictionary(self.__userValues)
-        #errorList = self.__model.validateCustomerInfo(activeCustomer)
-        #if len(errorList) == 0:
         try:
             customerDbId = self.__model.saveCustomerInfo(activeCustomer)
         except ValidationErrors, e:
@@ -859,6 +782,105 @@ class MaintAppController(object):
         self.__view.configureWorkorderContent(workorders)
         return None
 
+    # The following methods will be used to determine if the user edited values
+    # in any of the form fields to help decide if the save dialog needs to be
+    # presented.
+    
+    def __fieldsNeedSaving(self):
+        """ Compare the form fields on the screen with the version saved in the
+            database (or against an empty record if creating a new item).  Return
+            True if any field has changed.  False otherwise.
+        """
+        # return self.__customerFieldsChanged() or \
+        #        self.__vehicleFieldsChanged() or \
+        #        self.__workorderFieldsChanged()
+        return False # Stub this out so we don't go through the save dialog path for now.
+    
+    def __customerFieldsChanged(self):
+        """ Compares the form fields for the customer section against the 
+            corresponding database information or against an empty Customer
+            record if entering a new customer to see if any edits have been
+            made.  Return True if edits have been made, False otherwise.
+            Also, returns False if the customer form fields are not active.
+        """
+        if self.__customerActive():
+            if self.__activeCustomerId == "-1":
+                compCust = Customer()
+            else:
+                compCust = self.__model.getCustomer(self.__activeCustomerId)
+            activeCust = Customer()
+            activeCust.loadFromDictionary(self.__userValues)
+            retVal = (compCust == activeCust)
+        else:
+            retVal = False
+            
+        return retVal
+    
+    def __vehicleFieldsChanged(self):
+        """ Compares the form fields for the customer section against the 
+            corresponding database information or against an empty Vehicle
+            record if entering a new vehicle to see if any edits have been
+            made.  Return True if edits have been made, False otherwise.
+            Also, returns False if the customer or vehicle form fields are
+            not active.
+        """
+        if self.__vehicleActive():
+            if self.__activeVehicleId == "-1":
+                compVehicle = Vehicle()
+            else:
+                compVehicle = self.__model.getCustomer(self.__activeVehicleId)
+            activeVehicle = Vehicle()
+            activeVehicle.loadFromDictionary(self.__userValues)
+            retVal = (compVehicle == activeVehicle)
+        else:
+            retVal = False
+            
+        return retVal
+    
+    def __workorderFieldsChanged(self):
+        """ Compares the form fields for the work order section against the 
+            corresponding database information or against an empty Workorder
+            record if entering a new customer to see if any edits have been
+            made.  Return True if edits have been made, False otherwise.
+            Also, returns False if the work order view is not active.
+        """
+        if self.__workorderActive():
+            if self.__activeWorkorderId == "-1":
+                compWorkorder = Workorder()
+            else:
+                compWorkorder = self.__model.getCustomer(self.__activeWorkorderId)
+            activeWorkorder = Workorder()
+            activeWorkorder.loadFromDictionary(self.__userValues)
+            retVal = (compWorkorder == activeWorkorder)
+        else:
+            retVal = False
+            
+        return retVal
+    
+    # Some of the state changes need a bit more information about the previous
+    # configuration of the forms than is available through the hidden form
+    # fields.  These see which fields got submitted to determine the screen
+    # configuration.
+    
+    def __customerActive(self):
+        """ See if the 'first_name' form field for the customer was submitted.  If
+            it is, the form is active (return True, False otherwise).
+        """
+        return ('first_name' in self.__userValues.keys())
+    
+    def __vehicleActive(self):
+        """ See if the 'model' form field for the vehicle was submitted.  If
+            it is, the form is active (return True, False otherwise).
+        """
+        return ('model' in self.__userValues.keys())
+    
+    def __workorderActive(self):
+        """ Determine whether or not the work order is active.  Since the work order
+            is never on the screen when the customer fields are active, we negate
+            the customerActive test.
+        """
+        return not self.__customerActive()
+    
     # The following method is not active in any way.  It was put together as
     # a way of 'thinking' about how we might handle a situation that would
     # require a full-blown dialog.  The need to keep track of this is still
