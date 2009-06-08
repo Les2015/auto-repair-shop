@@ -39,6 +39,14 @@ class SearchLinkHandler(webapp.RequestHandler):
     
     
 class CustomerInput(webapp.RequestHandler):
+    def get(self):
+        """ Callback for handling special case of someone typing in 
+            http://..../Customer.  Without this handler, the user sees a
+            blank screen.  This puts the app in the standard startup mode.
+        """
+        MaintAppController.theController().handle_button_events(self, "newcust", "STARTUP")
+        return None
+
     def post(self):
         button_pressed = self.__getbutton()
         button_fields = button_pressed.split("_")
@@ -78,9 +86,10 @@ class MaintAppController(object):
         MaintAppController.__theController = self
         self.__view = MaintAppView(self)
         self.__app = webapp.WSGIApplication(
-                                            [('/',         DefaultConfiguration),
-                                             ('/Customer', CustomerInput),
-                                             ('/Search',   SearchLinkHandler)],
+                                            [('/',           DefaultConfiguration),
+                                             ('/index.html', DefaultConfiguration),
+                                             ('/Customer',   CustomerInput),
+                                             ('/Search',     SearchLinkHandler)],
                                              debug=True)
 
         self.__dispatch_table = {"newcust"   : MaintAppController.addNewCustomer,
