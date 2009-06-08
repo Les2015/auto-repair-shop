@@ -1,0 +1,174 @@
+/* 
+    dermico.css
+    Author: Brad Gaiser
+    Copyright  2009
+    Class:  CIS 068K
+    Style sheet applied to the Maintenance Records System Web Pages 
+*/
+
+/* Make the pages "marginally" more interesting. */
+body
+{
+    background-color: Silver;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 0px;
+}
+
+/* Styles for presentation of tables of names, etc. where
+   we want the cells to be outlined & offset visually. */
+.my_table
+{
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1ex;
+    margin-bottom: 1ex;
+    color: black;
+    background: #dddddd;
+    font-size: small;
+    text-align: left;
+    padding: 0.5em 1ex 0.5em 1ex;
+    border: medium ridge #800000;
+    height: 650px;
+    width: 1000px;
+}
+
+.my_tleft
+{
+    color: black;
+    background: #eeeeee;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.25em 1ex 0.25em 1ex;
+    border: 1pt solid gray;
+    width: 25%;
+}
+
+.my_tmiddle
+{
+    color: black;
+    background: #eeeeee;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.25em 1ex 0.25em 1ex;
+    border: 1pt solid gray;
+    width: 55%;
+}
+
+.my_tright
+{
+    color: black;
+    background: #eeeeee;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.25em 1ex 0.25em 1ex;
+    border: 1pt solid gray;
+    height: 50%;
+    width: 75%;
+}
+
+.my_tright_bottom
+{
+    color: black;
+    background: #eeeeee;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.25em 1ex 0.25em 1ex;
+    border: 1pt solid gray;
+    height: 50%;
+    width: 75%;
+}
+
+.my_thead
+{
+    color: black;
+    background: #aaaaaa;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.25em 1ex 0.25em 1ex;
+    border: 1pt solid gray;
+    font-weight: bold;
+}
+
+.my_tbody
+{
+    color: black;
+    background: #aaaaaa;
+    font-size: small;
+    vertical-align: top;
+    text-align: left;
+    padding: 0.1em .5ex 0.1em .5ex;
+    border: 1pt solid gray;
+}
+
+/* Style for tab links */
+
+.tab_button
+{
+    position: relative;
+    border-color: #EEEEEE #EEEEEE #000000 #EEEEEE;
+    border-style: solid;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: x-small;
+    font-weight: bold;
+    border-width: thin;
+    width: 15em;
+    background-color: #C0C0C0;
+    margin-left: .5ex;
+    padding-left: .5ex;
+    padding-right: .5ex;
+    text-decoration: none;
+    bottom: 0px;
+}
+
+.selected_tab_button
+{
+    position: relative;
+    border-color: #000000 #000000 #EEEEEE #000000;
+    border-style: solid;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: x-small;
+    font-weight: bold;
+    border-width: thin;
+    width: 15em;
+    background-color: #EEEEEE;
+    margin-left: .5ex;
+    padding-left: .5ex;
+    padding-right: .5ex;
+    text-decoration: none;
+    bottom: -1px;
+}
+
+.s_side_links
+{
+    border-width: thin;
+    padding: 0.3ex 0.5em 0.3ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #000000;
+    text-decoration: none; /* suppress the underscore on hyperlinks */
+    font-weight: normal;
+    background-color: #99CCFF;
+    width: 90%;
+    display: block;
+    border-bottom-style: dotted;
+}
+
+.s_active_side_links
+{
+    padding: 0.3ex 0.5em 0.3ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #FFFFFF;
+    text-decoration: none; /* suppress the underscore on hyperlinks */
+    font-weight: normal;
+    background-color: #000080;
+    width: 90%;
+    display: block;
+}
+
