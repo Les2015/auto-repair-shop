@@ -504,33 +504,26 @@ class MaintAppController(object):
         """
         workorder = Workorder()
         workorder.loadFromDictionary(self.__userValues)
-        errorList = self.__model.validateWorkorderInfo(workorder) + \
-                    workorder.checkRequiredFieldsForCurrentState()
-        if len(errorList) == 0:
-            if self.__activeWorkorderId == "-1": # New workorder to be saved.
-                workorder.setDateCreated()
-                workorder.setVehicleId(self.__activeVehicleId)
-            elif workorder.status == Workorder.CLOSED and \
-                    workorder.getDateClosed() is not None:
-                workorder.setDateClosed()
-            self.__activeWorkorderId = self.__model.saveWorkorder(workorder)
-            
-            workorders = self.__model.getWorkorderList(self.__activeVehicleId)
+        #errorList = self.__model.validateWorkorderInfo(workorder) + \
+        #            workorder.checkRequiredFieldsForCurrentState()
+        if self.__activeWorkorderId == "-1": # New workorder to be saved.
+            workorder.setDateCreated()
+            workorder.setVehicleId(self.__activeVehicleId)
+        elif workorder.status == Workorder.CLOSED and \
+                workorder.getDateClosed() is not None:
+            workorder.setDateClosed()
+
+        try:
+            workorderDbId  = self.__model.saveWorkorder(workorder)
+        except ValidationErrors, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateWorkorderView()
         else:
-            self.__view.configureErrorMessages(errorList)
+            self.__activeWorkorderId = workorderDbId
             workorders = self.__model.getWorkorderList(self.__activeVehicleId)
-            if self.__activeWorkorderId == "-1":
-                # User is entering a new workorder.
-                workorders.insert(0, workorder)
-            else:
-                # Replace entry in list with the active one whose values were
-                #   loaded from the form fields.
-                workorderIndex = self.__findActiveWorkorder(workorders)
-                workorders.pop(workorderIndex)
-                workorders.insert(workorderIndex, workorder)
-                
-        self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+            self.__view.configureWorkorderContent(workorders)
+            self.__configureWorkorderCustomerVehicleInfo()
+            
         self.__configureSidePanel(3, "Save Workorder")
         self.__view.set_workorder_mode()
         return None
