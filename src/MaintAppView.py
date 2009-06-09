@@ -568,10 +568,13 @@ class WorkorderSubview(object):
         #<input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
         reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
         reqhandler.response.out.write('</div>')
-        dateText = nz(self.__workorder.getDateCreated())
+        dateText = nz(self.__workorder.getDateCreated()) # Reused below for visible text
         reqhandler.response.out.write( \
             '<input type="hidden" name="date_created" value="%s" />' % \
             dateText)
+        reqhandler.response.out.write( \
+            '<input type="hidden" name="date_closed" value="%s" />' % \
+            nz(self.__workorder.getDateClosed()))
         reqhandler.response.out.write("""
             <table style="margin-top:30px;">
                 <tr>
@@ -603,20 +606,21 @@ class WorkorderSubview(object):
                     </td>
                     <td style="text-align:right;">
                         <label for "mechanic">Mechanic:</label>
-                        <select name="mechanic">
-                        <option value="mechanic_0">Select...</option>""")
+                        <select name="mechanic">""")
         reqhandler.response.out.write( \
-            '<option value="mechanic_1"%s>Jerome Calvo</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="mechanic_1" else ""))
+            '<option value="%s">Select...</option>' % Workorder.NO_MECHANIC)
         reqhandler.response.out.write( \
-            '<option value="mechanic_2"%s>Les Faby</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="mechanic_2" else ""))
+            '<option value="Jerome Calvo"%s>Jerome Calvo</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="Jerome Calvo" else ""))
         reqhandler.response.out.write( \
-            '<option value="mechanic_3"%s>Brad Gaiser</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="mechanic_3" else ""))
+            '<option value="Les Faby"%s>Les Faby</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="Les Faby" else ""))
         reqhandler.response.out.write( \
-            '<option value="mechanic_4"%s>Wing Wong</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="mechanic_4" else ""))
+            '<option value="Brad Gaiser"%s>Brad Gaiser</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="Brad Gaiser" else ""))
+        reqhandler.response.out.write( \
+            '<option value="Wing Wong"%s>Wing Wong</option>' % \
+                (' selected="selected"' if self.__workorder.mechanic=="Wing Wong" else ""))
         reqhandler.response.out.write("""
                         </select>
                     </td>
