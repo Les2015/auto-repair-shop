@@ -277,9 +277,13 @@ class MaintAppController(object):
             else:
                 activeVehicle = self.__findActiveVehicle(activeVehicleList)
         # Load any information that might have already been entered into the
-        # form fields into the active vehicle.
+        # form fields into the active vehicle.  If this is called right after
+        # saving a New Vehicle, the hidden vehicle_id field will have -1 rather
+        # than the new id value from the db.  Be sure to replace it with correct
+        # version from UI.
         if self.__vehicleActive():
             activeVehicle.loadFromDictionary(self.__userValues)
+            activeVehicle.setId(self.__activeVehicleId)
         self.__view.configureVehicleContent(activeVehicleList)
         return None
     
@@ -334,9 +338,7 @@ class MaintAppController(object):
         else:
             activeCustomer.setId(customerDbId)
             self.__view.configureCustomerContent(activeCustomer)
-            
             self.__configureVehicleInfo()
-            
             self.__activeCustomerId = customerDbId
             self.__configureSidePanel(0, "Save Customer Info")
             self.__view.set_customer_vehicle_mode()
@@ -397,35 +399,17 @@ class MaintAppController(object):
         vehicle = Vehicle()
         vehicle.loadFromDictionary(self.__userValues)
         vehicle.setCustomerId(self.__activeCustomerId)
-        errorList = self.__model.validateVehicleInfo(vehicle)
-        if len(errorList) == 0:
-            self.__activeVehicleId = self.__model.saveVehicleInfo(vehicle)
-            # Need to load the vehicle list after saving the vehicle so saved
-            # vehicle is in list.
-            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
-            vehicleList.append(Vehicle())
+        try:
+            vehicleDbId = self.__model.saveVehicleInfo(vehicle)
+        except ValidationErrors, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateCurrentView()
         else:
-            self.__view.configureErrorMessages(errorList)
-            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
-            if self.__activeVehicleId == "-1":
-                # User was entering info for a new vehicle.  Just append the
-                # vehicle loaded from the UI to the end of the list as the
-                # new vehicle place holder.
-                vehicleList.append(vehicle)
-            else:
-                # Replace entry in list with the active one whose values were
-                #   loaded from the form fields.
-                vehicleIndex = self.__findActiveVehicle(vehicleList)
-                vehicleList.pop(vehicleIndex)
-                vehicleList.insert(vehicleIndex, vehicle)
-            
-        customer = Customer()
-        customer.loadFromDictionary(self.__userValues)
-        self.__view.configureCustomerContent(customer)
-    
-        self.__view.configureVehicleContent(vehicleList)
-        self.__configureSidePanel(0, "Save Vehicle Info")
-        self.__view.set_customer_vehicle_mode()
+            self.__activeVehicleId = vehicleDbId
+            self.__configureVehicleInfo()
+            self.__regenerateCustomerView()
+            self.__configureSidePanel(0, "Save Vehicle Info")
+            self.__view.set_customer_vehicle_mode()
         return None
 
     def vehicleTabClicked(self, reqhandler, tag):
