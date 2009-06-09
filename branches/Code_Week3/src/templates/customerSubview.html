@@ -1,0 +1,83 @@
+<!-- Customer Subview 
+	06/05/09 Handle customerSubview for testing use case #1 only
+	~ Jerome Calvo
+-->
+
+
+<h3>Customer Information</h3>
+<table style="margin-top:15px; margin-left:auto; margin-right:auto;">
+	<tr>
+		<td>
+			<label for="first_name">First Name: </label>
+		</td>
+		<td>
+			<input type="text" name="first_name" value="{{ customer_first_name }}" />
+		</td>
+		<td>
+			<label for="last_name" style="padding-left:10px">Last Name: </label>
+		</td>
+		<td>
+			<input type="text" name="last_name" value="{{ customer_last_name }}" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="address1">Address: </label>
+		</td>
+		<td>
+			<input type="text" name="address1" value="{{ customer_address1 }}" />
+		</td>
+		<td>
+			<label for="phone1" style="padding-left:10px">Primary Phone: </label>
+		</td>
+		<td>
+			<input type="text" name="phone1" value="{{ customer_phone1 }}" />
+		</td>
+	</tr>
+	<tr>	
+		<td>
+			<label for="address2">Address: </label>
+		</td>
+		<td>
+			<input type="text" name="address2" value="{{ customer_address2 }}" />
+		</td>
+		<td>
+			<label for="phone2" style="padding-left:10px">Secondary Phone: </label>
+		</td>
+		<td>
+			<input type="text" name="phone2" value="{{ customer_phone2 }}" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="city">City: </label>
+		</td>
+		<td>
+			<input type="text" name="city" value="{{ customer_city }}" />
+		</td>
+		<td>
+			<label for="email" style="padding-left:10px">Email: </label>
+		</td>
+		<td>
+			<input type="text" name="email" value="{{customer_email}}" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="state">State: </label>
+		</td>
+		<td>
+			<input type="text" name="state" value="{{ customer_state }}" />
+		</td>
+		<td>
+			<label for="zip" style="padding-left:10px">Zip: </label>
+		</td>
+		<td>
+			<input type="text" name="zip" value="{{ customer_zip }}" />
+		</td>
+	</tr>
+	
+	{% block lowerPanel %}
+		Shouldn't not display this...
+	{% endblock lowerPanel %}
+</table>

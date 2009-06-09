@@ -1,0 +1,18 @@
+<!-- Find Customer Subview 
+	06/04/09 Inherit from mainview.html; add a sidePanelSubview and a customerSubview.
+	06/05/09 Handle customerSubview for testing use case #1 only
+	~ Jerome Calvo
+-->
+
+{% extends "customerSubview.html" %}
+
+{% block lowerPanel %} 
+<tr>
+	<td colspan="4">
+		<p style="width:100%; text-align:center;">
+			<input type="submit" name="submit_search" value="Find Customer(s)" />
+			<input type="submit" name="submit_resetcust_1" value="Clear Customer Info" />
+		</p>
+	</td>
+</tr>
+{% endblock lowerPanel %}  
