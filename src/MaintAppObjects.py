@@ -195,6 +195,7 @@ class Workorder(object):
     OPEN = 1; COMPLETED = 2; CLOSED = 3
     _status_map = { 'open':OPEN, 'completed':COMPLETED, 'closed':CLOSED }
     DATE_FORMAT = "%b %d, %Y  %H:%M:%S"
+    NO_MECHANIC = "NO_MECHANIC"
     
     def __init__(self, id="-1", vehicle_id=None, mileage=None,
                  status=OPEN, date_created=None, customer_request=None,
@@ -244,7 +245,10 @@ class Workorder(object):
         
     def getDateClosed(self):
         """ Do we want to format this as a string or return it as a date/time type? """
-        return self.date_closed
+        if self.date_closed == None:
+            return None
+        else:
+            return self.date_closed.strftime(Workorder.DATE_FORMAT)
     
     def loadFromDictionary(self, dictionary):
         """ Load values from dictionary passed over from the view. 
@@ -271,7 +275,17 @@ class Workorder(object):
         else:
             self.date_created = \
                 datetime.strptime(strDate, Workorder.DATE_FORMAT)
-        self.mechanic = dictionary['mechanic']
+        strDate = dictionary['date_closed']
+        if strDate == "":
+            self.date_closed = None
+        else:
+            self.date_closed = \
+                datetime.strptime(strDate, Workorder.DATE_FORMAT)
+        mechanic = dictionary['mechanic']
+        if mechanic == Workorder.NO_MECHANIC:
+            self.mechanic = None
+        else:
+            self.mechanic = dictionary['mechanic']
         self.status = self._status_map[dictionary['status'].lower()]
         self.task_list = dictionary['task_list'] 
         self.work_performed = dictionary['work_performed']
