@@ -21,9 +21,12 @@ FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
 INPUT_WORKORDER = 4
 
+import os
 from datetime import datetime
+from google.appengine.ext.webapp import template
 from MaintAppObjects import nz
 from MaintAppObjects import Workorder
+
 
 class MaintAppView(object):
     """ Class to implement the View part of the MVC implementation of the
@@ -264,7 +267,7 @@ class CustomerSubview(object):
         self.__searchResults = customer_list
         return None
     
-    def _serve_content(self, reqhandler):
+    def _serve_content_old(self, reqhandler):
         reqhandler.response.out.write("""
             <table style="margin-top:15px; margin-left:auto; margin-right:auto;">
             <tr>
@@ -364,6 +367,45 @@ class CustomerSubview(object):
                         reqhandler.response.out.write( \
                             '<p><a href="%s">%s %s</a></p>' % \
                             (link, nz(customer.first_name), nz(customer.last_name)))
+        return None
+    
+    def _serve_content(self, reqhandler):
+        """ Uses template customerSubview.html and its children to compose and display customer info sub view """
+        
+        newCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewNewCust.html' )
+        findCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewFindCust.html' )
+        tempValuesDict = {'customer_first_name':nz(self.__customer.first_name),
+                'customer_last_name':nz(self.__customer.last_name),
+                'customer_address1':nz(self.__customer.address1),
+                'customer_address2':nz(self.__customer.address2),
+                'customer_city':nz(self.__customer.city),
+                'customer_state':nz(self.__customer.state),
+                'customer_zip':nz(self.__customer.zip),
+                'customer_phone1':nz(self.__customer.phone1),
+                'customer_phone2':nz(self.__customer.phone2),
+                'customer_email':nz(self.__customer.email),
+                'customer_comments': nz(self.__customer.comments)
+                }
+                
+        if (self.__searchMode == False):      
+            outstr = template.render ( newCustTemp, tempValuesDict )
+            reqhandler.response.out.write(outstr)
+        else:
+            outstr = template.render ( findCustTemp, tempValuesDict )
+            reqhandler.response.out.write(outstr)
+            
+            if self.__searchResults is not None:
+                reqhandler.response.out.write("<hr \>")
+                if len(self.__searchResults) == 0:
+                    reqhandler.response.out.write("""
+                    <p><strong>No customers match the search you requested.
+                    </strong></p>""")
+                else:
+                    for customer in self.__searchResults:
+                        link = "/Search?cid=%s" % customer.getId()
+                        reqhandler.response.out.write( \
+                        '<p><a href="%s">%s %s</a></p>' % \
+                        (link, nz(customer.first_name), nz(customer.last_name)))
         return None
     
 class VehicleSubview(object):
