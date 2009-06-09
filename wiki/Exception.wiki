@@ -1,0 +1,11 @@
+#summary except should catch specific Exception instead of the top level Exception
+#labels enhancement,-----------------------------28Proxy-Connectionkeep-aliveCache-Controlmax-age-090412195400260589673557Content-Dispositionform-dataname-label,-----------------------------6819109621904797942140028Proxy-Connectionkeep-aliveCache-Controlmax-age-065Content-Dispositionform-dataname-label,---------------------------Proxy-Connectionkeep-aliveCache-Controlmax-age-03228420821463179852828530767Content-Dispositionform-dataname-label
+
+= Introduction =
+
+In MaintAppModel class, a few "exception Exception" are found
+
+
+= Details =
+
+should provide individual handlers for specific exceptions
