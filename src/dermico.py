@@ -566,7 +566,7 @@ class MaintAppController(object):
             Set active customer/vehicle/workorder ids.
             Tell view to rerender.
         """
-        self.__activeWorkorderId = int(tag)
+        self.__activeWorkorderId = tag
         activeWorkorder = self.__model.getWorkorder(self.__activeWorkorderId)
         self.__activeVehicleId = activeWorkorder.getVehicleId()
         vehicle = self.__model.getVehicle(self.__activeVehicleId)
@@ -638,9 +638,11 @@ class MaintAppController(object):
             self.__view.configureCustomerContent(Customer())
             activeConfig = int(tag)
             if activeConfig == 0:
+                # Reset info in new customer entry form
                 self.__configureSidePanel(1, "Clearing Customer Info")
                 self.__view.set_new_customer_mode()
             else:
+                # Reset info in search form
                 self.__configureSidePanel(2, "Clearing Customer Info")
                 self.__view.set_search_mode()
         return None
