@@ -71,12 +71,13 @@ class Customer(object):
     
     def loadFromDictionary(self, dictionary):
         """ Load values from dictionary passed over from the view. """
-        customer_id = dictionary['customer_id']
-        if customer_id == '-1':
-            self.setId(None)
-        else:
-            self.setId(customer_id)
-            
+        #customer_id = dictionary['customer_id']
+        #if customer_id == '-1':
+        #    self.setId(None)
+        #else:
+        #    self.setId(customer_id)
+        
+        self.setId(dictionary['customer_id'])   
         self.setFirstName(dictionary['first_name'])
         self.setLastname(dictionary['last_name'])
         self.address1 = dictionary['address1']
@@ -152,16 +153,16 @@ class Vehicle(object):
             javascript.
         """
         # Load fields similarly to method sketched out in Customer class
-        vehicle_id = dictionary['vehicle_id']
-        if vehicle_id == '-1':
-            self.setId(None)
-        else:
-            self.setId(vehicle_id)
-            
+        #vehicle_id = dictionary['vehicle_id']
+        #if vehicle_id == '-1':
+        #    self.setId(None)
+        #else:
+        #    self.setId(vehicle_id)
+        self.setId(dictionary['vehicle_id'])
+        self.setCustomerId(dictionary['customer_id'])
         self.make = dictionary['make']
         self.model = dictionary['model']
         self.year = dictionary['year']
-        #self.mileage = int(dictionary['mileage'])
         self.license = dictionary['license']
         self.vin = dictionary['vin']
         self.notes = dictionary['notes']
@@ -256,17 +257,19 @@ class Workorder(object):
             javascript.
         """
         # Load fields similarly to method sketched out in Customer class
-        workorder_id = dictionary['workorder_id']
-        if workorder_id == '-1':
-            self.setId(None)
-        else:
-            self.setId(workorder_id)
-            
-        vehicle_id = dictionary['vehicle_id']
-        if vehicle_id == '-1':
-            self.setVehicleId(None)
-        else:
-            self.setVehicleId(vehicle_id)
+        #workorder_id = dictionary['workorder_id']
+        #if workorder_id == '-1':
+        #    self.setId(None)
+        #else:
+        #    self.setId(workorder_id)
+
+        #vehicle_id = dictionary['vehicle_id']
+        #if vehicle_id == '-1':
+        #    self.setVehicleId(None)
+        #else:
+        #    self.setVehicleId(vehicle_id)
+        self.setId(dictionary['workorder_id'])
+        self.setVehicleId(dictionary['vehicle_id'])
         self.customer_request = dictionary['customer_request']
         self.mileage = dictionary['mileage']
         strDate = dictionary['date_created']
