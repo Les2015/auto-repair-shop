@@ -299,7 +299,7 @@ class CustomerSubview(object):
         
         newCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewNewCust.html' )
         findCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewFindCust.html' )
-        searchEmptyTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSearchEmpty.html' )
+        dispCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewDispCust.html' )
         searchResultsTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSearchResults.html' )
         tempValuesDict = {'customer_first_name':nz(self.__customer.first_name),
                 'customer_last_name':nz(self.__customer.last_name),
@@ -313,23 +313,21 @@ class CustomerSubview(object):
                 'customer_email':nz(self.__customer.email),
                 'customer_comments': nz(self.__customer.comments)
                 }
-                
-        if (self.__searchMode == False):      
-            outstr = template.render ( newCustTemp, tempValuesDict )
-            reqhandler.response.out.write(outstr)
-        else:
+              
+        if (self.__searchMode == False):
+            if self.__customer is None:     
+                outstr = template.render ( newCustTemp, tempValuesDict )
+                reqhandler.response.out.write(outstr)
+            else:
+                outstr = template.render ( dispCustTemp, tempValuesDict )
+                reqhandler.response.out.write(outstr)
+        else: 
             outstr = template.render ( findCustTemp, tempValuesDict )
-            reqhandler.response.out.write(outstr)
-            
-            if self.__searchResults is not None:
-                if len(self.__searchResults) == 0:
-                    outstr = template.render ( searchEmptyTemp, {} )
-                    reqhandler.response.out.write(outstr)
-                else:
-                    # customers = self.__searchResults
-                    customerList = {'customers':self.__searchResults}       
-                    outstr = template.render ( searchResultsTemp, customerList )
-                    reqhandler.response.out.write(outstr)
+            reqhandler.response.out.write(outstr) 
+            if self.__searchResults is not None:          
+                tempValuesDict = { 'customers':self.__searchResults }    
+                outstr = template.render ( searchResultsTemp, tempValuesDict )
+                reqhandler.response.out.write(outstr)
         return None
     
 class VehicleSubview(object):
