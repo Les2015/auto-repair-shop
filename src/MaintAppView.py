@@ -374,6 +374,8 @@ class CustomerSubview(object):
         
         newCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewNewCust.html' )
         findCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewFindCust.html' )
+        searchEmptyTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSearchEmpty.html' )
+        searchResultsTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSearchResults.html' )
         tempValuesDict = {'customer_first_name':nz(self.__customer.first_name),
                 'customer_last_name':nz(self.__customer.last_name),
                 'customer_address1':nz(self.__customer.address1),
@@ -395,17 +397,14 @@ class CustomerSubview(object):
             reqhandler.response.out.write(outstr)
             
             if self.__searchResults is not None:
-                reqhandler.response.out.write("<hr \>")
                 if len(self.__searchResults) == 0:
-                    reqhandler.response.out.write("""
-                    <p><strong>No customers match the search you requested.
-                    </strong></p>""")
+                    outstr = template.render ( searchEmptyTemp, {} )
+                    reqhandler.response.out.write(outstr)
                 else:
-                    for customer in self.__searchResults:
-                        link = "/Search?cid=%s" % customer.getId()
-                        reqhandler.response.out.write( \
-                        '<p><a href="%s">%s %s</a></p>' % \
-                        (link, nz(customer.first_name), nz(customer.last_name)))
+                    # customers = self.__searchResults
+                    customerList = {'customers':self.__searchResults}       
+                    outstr = template.render ( searchResultsTemp, customerList )
+                    reqhandler.response.out.write(outstr)
         return None
     
 class VehicleSubview(object):
