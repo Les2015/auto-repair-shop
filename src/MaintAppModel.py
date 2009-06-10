@@ -581,16 +581,34 @@ class MaintAppModel(object):
             is 'open'.  Also retrieve the vehicle associated with each
             work order.  Return a list of (vehicle, workorder) tuples filled in
             with the results of the query.
+            The list is sorted by workorder date_created in descending order
         """
-        return []
+        result = []
+        limit = 100 # get at most 100 open workorders 
+        
+        query = WorkorderEnt.gql("WHERE status = :status ORDER BY date_created DESC", status=Workorder.OPEN)
+        workorders = query.fetch(limit) 
+        for workorder_ent in workorders:
+            vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
+            result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
+        return result
     
     def getCompletedWorkorders(self):
         """ Query the database for all work orders where the work order status
             is 'completed'.  Also retrieve the vehicle associated with each
             work order.  Return a list of (vehicle, workorder) tuples filled in
             with the results of the query.
+            The list is sorted by workorder date_created in descending order
         """
-        return []
+        result = []
+        limit = 100 # get at most 100 completed workorders 
+        
+        query = WorkorderEnt.gql("WHERE status = :status ORDER BY date_created DESC", status=Workorder.COMPLETED)
+        workorders = query.fetch(limit) 
+        for workorder_ent in workorders:
+            vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
+            result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
+        return result
     
     def validateCustomerInfo(self, customer):
         """ Validate the data fields in the 'customer' object for data errors 
