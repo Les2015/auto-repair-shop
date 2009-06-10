@@ -1,0 +1,13 @@
+<!-- template for searchResult lower pane in customerSubview 
+when search comes back with a customer list
+-->
+
+{% extends "customerSearchEmpty.html" %}
+
+{% block searchResult %}
+{% for customer in customers %}
+<p>
+<a href="/Search?cid={{customer.id}}">{{customer.last_name}}, {{customer.first_name}} | {{customer.phone1}}</a>
+</p>
+{% endfor %}
+{% endblock searchResult %}
