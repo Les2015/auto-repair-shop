@@ -4,6 +4,7 @@ Created on May 27, 2009
 @author: Wing Wong
 
 2009-06-05  Add customer Validation   Les Faby
+2009-06-05  Add vehicle Validation    Les Faby
 
 '''
 
@@ -15,19 +16,47 @@ from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import datastore_file_stub 
 from MaintAppObjects import Customer, Vehicle, Workorder 
 from DatastoreModels import CustomerEnt, VehicleEnt, WorkorderEnt
+from util import myLog
 
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
 
 #================================================================
 class ValidationErrors(Exception):
+    '''
+    Exception raised in case of an invalid record.
+    usage
+    try: 
+        ... 
+    catch ValidationErrors, ve:
+       print ve    prints all the error text for all the fields in error
+       errorMsg = str(ve)  puts that text in the variable
+       ve.getFieldsWithErrors() to get a list of the field names in error
+    '''
     def __init__(self, errTxt, badFldLst):
         self.errTxt = errTxt
         self.badFldLst = badFldLst
+        
     def __str__(self):
+        '''returns error text for all fields in error or required and missing' fields.'''
         return self.errTxt
+    
     def getFieldsWithErrors(self):
+        '''returns a list of fields in error.'''
         return self.badFldLst
+#================================================================
+class InternalErrors(ValidationErrors):
+    '''
+    Exception raised in case of an invalid record.
+    usage
+    try: 
+        ... 
+    catch InternalErrors, ie:
+       print ie    prints all the error text for all the fields in error
+       errorMsg = str(ie)  puts that text in the variable
+       ve.getFieldsWithErrors() to get a list of the field names in error
+    '''
+    pass
 #================================================================
 
 def isState(s):
@@ -83,8 +112,7 @@ def isZip(s):
 def lenOK(s,minLen, maxLen):
     if s == None:
        return (False,"needs to have a length between %i and %i" % ( minLen, maxLen))
-    aLen = len(s)
-    if (aLen >= minLen) & (aLen <= maxLen): 
+    if minLen <= len(s) <= maxLen: 
        return (True, "")
     else:
        return (False, "needs to have a length between %i and %i" % ( minLen, maxLen))
@@ -94,6 +122,12 @@ def isMissing(s):
 
 class MaintAppModel(object):
     requiredCust = ('last_name', 'address1', 'city', 'state', 'zip', 'phone1')
+    requiredVehicle = ('customer_id', 'make', 'model', 'year', 'license')
+    requiredWorkOrdAll = ('vehicle_id', 'mileage', 'status',
+                       'customer_request', 'mechanic', 'date_created')
+    # additional required fields for work orders that are ready for customer pickup (not open) 
+    reqdWorkOrdDone = ('task_list', 'work_performed', 'notes')
+
     OK, MISSING, INVALID = (0,1,2)
     
     def __init__(self):
@@ -113,7 +147,14 @@ class MaintAppModel(object):
         """
         pass
      
-     #---------------------------- customer -----------------------------------------------
+    #---------------------------- customer -----------------------------------------------
+    
+    #================================================================================
+    #  For each customer attribute to validate, there is a chk_attribute method that
+    #  returns True if valid, else False
+    #================================================================================
+    
+    
     def chk_id(self,id):
         return True
     
@@ -176,9 +217,11 @@ class MaintAppModel(object):
         returns boolean: True if valid else False
         for each attribute, 
              check the attribute by calling corresponding chk_attribute(customer.attribute)
+             method.
              Save a list of missing and invalid attributes and add errortext
              for each missing or invalid field.
         """
+        
         for a in customer.__dict__.keys():
              check_attr_meth = getattr(self, 'chk_'+a, None)
              if check_attr_meth == None: continue
@@ -195,7 +238,9 @@ class MaintAppModel(object):
         return (len(self.missing) + len(self.invFld)) == 0
     
     def saveCustomerInfo(self, customer):
-        """ Write customer object to data store.  If id in customer is '-1',
+        """ 
+        If customer is invalid, raise exception.
+        Write customer object to data store.  If id in customer is '-1',
             create the record; otherwise, update the record.  Return the 
             primary key of the customer (the new one if creating, the existing
             one if updating.)
@@ -327,85 +372,91 @@ class MaintAppModel(object):
         return result
          
     #---------------------------- vehicle -----------------------------------------------
+    
+    #================================================================================
+    #  For each vehicle attribute to validate, there is a chk_attribute method that
+    #  returns True if valid, else False
+    #================================================================================
+    def chk_customer_id(self, customer_id):
+        return True
+    
     def chk_make(self, make):
-        if isMissing(zip):
-           self.missing.append('make')
-           return False
         status,msg = lenOK(make,1,30)
-        if len(msg):
-            self.invFld.append('make')
-            self.errTxt += 'make ' + msg  + '\n'
         return status
       
     def chk_model(self, model):
-        if isMissing(model):
-           self.missing.append('zip')
-           return False
         status,msg = lenOK(model,1,30)
-        if len(msg):
-            self.invFld.append('model')
-            self.errTxt += 'model ' + msg  + '\n'
         return status
       
     def chk_year(self, year):
-        if isMissing(zip):
-           self.missing.append('year')
-           return False
+        # FIXME: is year already an integer, not a string????
         if (year.isdigit() == False):
-            self.invFld.append('year')
-            self.errTxt += 'year must be a 4-digit number\n'
             return False
-        maxYr = datetime.today().year + 3
-        if (int(year) < 1925) | (int(year) > maxYr) :
-            self.invFld.append('year')
-            self.errTxt += 'year must be between 1925 and 2 years after current year\n'
+        maxYr = datetime.datetime.today().year + 3
+        myLog.write("maxYr = %i\nyear=%s" % (maxYr, year ))
+        if  not (1925 < int(year) <  maxYr) :
             return False
         status,msg = lenOK(year,4,4)
-        if len(msg):
-            self.invFld.append('year')
-            self.errTxt += 'year ' + msg  + '\n'
         return status
       
     def chk_license(self, license):
-        if isMissing(zip):
-           self.missing.append('license')
-           return False
         status,msg = lenOK(license,1,30)
-        if len(msg):
-            self.invFld.append('liense')
-            self.errTxt += 'license ' + msg  + '\n'
         return status
       
     def chk_vin(self, vin):
         # Note:  see http://www.vinguard.org/vin.htm for the full story. This is not a complete check
         # For example, the year is encoded (vin[9]) as well as a check digit (vin[8])
-        if isMissing(vin):
-            return True
         if (vin.isalnum() == False):
-            self.invFld.append('vin')
-            self.errTxt += 'vin must be only numbers and letters\n'
             return False
         status,msg = lenOK(vin,16,17)
-        if len(msg):
-            self.invFld.append('vin')
-            self.errTxt += 'vin ' + msg  + '\n'
         return status
       
     def chk_notes(self, notes):
-        if isMissing(notes):
-            return True
         status,msg = lenOK(notes,1,999)
-        if len(msg):
-            self.invFld.append('notes')
-            self.errTxt += 'notes ' + msg  + '\n'
         return status
     
-    
+    def validateVehicle(self,vehicle):
+        """
+        given a vehicle instance,
+        returns boolean: True if valid else False
+        for each attribute, 
+             check the attribute by calling corresponding chk_attribute(vehicle.attribute)
+             Save a list of missing and invalid attributes and add errortext
+             for each missing or invalid field.
+        """
+        myLog.write('validateVehicle')
+        for a in vehicle.__dict__.keys():
+             myLog.write('validating ' +a)
+             check_attr_meth = getattr(self, 'chk_'+a, None)
+             if check_attr_meth == None: continue
+             anAttr = getattr(vehicle, a, None)
+             if isMissing(anAttr):
+                 if a in MaintAppModel.requiredVehicle:
+                     self.missing.append(a)
+                     self.errTxt += 'missing ' + a + '\n'
+                 else: pass
+             elif check_attr_meth(anAttr)  == False: 
+                  self.invFld.append(a)
+                  self.errTxt += 'invalid ' + a + '\n'    
+        # if there are no required missing fields  or invalid fields, everything is ok
+        return (len(self.missing) + len(self.invFld)) == 0
+       
     def saveVehicleInfo(self, vehicle):
-        """ Write vehicle object to data store.  If id in vehicle object is
+        """ 
+        If vehicle is invalid, raise exception.
+        Write vehicle object to data store.  If id in vehicle object is
             -1, create the record; otherwise, update the existing record
             in the database.  Return primary key of the vehicle.
         """
+        myLog.write('saveVehicleInfo')
+        if self.validateVehicle(vehicle) == False: 
+           resLst = self.getInvFldNames()
+           if 'customer_id' in resLst:
+              trap = InternalErrors
+           else:
+              trap = ValidationErrors
+           raise trap(self.errTxt, resLst)
+        myLog.write('validated Vehicle')
         if vehicle.id == '-1':
             entity = None
         else:
@@ -475,7 +526,7 @@ class MaintAppModel(object):
             if no vehicles are found.
         """
         result = []
-        limit = 10 # get at most 10 vehicle for each customer
+        limit = 10 # get at most 10 vehicles for each customer
         try:
             customer = CustomerEnt.get(db.Key(customer_id))
         except Exception:
@@ -488,41 +539,133 @@ class MaintAppModel(object):
         return result
     
     #---------------------------- work order -----------------------------------------------
-    def saveWorkorder(self, workorder):
-        """ Write contents of workorder object to data store.  If id in workorder
-            object is -1, create the record; otherwise, update the existing record
-            in the database.  Return primary key of the workorder.
+    
+    #================================================================================
+    #  For each workOrder attribute to validate, there is a chk_w_attribute method
+    # that returns True if valid, else False
+    #================================================================================
+    
+    def chk_w_vehicle_id(self, vehicle_id):
+        return True
+    
+    def chk_w_date_created(self, date_created):
+        return True
+    
+    def chk_w_date_closed(self, date_closed):
+        return True
+    
+    def chk_w_mileage(self, mileage):
+        status,msg = lenOK(mileage, 1,7)
+        if status == False:
+            return False
+        if mileage.isdigit():
+            return ( 0 < int(mileage)  < 1000000)
+        else:
+            return False
+    
+    def chk_w_status(self, status):
+        return status in (Workorder.OPEN, Workorder.COMPLETED, Workorder.CLOSED )
+    
+    def chk_w_customer_request(self, customer_request):
+        status,msg = lenOK(customer_request,1,1000)
+        return status
+ 
+    def chk_w_mechanic(self, mechanic):
+        status,msg = lenOK(mechanic, 1,50)
+        return status
+    
+    def chk_w_task_list(self, task_list):
+        isOK,msg = lenOK(task_list, 1,9)
+        return isOK
+    
+    def chk_w_work_performed(self, work_performed):
+        status,msg = lenOK(work_performed,1,999)
+        return status
+    
+    #FIXME: what about date fields?
+    
+    def validateWorkOrder(self,workOrder):
         """
-        if workorder.id == '-1':
+        given a work order instance,
+        returns True if valid else False
+        for each attribute, 
+             check the attribute by calling corresponding chk_attribute(vehicle.attribute)
+             Save a list of missing and invalid attributes and add errortext
+             for each missing or invalid field.
+        """
+        requiredWorkOrd = MaintAppModel.requiredWorkOrdAll
+        if workOrder.status != Workorder.OPEN:
+            requiredWorkOrd.extend(MaintAppModel.requiredWorkOrdDone)
+        if workOrder.status == Workorder.CLOSED:
+             requiredWorkOrd.append('date_closed') 
+           
+        
+        
+        for a in workOrder.__dict__.keys():
+             myLog.write('checking ' + a + '...')
+             check_attr_meth = getattr(self, 'chk_w_'+a, None)
+             if check_attr_meth == None: continue
+             anAttr = getattr(workOrder, a, None)
+             if isMissing(anAttr):
+                 if a in requiredWorkOrd:
+                     self.missing.append(a)
+                     self.errTxt += 'missing ' + a + '\n'
+                 else: pass
+             elif check_attr_meth(anAttr)  == False: 
+                  self.invFld.append(a)
+                  self.errTxt += 'invalid ' + a + '\n'  
+        
+        # if there are no required missing fields  or invalid fields, everything is ok
+        return (len(self.missing) + len(self.invFld)) == 0
+       
+    def saveWorkorder(self, workOrder):
+        """ 
+        If workOrder is invalid, raise exception.
+        Write contents of workOrder object to data store.  
+        If id in workOrder object is -1, create the record; 
+        otherwise, update the existing record
+        in the database.  Return primary key of the workOrder.
+        """
+        if self.validateWorkOrder(workOrder) == False: 
+           resLst = self.getInvFldNames()
+           if ('date_created' in resLst) or \
+              ('date_closed' in resLst) or \
+               ('vehicle_id' in resLst) :
+              trap = InternalErrors
+           else:
+              trap = ValidationErrors   
+           raise trap(self.errTxt, resLst)
+       
+        if workOrder.id == '-1':
             entity = None
         else:
             try:
-                entity = WorkorderEnt.get(db.Key(workorder.id))
+                entity = WorkorderEnt.get(db.Key(workOrder.id))
             except Exception:
                 entity = None
 
-        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
+        vehicle_ent = VehicleEnt.get(db.Key(workOrder.vehicle_id))    
         if entity:
-            entity.mileage = int(workorder.mileage)
-            entity.status = workorder.status
-            entity.date_created = workorder.date_created
-            entity.customer_request = workorder.customer_request
-            entity.mechanic = workorder.mechanic
-            entity.task_list = workorder.task_list
-            entity.work_performed = workorder.work_performed
-            entity.notes = workorder.notes
-            entity.date_closed = workorder.date_closed
+            entity.mileage = int(workOrder.mileage)
+            entity.status = workOrder.status
+            entity.date_created = workOrder.date_created
+            entity.customer_request = workOrder.customer_request
+            entity.mechanic = workOrder.mechanic
+            entity.task_list = workOrder.task_list
+            entity.work_performed = workOrder.work_performed
+            entity.notes = workOrder.notes
+            entity.date_closed = workOrder.date_closed
             entity.vehicle = vehicle_ent
         else:    
-            entity = WorkorderEnt(mileage=int(workorder.mileage),
-                                  status=workorder.status,
-                                  date_created=workorder.date_created,
-                                  customer_request=workorder.customer_request,
-                                  mechanic=workorder.mechanic,
-                                  task_list=workorder.task_list,
-                                  work_performed=workorder.work_performed,
-                                  notes=workorder.notes,
-                                  date_closed=workorder.date_closed,
+            entity = WorkorderEnt(mileage=int(workOrder.mileage),
+                                  status=workOrder.status,
+                                  date_created=workOrder.date_created,
+                                  customer_request=workOrder.customer_request,
+                                  mechanic=workOrder.mechanic,
+                                  task_list=workOrder.task_list,
+                                  work_performed=workOrder.work_performed,
+                                  notes=workOrder.notes,
+                                  date_closed=workOrder.date_closed,
                                   vehicle = vehicle_ent)
         key = entity.put()
         return str(key)
@@ -564,7 +707,7 @@ class MaintAppModel(object):
             by vehicle_id.  Return an empty list if no workorders are found.
         """
         result = []
-        limit = 10 # get at most 10 workorder for each vehicle
+        limit = 10 # get at most 10 work orders for each vehicle
         try:
             vehicle = VehicleEnt.get(db.Key(vehicle_id))
         except Exception:
@@ -633,6 +776,7 @@ class MaintAppModel(object):
     
 
 class TestMaintAppModel(object):
+    ''' unit test '''
     def __init__(self): 
         # Start with a fresh api proxy. 
         apiproxy_stub_map.apiproxy = apiproxy_stub_map.APIProxyStubMap() 
@@ -642,6 +786,7 @@ class TestMaintAppModel(object):
         apiproxy_stub_map.apiproxy.RegisterStub('datastore_v3', stub) 
         
     def testSaveAndGet(self):
+        ''' unit test '''
         appModel = MaintAppModel()
         print "** testing customer save..."
         c1 = Customer(id='-1',
@@ -778,6 +923,7 @@ class TestMaintAppModel(object):
         
 
 def main( ):
+    ''' unit test '''
     test = TestMaintAppModel()
     test.testSaveAndGet()
 
