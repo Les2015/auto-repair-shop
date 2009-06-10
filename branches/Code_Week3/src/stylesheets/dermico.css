@@ -151,12 +151,12 @@ body
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
     color: #000000;
-    text-decoration: none; /* suppress the underscore on hyperlinks */
     font-weight: normal;
     background-color: #99CCFF;
     width: 90%;
     display: block;
     border-bottom-style: dotted;
+    margin-left: 10px;
 }
 
 .s_active_side_links
@@ -165,10 +165,41 @@ body
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
     color: #FFFFFF;
-    text-decoration: none; /* suppress the underscore on hyperlinks */
     font-weight: normal;
     background-color: #000080;
     width: 90%;
     display: block;
+    margin-left: 10px;
 }
+
+.s_side_wo
+{
+    padding: 0.2ex 0.5em 0.2ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #504782;
+    font-weight: normal;
+    background-color: #C0C0C0;
+    width: 90%;
+    display: block;
+    margin-top: 2px;
+    margin-left: 10px;
+}
+
+.s_active_side_wo
+{
+    padding: 0.2ex 0.5em 0.2ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #FFFFFF;
+    font-weight: normal;
+    background-color: #000000;
+    width: 90%;
+    display: block;
+    margin-top: 2px;
+    margin-left: 10px;
+}
+
+input.s_side_links:hover {color: #FFFFFF; background-color: #4488FF}   /* mouse over link */
+input.s_side_wo:hover {color: #FFFFFF; background-color: #808080}   /* mouse over link */
 
