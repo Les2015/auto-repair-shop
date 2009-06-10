@@ -570,7 +570,7 @@ class MaintAppModel(object):
         except Exception:
             return result
         
-        query = WorkorderEnt.gql("WHERE vehicle = :key", key=vehicle)
+        query = WorkorderEnt.gql("WHERE vehicle = :key ORDER BY date_created DESC", key=vehicle)
         workorders = query.fetch(limit) 
         for workorder_ent in workorders:
             result.append(self.getWorkorderFromWorkorderEnt(workorder_ent))
