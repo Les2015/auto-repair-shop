@@ -21,7 +21,7 @@ FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
 INPUT_WORKORDER = 4
 
-import os
+import os, sys
 from datetime import datetime
 from google.appengine.ext.webapp import template
 from MaintAppObjects import nz
@@ -207,6 +207,8 @@ class SidePanelSubview(object):
         self.__itemSelected = whichItem
     
     def _configure_content(self, openWorkorders, completedWorkorders, debug_message):
+        self.__openWorkorders = openWorkorders
+        self.__completedWorkorders = completedWorkorders
         self.__comments = debug_message
         
     def _configure_hidden_fields(self, customer_id, vehicle_id, workorder_id):
@@ -218,6 +220,24 @@ class SidePanelSubview(object):
     def _configureErrorMessages(self, errorObj):
         self.__errorObj = errorObj
         
+    def __serve_workorderList(self, reqhandler, woList):
+        reqhandler.response.out.write("<div>\n")
+        for pair in woList:
+            vehicle = pair[0]
+            workorder = pair[1]
+            sys.stderr.write(str(vehicle))
+            sys.stderr.write(str(workorder) + "\n")
+            if vehicle is not None:
+                if workorder.getId() == self.__workorderId:
+                    button_class = "s_active_side_wo"
+                else:
+                    button_class = "s_side_wo"
+                reqhandler.response.out.write( \
+                    '<input class="%s" type="submit" name="submit_activewo_%s" value="%s %s %s, \nLic# %s" />' % \
+                    (button_class, workorder.getId(), vehicle.year, vehicle.make, vehicle.model, vehicle.license))
+        reqhandler.response.out.write("</div>\n")
+        return None
+        
     def _serve_content(self, reqhandler):
         linkClass = "s_side_links"
         activeLinkClass = "s_active_side_links"
@@ -228,15 +248,22 @@ class SidePanelSubview(object):
         css_class = activeLinkClass if (self.__itemSelected == 2) else linkClass
         reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_findcust" value="Find Customer" /></p>' % css_class)
         reqhandler.response.out.write('<p><strong>Open Work Orders:</strong></p>')
-        reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
+        if len(self.__openWorkorders) == 0: 
+            reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
+        else:
+            self.__serve_workorderList(reqhandler, self.__openWorkorders)
         reqhandler.response.out.write('<p><strong>Work Completed:</strong></p>')
-        reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
+        if len(self.__completedWorkorders) == 0: 
+            reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
+        else:
+            self.__serve_workorderList(reqhandler, self.__completedWorkorders)
         reqhandler.response.out.write('<hr />')
         reqhandler.response.out.write('<p><strong>App Info:</strong></p>')
         reqhandler.response.out.write('<p style="margin-left:15px;">%s</p>' % self.__comments)
         if self.__errorObj is not None:
-            reqhandler.response.out.write('<p style="margin-left:15px; color:red;">%s</p>' % \
-                                          str(self.__errorObj))        
+            errors = "<br />".join(str(self.__errorObj).split("\n"))
+            reqhandler.response.out.write( \
+                '<p style="margin-left:15px; color:red;">%s</p>' % errors)        
         reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
         reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
         reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
