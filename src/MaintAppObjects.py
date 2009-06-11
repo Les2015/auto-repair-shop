@@ -111,8 +111,10 @@ class Customer(object):
     def __eq__(self, testCustomer):
         """ Overload the == operator to do a field-by-field comparison of self
             against testCustomer """
-        return self.first_name == testCustomer.first_name and \
-               self.last_name  == testCustomer.last_name # and etc., etc.
+        # QQQQ This is just a stub for now !!!
+        # Once the Customer objects hold strings the nz() calls won't be needed.
+        return nz(self.first_name) == nz(testCustomer.first_name) and \
+               nz(self.last_name)  == nz(testCustomer.last_name) # and etc., etc.
     
     def __ne__(self, testCustomer):
         """ Overload the != operator to do a field-by-field comparison of self
