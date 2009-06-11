@@ -70,7 +70,7 @@ class MaintAppView(object):
     
     def set_customer_vehicle_mode(self):
         self.__mainMode = INPUT_CUSTOMER
-        self.__customerPanel._configure_input_mode()
+        self.__customerPanel._configure_display_mode()
         
     def set_workorder_mode(self):
         self.__mainMode = INPUT_WORKORDER
@@ -274,6 +274,7 @@ class CustomerSubview(object):
     def __init__(self):
         self.__customer = None
         self.__searchMode = False
+        self.__dispMode = False
         self.__searchResults = None
         return None
     
@@ -283,14 +284,23 @@ class CustomerSubview(object):
     
     def _configure_search_mode(self):
         self.__searchMode = True
+        self.__displayMode = False
         return None
     
     def _configure_input_mode(self):
         self.__searchMode = False
+        self.__displayMode = False
         return None
+    
+    def _configure_display_mode(self):
+        self.__searchMode = False
+        self.__displayMode = True
+        return None
+ 
     
     def _configure_search_results(self, customer_list):
         self.__searchMode = True
+        self__displayMode = False
         self.__searchResults = customer_list
         return None
 
@@ -315,11 +325,11 @@ class CustomerSubview(object):
                 }
               
         if (self.__searchMode == False):
-            if self.__customer is None:     
-                outstr = template.render ( newCustTemp, tempValuesDict )
-                reqhandler.response.out.write(outstr)
-            else:
+            if self.__displayMode:
                 outstr = template.render ( dispCustTemp, tempValuesDict )
+                reqhandler.response.out.write(outstr)     
+            else:
+                outstr = template.render ( newCustTemp, tempValuesDict )
                 reqhandler.response.out.write(outstr)
         else: 
             outstr = template.render ( findCustTemp, tempValuesDict )
