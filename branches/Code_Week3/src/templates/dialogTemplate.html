@@ -1,0 +1,23 @@
+<!-- Dialog Template 
+	06/10/09 Provide dialog box functionality for Maintenance Records System
+	~ Brad Gaiser
+-->
+
+<div style="height:0px; width:100%">
+<div class="dialog">
+	<p style="position:relative; top:70px; margin-left: 40px;">
+		<strong>
+		You changed one of the data values in the displayed form.<br />
+		Would you like to save your changes before continuing?
+		</strong>
+	</p>
+	<hr style="height:1px; width:98%; margin-left:1%; position:relative; top:160px;" />
+	<p style="position:absolute; bottom:15px; left:105px;">
+		<input class="dialog-button" type="submit" name="submit_dialog_yes"    value="Yes" />
+		<input class="dialog-button" type="submit" name="submit_dialog_no"     value="No"  />
+		<input class="dialog-button" type="submit" name="submit_dialog_cancel" value="Cancel" />
+		<input type="hidden" name="request_button" value="{{ request_button }}" />
+		<input type="hidden" name="request_tag" value="{{ request_tag }}" />
+	</p>
+</div>
+</div>
