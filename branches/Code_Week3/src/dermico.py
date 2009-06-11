@@ -772,11 +772,18 @@ class MaintAppController(object):
     def __fieldsNeedSaving(self):
         """ Compare the form fields on the screen with the version saved in the
             database (or against an empty record if creating a new item).  Return
-            True if any field has changed.  False otherwise.
+            True if any field has changed.  False otherwise.  Since search mode
+            looks much the same as the modes where the customer info is being
+            added or edited, we need to do an additional check to keep from flagging
+            data as changed when moving away from search mode.
         """
-        return self.__customerFieldsChanged() or \
-               self.__vehicleFieldsChanged() or \
-               self.__workorderFieldsChanged()
+        if self.__customerActive() and ('comments' not in self.__userValues.keys()):
+            retVal = False
+        else:
+            retVal =  self.__customerFieldsChanged() or \
+                      self.__vehicleFieldsChanged() or \
+                      self.__workorderFieldsChanged()
+        return retVal
     
     def __customerFieldsChanged(self):
         """ Compares the form fields for the customer section against the 
