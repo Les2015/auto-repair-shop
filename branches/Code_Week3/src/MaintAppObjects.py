@@ -111,8 +111,8 @@ class Customer(object):
     def __eq__(self, testCustomer):
         """ Overload the == operator to do a field-by-field comparison of self
             against testCustomer """
-        return self.firstName == testCustomer.firstName and \
-               self.lastName  == testCustomer.lastName # and etc., etc.
+        return self.first_name == testCustomer.first_name and \
+               self.last_name  == testCustomer.last_name # and etc., etc.
     
     def __ne__(self, testCustomer):
         """ Overload the != operator to do a field-by-field comparison of self
