@@ -54,6 +54,7 @@ class MaintAppView(object):
         self.__customerPanel = CustomerSubview()
         self.__vehiclePanel = VehicleSubview()
         self.__workorderPanel = WorkorderSubview()
+        self.__dialogPanel = None
         self.__mainMode = NEW_CUSTOMER
         return None
     
@@ -124,13 +125,18 @@ class MaintAppView(object):
             associated with this dialog form so they get submitted when
             the user responds to the dialog.
         """
-        pass
+        self.__dialogPanel = DialogSubview(request_button, request_tag)
+        return None
     
     def serve_content(self, reqhandler):
         self.__serve_header(reqhandler)
         reqhandler.response.out.write("""
           <body>
             <form action="/Customer" method="post">
+        """)
+        if self.__dialogPanel is not None:
+            self.__dialogPanel._serve_content(reqhandler)
+        reqhandler.response.out.write("""
               <table class="my_table">
                 <tr>
                   <td rowspan="2" class="my_tleft">""")
@@ -225,8 +231,8 @@ class SidePanelSubview(object):
         for pair in woList:
             vehicle = pair[0]
             workorder = pair[1]
-            sys.stderr.write(str(vehicle))
-            sys.stderr.write(str(workorder) + "\n")
+            #sys.stderr.write(str(vehicle))
+            #sys.stderr.write(str(workorder) + "\n")
             if vehicle is not None:
                 if workorder.getId() == self.__workorderId:
                     button_class = "s_active_side_wo"
@@ -649,4 +655,20 @@ class WorkorderSubview(object):
                 </tr>
             </table>""")
         return None
+
+class DialogSubview(object):
+    def __init__(self, request_button, request_tag):
+        self.__request_button = request_button
+        self.__request_tag = request_tag
+        return None
+    
+    def _serve_content(self, reqhandler):
+        dialogTemp = os.path.join ( os.path.dirname(__file__), 'templates/dialogTemplate.html' )
+        tempValuesDict = {'request_button':nz(self.__request_button),
+                          'request_tag':nz(self.__request_tag) }
+                
+        outstr = template.render ( dialogTemp, tempValuesDict )
+        reqhandler.response.out.write(outstr)
+        return None
+    
     
