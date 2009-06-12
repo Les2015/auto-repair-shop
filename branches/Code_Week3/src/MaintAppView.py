@@ -27,7 +27,11 @@ from google.appengine.ext.webapp import template
 from MaintAppObjects import nz
 from MaintAppObjects import Workorder
 
-
+def doRender(handler,temp,dict):
+    path = os.path.join ( os.path.dirname(__file__), 'templates/' + temp + '.html' )
+    outstr = template.render ( path, dict )
+    handler.response.out.write(outstr)
+    
 class MaintAppView(object):
     """ Class to implement the View part of the MVC implementation of the
         Maintenance Records System.  This class provides the public interface
@@ -128,18 +132,19 @@ class MaintAppView(object):
         self.__dialogPanel = DialogSubview(request_button, request_tag)
         return None
     
-    def serve_content(self, reqhandler):
+    def serve_content(self, reqhandler):         
         self.__serve_header(reqhandler)
         reqhandler.response.out.write("""
           <body>
             <form action="/Customer" method="post">
-        """)
+        """)         
         if self.__dialogPanel is not None:
             self.__dialogPanel._serve_content(reqhandler)
         reqhandler.response.out.write("""
               <table class="my_table">
                 <tr>
-                  <td rowspan="2" class="my_tleft">""")
+                  <td rowspan="2" class="my_tleft">""")       
+        #doRender (reqhandler, 'top', {})   #moving html to templates         
         if self.__sidePanel is not None:
             self.__sidePanel._serve_content(reqhandler)
         reqhandler.response.out.write("""
@@ -155,19 +160,18 @@ class MaintAppView(object):
             reqhandler.response.out.write("""
                       </td>
                     </tr>
-                    """)
-            
+                    """)            
             if self.__mainMode == INPUT_CUSTOMER:
                 reqhandler.response.out.write("""
                         <tr>
                           <td class="my_tright_bottom">""")
                 if self.__vehiclePanel is not None:
-                    self.__vehiclePanel._serve_content(reqhandler)
+                    self.__vehiclePanel._serve_content(reqhandler)                    
+        #doRender(reqhandler, 'bottom', {})
         reqhandler.response.out.write("""
                   </td>
                 </tr>
-                """)
-            
+                """)           
         reqhandler.response.out.write("""
               </table>
             </form>
@@ -310,13 +314,10 @@ class CustomerSubview(object):
         self.__searchResults = customer_list
         return None
 
-    def _serve_content(self, reqhandler):
-        """ Uses template customerSubview.html and its children to compose and display customer info sub view """
-        
-        newCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewNewCust.html' )
-        findCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewFindCust.html' )
-        dispCustTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSubviewDispCust.html' )
-        searchResultsTemp = os.path.join ( os.path.dirname(__file__), 'templates/customerSearchResults.html' )
+    def _serve_content_old(self, reqhandler):
+        """ Uses template customerSubview.html and its children to compose and display customer info sub view
+            as well as search results while in find mode 
+        """ 
         tempValuesDict = {'customer_first_name':nz(self.__customer.first_name),
                 'customer_last_name':nz(self.__customer.last_name),
                 'customer_address1':nz(self.__customer.address1),
@@ -332,20 +333,36 @@ class CustomerSubview(object):
               
         if (self.__searchMode == False):
             if self.__displayMode:
-                outstr = template.render ( dispCustTemp, tempValuesDict )
-                reqhandler.response.out.write(outstr)     
+                doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
             else:
-                outstr = template.render ( newCustTemp, tempValuesDict )
-                reqhandler.response.out.write(outstr)
+                doRender (reqhandler, 'customerSubviewNewCust', tempValuesDict)
         else: 
-            outstr = template.render ( findCustTemp, tempValuesDict )
-            reqhandler.response.out.write(outstr) 
+            doRender (reqhandler, 'customerSubviewFindCust', tempValuesDict) 
             if self.__searchResults is not None:          
                 tempValuesDict = { 'customers':self.__searchResults }    
-                outstr = template.render ( searchResultsTemp, tempValuesDict )
-                reqhandler.response.out.write(outstr)
+                doRender (reqhandler, 'customerSearchResults', tempValuesDict)
         return None
     
+    def _serve_content(self, reqhandler):
+        """ Uses template customerSubview.html and its children to compose and display customer info sub view
+            as well as search results when in find mode 
+        """            
+        if ( self.__customer.getId() == "-1" ):
+            tempValuesDict = {}  # take care of None values if database object is empty.
+        else:
+            tempValuesDict = { 'customer':self.__customer }              
+        if (self.__searchMode == False):
+            if self.__displayMode:
+                doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
+            else:
+                doRender (reqhandler, 'customerSubviewNewCust', tempValuesDict)
+        else: 
+            doRender (reqhandler, 'customerSubviewFindCust', tempValuesDict) 
+            if self.__searchResults is not None:          
+                tempValuesDict = { 'customers':self.__searchResults }    
+                doRender (reqhandler, 'customerSearchResults', tempValuesDict)
+        return None
+   
 class VehicleSubview(object):
     def __init__(self):
         return None
@@ -365,7 +382,7 @@ class VehicleSubview(object):
                 break
         return None
     
-    def _serve_content(self, reqhandler):
+    def _serve_content_old(self, reqhandler):
         self.__retrieveActiveVehicle()
         reqhandler.response.out.write('<div style="width:100%">')
         tabNum = -1
@@ -460,6 +477,36 @@ class VehicleSubview(object):
             """)
         return None
     
+    def _serve_content(self, reqhandler):
+        self.__retrieveActiveVehicle()
+        reqhandler.response.out.write('<div style="width:100%">')
+        tabNum = -1
+        for eachVehicle in self.__vehicles:
+            tabNum += 1
+            if eachVehicle.getId() == self.__activeVehicleId:
+                style = "selected_tab_button"
+            else:
+                style = "tab_button"
+            if eachVehicle.getId() == "-1":
+                reqhandler.response.out.write( \
+                    '<input class="%s" type="submit" name="submit_vtab_%d" value="New Vehicle" />' % \
+                    (style, tabNum, ))
+            else:
+                reqhandler.response.out.write( \
+                    '<input class="%s" type="submit" name="submit_vtab_%d" value="%s" />' % \
+                    (style, tabNum, str(eachVehicle.year)))
+        #<input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
+        #<input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
+        reqhandler.response.out.write("""
+            <hr style="width=102%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
+            </div>""")
+        if ( self.__vehicle.getId() == "-1" ):
+            tempValuesDict = {}
+        else:
+            tempValuesDict = { 'vehicle':self.__vehicle }    
+        doRender (reqhandler, 'vehicleSubview', tempValuesDict)       
+        return None
+        
 class WorkorderSubview(object):
     def __init__(self):
         self.__customer = None
