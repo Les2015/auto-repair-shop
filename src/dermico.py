@@ -777,6 +777,7 @@ class MaintAppController(object):
             added or edited, we need to do an additional check to keep from flagging
             data as changed when moving away from search mode.
         """
+        return False
         if self.__customerActive() and ('comments' not in self.__userValues.keys()):
             retVal = False
         else:
