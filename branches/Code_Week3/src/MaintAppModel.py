@@ -208,7 +208,7 @@ class MaintAppModel(object):
         return status
     
     def chk_comments(self, comments):
-        status, msg = lenOK(comments,1,999)
+        status, msg = lenOK(comments,1,5000)
         return status
     
     def getInvFldNames(self):
@@ -407,7 +407,7 @@ class MaintAppModel(object):
         return status
       
     def chk_notes(self, notes):
-        status,msg = lenOK(notes,1,999)
+        status,msg = lenOK(notes,1,5000)
         return status
     
     def validateVehicle(self,vehicle):
@@ -562,7 +562,7 @@ class MaintAppModel(object):
         return status in (Workorder.OPEN, Workorder.COMPLETED, Workorder.CLOSED )
     
     def chk_w_customer_request(self, customer_request):
-        status,msg = lenOK(customer_request,1,1000)
+        status,msg = lenOK(customer_request,1,5000)
         return status
  
     def chk_w_mechanic(self, mechanic):
@@ -570,11 +570,11 @@ class MaintAppModel(object):
         return status
     
     def chk_w_task_list(self, task_list):
-        isOK,msg = lenOK(task_list, 1,9)
+        isOK,msg = lenOK(task_list, 1,5000)
         return isOK
     
     def chk_w_work_performed(self, work_performed):
-        status,msg = lenOK(work_performed,1,999)
+        status,msg = lenOK(work_performed,1,5000)
         return status
     
     #FIXME: what about date fields?
@@ -613,15 +613,15 @@ class MaintAppModel(object):
         # if there are no required missing fields  or invalid fields, everything is ok
         return (len(self.missing) + len(self.invFld)) == 0
        
-    def saveWorkorder(self, workOrder):
+    def saveWorkorder(self, workorder):
         """ 
-        If workOrder is invalid, raise exception.
-        Write contents of workOrder object to data store.  
-        If id in workOrder object is -1, create the record; 
+        If workorder is invalid, raise exception.
+        Write contents of workorder object to data store.  
+        If id in workorder object is -1, create the record; 
         otherwise, update the existing record
-        in the database.  Return primary key of the workOrder.
+        in the database.  Return primary key of the workorder.
         """
-        if self.validateWorkOrder(workOrder) == False: 
+        if self.validateWorkOrder(workorder) == False: 
            resLst = self.getInvFldNames()
            if ('date_created' in resLst) or \
               ('date_closed' in resLst) or \
@@ -630,16 +630,18 @@ class MaintAppModel(object):
            else:
               trap = ValidationErrors   
            raise trap(self.errTxt, resLst)
-       
-        if workOrder.id == '-1':
+        
+        myLog.write("----> %s" % workorder.id)
+        if workorder.id == '-1':
             entity = None
         else:
             try:
-                entity = WorkorderEnt.get(db.Key(workOrder.id))
-            except Exception:
+                entity = WorkorderEnt.get(db.Key(workorder.id))
+            except Exception, e:
+                myLog.write("db error: " + str(e))
                 entity = None
 
-        vehicle_ent = VehicleEnt.get(db.Key(workOrder.vehicle_id))    
+        vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
         if entity:
             entity.mileage = int(workorder.mileage)
             entity.status = zn(workorder.status)
@@ -674,7 +676,7 @@ class MaintAppModel(object):
                 vehicle_key = str(workorder_ent.vehicle.key())
                 
             return Workorder(id=str(workorder_ent.key()), 
-                             mileage=nz(workorder_ent.mileage), 
+                             mileage=str(workorder_ent.mileage), 
                              status=nz(workorder_ent.status), 
                              date_created=dateToString(workorder_ent.date_created),
                              customer_request=nz(workorder_ent.customer_request),
