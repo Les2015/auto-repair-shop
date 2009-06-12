@@ -1,38 +1,38 @@
 <table style="margin-top:15px; width:90%; margin-left:auto; margin-right:auto;">
 <tr>
 <td>
-<label for="vehicle.make">Make: </label>
+<label for="make">Make: </label>
 </td>
-<td><input type="text" name="vehicle.make" value="{{ vehicle.make }}" />
-</td>
-<td>
-<label for="vehicle.model" style="padding-left:10px">Model: </label>
-</td>
-<td><input type="text" name="vehicle.model" value="{{ vehicle.model }}" />
+<td><input type="text" name="make" value="{{ vehicle.make }}" />
 </td>
 <td>
-<label for="vehicle.year" style="padding-left:10px">Year: </label>
+<label for="model" style="padding-left:10px">Model: </label>
 </td>
-<td><input type="text" name="vehicle.year" size="8" value="{{ vehicle.year }}" />
+<td><input type="text" name="model" value="{{ vehicle.model }}" />
+</td>
+<td>
+<label for="year" style="padding-left:10px">Year: </label>
+</td>
+<td><input type="text" name="year" size="8" value="{{ vehicle.year }}" />
 </td>
 </tr>
 <tr>
 <td>
-<label for="vehicle.license">License Plate: </label>
+<label for="license">License Plate: </label>
 </td>
-<td><input type="text" name="vehicle.license" value="{{ vehicle.license}}" />
-<input type="hidden" name="vehicle.mileage" value="{{ vehicle.mileage }}" />
+<td><input type="text" name="license" value="{{ vehicle.license}}" />
+<input type="hidden" name="mileage" value="{{ vehicle.mileage }}" />
 </td>
 <td>
-<label for="vehicle.vin" style="padding-left:10px">VIN: </label>
+<label for="vin" style="padding-left:10px">VIN: </label>
 </td>
-<td colspan="3"><input type="text" name="vehicle.vin" size="40" value="{{ vehicle.vin }}" />
+<td colspan="3"><input type="text" name="vin" size="40" value="{{ vehicle.vin }}" />
 </td>
 </tr>
 <tr>
 <td colspan="6"><br />
-<label for="vehicle.notes">Notes: </label><br />
-<textarea name="vehicle.notes" rows="3" cols="65">{{ vehicle.notes }}
+<label for="notes">Notes: </label><br />
+<textarea name="notes" rows="3" cols="65">{{ vehicle.notes }}
 </textarea>
 </td>
 </tr>            
