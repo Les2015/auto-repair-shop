@@ -23,6 +23,8 @@ from time import *
 
 def nz(value):
 	return ("" if value is None else value)
+    
+###########################################################################################
 
 class Customer(object):
     """ Light weight class for passing the customer data around. """
@@ -108,18 +110,26 @@ class Customer(object):
                 "\temail = " + self.email + "\n" + \
                 "\tcomments = " + self.comments + "\n"            
     
-    def __eq__(self, testCustomer):
-        """ Overload the == operator to do a field-by-field comparison of self
-            against testCustomer """
-        # QQQQ This is just a stub for now !!!
-        # Once the Customer objects hold strings the nz() calls won't be needed.
-        return nz(self.first_name) == nz(testCustomer.first_name) and \
-               nz(self.last_name)  == nz(testCustomer.last_name) # and etc., etc.
     
-    def __ne__(self, testCustomer):
+    def __eq__(self, other):
+        '''
+        Overload the == operator to do a field-by-field comparison of self
+        with an other instance of the same class.
+        Assumes the compared object is of the same type and that
+        the class does not have any composite objects so that
+        2 attributes can be compared using "=="
+        '''
+        for a in self.__dict__:
+            if (nz(getattr(self,a)) != nz(getattr(other,a))):
+                return False 
+        return True
+
+    def __ne__(self, other):
         """ Overload the != operator to do a field-by-field comparison of self
-            to testCustomer """
-        return not self.__eq__(testCustomer)
+            with an other instance of the same class. See __eq__ for more details"""
+        return not self.__eq__(other)
+    
+###########################################################################################
     
     
 class Vehicle(object):
@@ -181,16 +191,28 @@ class Vehicle(object):
                 "\tnotes = " + self.notes + "\n" + \
                 "\tcustomer_id = " + self.customer_id + "\n"            
 
-    def __eq__(self, testVehicle):
-        """ Overload the == operator to do a field-by-field comparison of self
-            against testVehicle """
+ 
+    def __eq__(self, other):
+        '''
+        Overload the == operator to do a field-by-field comparison of self
+        with an other instance of the same class.
+        Assumes the compared object is of the same type and that
+        the class does not have any composite objects so that
+        2 attributes can be compared using "=="
+        '''
+        for a in self.__dict__:
+            if (nz(getattr(self,a)) != nz(getattr(other,a))):
+                return False 
         return True
-    
-    def __ne__(self, testVehicle):
+
+    def __ne__(self, other):
         """ Overload the != operator to do a field-by-field comparison of self
-            to testVehicle """
-        return not self.__eq__(testVehicle)
+            with an other instance of the same class. See __eq__ for more details"""
+        return not self.__eq__(other)
     
+  
+    
+###########################################################################################
     
 class Workorder(object):
     """ Light weight class for passing the workorder data around. """
@@ -314,12 +336,22 @@ class Workorder(object):
             retVal = []
         return retVal
     
-    def __eq__(self, testWO):
-        """ Overload the == operator to do a field-by-field comparison of self
-            against testWO """
+     
+    def __eq__(self, other):
+        '''
+        Overload the == operator to do a field-by-field comparison of self
+        with an other instance of the same class.
+        Assumes the compared object is of the same type and that
+        the class does not have any composite objects so that
+        2 attributes can be compared using "=="
+        '''
+        for a in self.__dict__:
+            if (nz(getattr(self,a)) != nz(getattr(other,a))):
+                return False 
         return True
-    
-    def __ne__(self, testWO):
+
+    def __ne__(self, other):
         """ Overload the != operator to do a field-by-field comparison of self
-            to testWO """
-        return not self.__eq__(testWO)
+            with an other instance of the same class. See __eq__ for more details"""
+        return not self.__eq__(other)
+    
