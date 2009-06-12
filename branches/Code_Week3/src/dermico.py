@@ -777,7 +777,6 @@ class MaintAppController(object):
             added or edited, we need to do an additional check to keep from flagging
             data as changed when moving away from search mode.
         """
-        return False
         if self.__customerActive() and ('comments' not in self.__userValues.keys()):
             retVal = False
         else:
@@ -816,9 +815,9 @@ class MaintAppController(object):
         """
         if self.__vehicleActive():
             if self.__activeVehicleId == "-1":
-                compVehicle = Vehicle()
+                compVehicle = Vehicle(customer_id=self.__activeCustomerId)
             else:
-                compVehicle = self.__model.getCustomer(self.__activeVehicleId)
+                compVehicle = self.__model.getVehicle(self.__activeVehicleId)
             activeVehicle = Vehicle()
             activeVehicle.loadFromDictionary(self.__userValues)
             retVal = (compVehicle != activeVehicle)
@@ -836,9 +835,9 @@ class MaintAppController(object):
         """
         if self.__workorderActive():
             if self.__activeWorkorderId == "-1":
-                compWorkorder = Workorder()
+                compWorkorder = Workorder(vehicle_id=self.__activeVehicleId)
             else:
-                compWorkorder = self.__model.getCustomer(self.__activeWorkorderId)
+                compWorkorder = self.__model.getWorkorder(self.__activeWorkorderId)
             activeWorkorder = Workorder()
             activeWorkorder.loadFromDictionary(self.__userValues)
             retVal = (compWorkorder != activeWorkorder)
@@ -869,7 +868,7 @@ class MaintAppController(object):
             is never on the screen when the customer fields are active, we negate
             the customerActive test.
         """
-        return not self.__customerActive()
+        return ('mechanic' in self.__userValues.keys())
     
     # The following method is not active in any way.  It was put together as
     # a way of 'thinking' about how we might handle a situation that would
