@@ -125,6 +125,7 @@ body
 	margin-right: auto;
 	vertical-align: middle;
 	background-color: Silver;
+	z-index: 1;
 }
 
 .dialog-button
