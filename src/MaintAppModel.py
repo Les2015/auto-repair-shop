@@ -16,7 +16,7 @@ from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import datastore_file_stub 
 from MaintAppObjects import Customer, Vehicle, Workorder 
 from DatastoreModels import CustomerEnt, VehicleEnt, WorkorderEnt
-from util import myLog
+from Utilities import myLog, dateToString, stringToDate
 
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
@@ -28,6 +28,7 @@ def nz(value):
 def zn(strValue):
     """ if input string is empty, convert it to None """
     return (None if strValue=="" else strValue)
+
 
 #================================================================
 class ValidationErrors(Exception):
@@ -329,7 +330,7 @@ class MaintAppModel(object):
             The searchCriteria object is an instance of the Customer class.
             For now we will assume exact matches:
                 e.g., 'SELECT .... WHERE (customer_table.first_name=%d)' %
-                                                searchCriteria.getFirstName()
+                                                searchCriteria.first_name
             In the future we may consider supporting wild card matching.
             A list of Customer objects corresponding to the customer records
             The objects in the list are ordered by last_name, then first_name
@@ -642,24 +643,24 @@ class MaintAppModel(object):
         if entity:
             entity.mileage = int(workorder.mileage)
             entity.status = zn(workorder.status)
-            entity.date_created = zn(workorder.date_created)
+            entity.date_created = stringToDate(workorder.date_created)
             entity.customer_request = zn(workorder.customer_request)
             entity.mechanic = zn(workorder.mechanic)
             entity.task_list = zn(workorder.task_list)
             entity.work_performed = zn(workorder.work_performed)
             entity.notes = zn(workorder.notes)
-            entity.date_closed = zn(workorder.date_closed)
+            entity.date_closed = stringToDate(workorder.date_closed)
             entity.vehicle = vehicle_ent
         else:    
             entity = WorkorderEnt(mileage=int(workorder.mileage),
                                   status=zn(workorder.status),
-                                  date_created=zn(workorder.date_created),
+                                  date_created=stringToDate(workorder.date_created),
                                   customer_request=zn(workorder.customer_request),
                                   mechanic=zn(workorder.mechanic),
                                   task_list=zn(workorder.task_list),
                                   work_performed=zn(workorder.work_performed),
                                   notes=zn(workorder.notes),
-                                  date_closed=zn(workorder.date_closed),
+                                  date_closed=stringToDate(workorder.date_closed),
                                   vehicle = vehicle_ent)
         key = entity.put()
         return str(key)
@@ -675,13 +676,13 @@ class MaintAppModel(object):
             return Workorder(id=str(workorder_ent.key()), 
                              mileage=nz(workorder_ent.mileage), 
                              status=nz(workorder_ent.status), 
-                             date_created=nz(workorder_ent.date_created),
+                             date_created=dateToString(workorder_ent.date_created),
                              customer_request=nz(workorder_ent.customer_request),
                              mechanic=nz(workorder_ent.mechanic),
                              task_list=nz(workorder_ent.task_list),
                              work_performed=nz(workorder_ent.work_performed),
                              notes=nz(workorder_ent.notes),
-                             date_closed=nz(workorder_ent.date_closed),
+                             date_closed=dateToString(workorder_ent.date_closed),
                              vehicle_id=vehicle_key)
         else:
             return None
@@ -746,27 +747,6 @@ class MaintAppModel(object):
             vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
             result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
         return result
-    
-    def validateCustomerInfo(self, customer):
-        """ Validate the data fields in the 'customer' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
-    
-    def validateVehicleInfo(self, vehicle):
-        """ Validate the data fields in the 'vehicle' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
-    
-    def validateWorkorderInfo(self, workorder):
-        """ Validate the data fields in the 'workorder' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
     
 
 class TestMaintAppModel(object):
