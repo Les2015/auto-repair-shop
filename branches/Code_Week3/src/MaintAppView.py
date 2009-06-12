@@ -22,10 +22,10 @@ INPUT_CUSTOMER = 3
 INPUT_WORKORDER = 4
 
 import os, sys
-from datetime import datetime
 from google.appengine.ext.webapp import template
-from MaintAppObjects import nz
 from MaintAppObjects import Workorder
+import Utilities
+
 
 def doRender(handler,temp,dict):
     path = os.path.join ( os.path.dirname(__file__), 'templates/' + temp + '.html' )
@@ -318,17 +318,17 @@ class CustomerSubview(object):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results while in find mode 
         """ 
-        tempValuesDict = {'customer_first_name':nz(self.__customer.first_name),
-                'customer_last_name':nz(self.__customer.last_name),
-                'customer_address1':nz(self.__customer.address1),
-                'customer_address2':nz(self.__customer.address2),
-                'customer_city':nz(self.__customer.city),
-                'customer_state':nz(self.__customer.state),
-                'customer_zip':nz(self.__customer.zip),
-                'customer_phone1':nz(self.__customer.phone1),
-                'customer_phone2':nz(self.__customer.phone2),
-                'customer_email':nz(self.__customer.email),
-                'customer_comments': nz(self.__customer.comments)
+        tempValuesDict = {'customer_first_name':self.__customer.first_name,
+                'customer_last_name':self.__customer.last_name,
+                'customer_address1':self.__customer.address1,
+                'customer_address2':self.__customer.address2,
+                'customer_city':self.__customer.city,
+                'customer_state':self.__customer.state,
+                'customer_zip':self.__customer.zip,
+                'customer_phone1':self.__customer.phone1,
+                'customer_phone2':self.__customer.phone2,
+                'customer_email':self.__customer.email,
+                'customer_comments': self.__customer.comments
                 }
               
         if (self.__searchMode == False):
@@ -412,7 +412,7 @@ class VehicleSubview(object):
             </td>
             <td>""")
         reqhandler.response.out.write('<input type="text" name="make" value="%s" />' %
-                                        nz(self.__vehicle.make))
+                                        self.__vehicle.make)
         reqhandler.response.out.write("""
             </td>
             <td>
@@ -420,7 +420,7 @@ class VehicleSubview(object):
             </td>
             <td>""")
         reqhandler.response.out.write('<input type="text" name="model" value="%s" />' %
-                                        nz(self.__vehicle.model))
+                                        self.__vehicle.model)
         reqhandler.response.out.write("""
             </td>
             <td>
@@ -428,7 +428,7 @@ class VehicleSubview(object):
             </td>
             <td>""")
         reqhandler.response.out.write('<input type="text" name="year" size="8" value="%s" />' %
-                                        nz(self.__vehicle.year))
+                                        self.__vehicle.year)
         reqhandler.response.out.write("""
             </td>
             </tr>
@@ -438,7 +438,7 @@ class VehicleSubview(object):
             </td>
             <td>""")
         reqhandler.response.out.write('<input type="text" name="license" value="%s" />' %
-                                        nz(self.__vehicle.license))
+                                        self.__vehicle.license)
         reqhandler.response.out.write("""
             <input type="hidden" name="mileage" value="150000" />
             </td>
@@ -447,7 +447,7 @@ class VehicleSubview(object):
             </td>
             <td colspan="3">""")
         reqhandler.response.out.write('<input type="text" name="vin" size="40" value="%s" />' %
-                                        nz(self.__vehicle.vin))
+                                        self.__vehicle.vin)
         reqhandler.response.out.write("""
             </td>
             </tr>
@@ -455,7 +455,7 @@ class VehicleSubview(object):
             <td colspan="6"><br />
             <label for="notes">Notes: </label><br />
             <textarea name="notes" rows="3" cols="65">""")
-        reqhandler.response.out.write(nz(self.__vehicle.notes))
+        reqhandler.response.out.write(self.__vehicle.notes)
         reqhandler.response.out.write("""
             </textarea>
             </td>
@@ -551,9 +551,9 @@ class WorkorderSubview(object):
                 </td>
                 <td>""")
         reqhandler.response.out.write("%s %s; Contact: %s" %
-                                      (nz(self.__customer.first_name),
-                                       nz(self.__customer.last_name),
-                                       nz(self.__customer.phone1)))
+                                      (self.__customer.first_name,
+                                       self.__customer.last_name,
+                                       self.__customer.phone1))
         reqhandler.response.out.write("""
                 </td>
             </tr>
@@ -563,10 +563,10 @@ class WorkorderSubview(object):
                 </td>
                 <td>""")
         reqhandler.response.out.write("%s %s %s; License: %s" %
-                                      (nz(self.__vehicle.year),
-                                       nz(self.__vehicle.make),
-                                       nz(self.__vehicle.model),
-                                       nz(self.__vehicle.license)))
+                                      (self.__vehicle.year,
+                                       self.__vehicle.make,
+                                       self.__vehicle.model,
+                                       self.__vehicle.license))
         reqhandler.response.out.write("""
                 </td>
             </tr>
@@ -582,7 +582,7 @@ class WorkorderSubview(object):
             if workorder.id == "-1":
                 label = "New Work Order"
             else:
-                label = workorder.date_created.strftime("%b %d, %Y")
+                label = Utilities.shortDate(workorder.date_created)
             reqhandler.response.out.write( \
                 '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
                     (selClass, woIndex, label))
@@ -595,13 +595,13 @@ class WorkorderSubview(object):
         #<input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
         reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
         reqhandler.response.out.write('</div>')
-        dateText = nz(self.__workorder.getDateCreated()) # Reused below for visible text
+        dateText = self.__workorder.getDateCreated() # Reused below for visible text
         reqhandler.response.out.write( \
             '<input type="hidden" name="date_created" value="%s" />' % \
             dateText)
         reqhandler.response.out.write( \
             '<input type="hidden" name="date_closed" value="%s" />' % \
-            nz(self.__workorder.getDateClosed()))
+            self.__workorder.getDateClosed())
         reqhandler.response.out.write("""
             <table style="margin-top:30px;">
                 <tr>
@@ -612,14 +612,14 @@ class WorkorderSubview(object):
                         <label for="mileage">Odometer Reading:</label>""")
         reqhandler.response.out.write( \
             '<input type="text" name="mileage" value="%s" />' % \
-            nz(self.__workorder.mileage))
+            self.__workorder.mileage)
         reqhandler.response.out.write("""
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
                         <textarea name="customer_request" rows="3" cols="85">""")
-        reqhandler.response.out.write(nz(self.__workorder.customer_request))
+        reqhandler.response.out.write(self.__workorder.customer_request)
         reqhandler.response.out.write("""
                         </textarea>
                     </td>
@@ -656,14 +656,14 @@ class WorkorderSubview(object):
                     <td>
                         <label for "mechanics_tasks">Mechanics Tasks:</label><br />
                         <textarea name="task_list" rows="7" cols="40">""")
-        reqhandler.response.out.write(nz(self.__workorder.task_list))
+        reqhandler.response.out.write(self.__workorder.task_list)
         reqhandler.response.out.write("""
                         </textarea>
                     </td>
                     <td>
                         <label for "work_done">Work Performed:</label><br />
                         <textarea name="work_performed" rows="7" cols="40">""")
-        reqhandler.response.out.write(nz(self.__workorder.work_performed))
+        reqhandler.response.out.write(self.__workorder.work_performed)
         reqhandler.response.out.write("""
                         </textarea>
                     </td>
@@ -672,7 +672,7 @@ class WorkorderSubview(object):
                     <td colspan="2">
                         <label for "next_service">Notes and next service recommendations:</label><br />
                         <textarea name="notes" rows="4" cols="85">""")
-        reqhandler.response.out.write(nz(self.__workorder.notes))
+        reqhandler.response.out.write(self.__workorder.notes)
         reqhandler.response.out.write("""
                         </textarea>
                     </td>
@@ -711,8 +711,8 @@ class DialogSubview(object):
     
     def _serve_content(self, reqhandler):
         dialogTemp = os.path.join ( os.path.dirname(__file__), 'templates/dialogTemplate.html' )
-        tempValuesDict = {'request_button':nz(self.__request_button),
-                          'request_tag':nz(self.__request_tag) }
+        tempValuesDict = {'request_button':self.__request_button,
+                          'request_tag':self.__request_tag }
                 
         outstr = template.render ( dialogTemp, tempValuesDict )
         reqhandler.response.out.write(outstr)
