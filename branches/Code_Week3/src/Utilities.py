@@ -34,7 +34,7 @@ def shortDate(strDate):
 ################################################################################
 
 def main():
-    """ Test the date/string conversion functions.
+    """ Test the date/string conversion functions. """
     date = datetime.now()
     print str(date)
     print dateToString(date)
