@@ -21,6 +21,14 @@ from util import myLog
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
 
+def nz(value):
+    """ if input value is None, convert it to empty string """
+    return ("" if value is None else value)
+
+def zn(strValue):
+    """ if input string is empty, convert it to None """
+    return (None if strValue=="" else strValue)
+
 #================================================================
 class ValidationErrors(Exception):
     '''
@@ -146,7 +154,7 @@ class MaintAppModel(object):
             the UI and the setup of the database.
         """
         pass
-     
+      
     #---------------------------- customer -----------------------------------------------
     
     #================================================================================
@@ -258,29 +266,29 @@ class MaintAppModel(object):
                 entity = None
        
         if entity:
-            entity.first_name = customer.first_name
-            entity.last_name = customer.last_name
-            entity.address1 = customer.address1
-            entity.address2 = customer.address2
-            entity.city = customer.city
-            entity.state = customer.state
-            entity.zip = customer.zip
-            entity.phone1 = customer.phone1
-            entity.phone2 = customer.phone2
-            entity.email = customer.email
-            entity.comments = customer.comments
+            entity.first_name = zn(customer.first_name)
+            entity.last_name = zn(customer.last_name)
+            entity.address1 = zn(customer.address1)
+            entity.address2 = zn(customer.address2)
+            entity.city = zn(customer.city)
+            entity.state = zn(customer.state)
+            entity.zip = zn(customer.zip)
+            entity.phone1 = zn(customer.phone1)
+            entity.phone2 = zn(customer.phone2)
+            entity.email = zn(customer.email)
+            entity.comments = zn(customer.comments)
         else:    
-            entity = CustomerEnt(first_name=customer.first_name,
-                                 last_name=customer.last_name,
-                                 address1=customer.address1,
-                                 address2=customer.address2,
-                                 city=customer.city,
-                                 state=customer.state,
-                                 zip=customer.zip,
-                                 phone1=customer.phone1,
-                                 phone2=customer.phone2,
-                                 email=customer.email,
-                                 comments=customer.comments)
+            entity = CustomerEnt(first_name=zn(customer.first_name),
+                                 last_name=zn(customer.last_name),
+                                 address1=zn(customer.address1),
+                                 address2=zn(customer.address2),
+                                 city=zn(customer.city),
+                                 state=zn(customer.state),
+                                 zip=zn(customer.zip),
+                                 phone1=zn(customer.phone1),
+                                 phone2=zn(customer.phone2),
+                                 email=zn(customer.email),
+                                 comments=zn(customer.comments))
         key = entity.put()
         return str(key)
             
@@ -289,17 +297,17 @@ class MaintAppModel(object):
         """
         if customer_ent:
             return Customer(id=str(customer_ent.key()), 
-                            first_name=customer_ent.first_name, 
-                            last_name=customer_ent.last_name,
-                            address1=customer_ent.address1,
-                            address2=customer_ent.address2,
-                            city=customer_ent.city,
-                            state=customer_ent.state,
-                            zip=customer_ent.zip,
-                            phone1=customer_ent.phone1,
-                            phone2=customer_ent.phone2,
-                            email=customer_ent.email,
-                            comments=customer_ent.comments)
+                            first_name=nz(customer_ent.first_name), 
+                            last_name=nz(customer_ent.last_name),
+                            address1=nz(customer_ent.address1),
+                            address2=nz(customer_ent.address2),
+                            city=nz(customer_ent.city),
+                            state=nz(customer_ent.state),
+                            zip=nz(customer_ent.zip),
+                            phone1=nz(customer_ent.phone1),
+                            phone2=nz(customer_ent.phone2),
+                            email=nz(customer_ent.email),
+                            comments=nz(customer_ent.comments))
         else:
             return None
 
@@ -313,21 +321,7 @@ class MaintAppModel(object):
         except Exception:
             entity = None
 
-        if entity:
-            return Customer(id=customer_id, 
-                            first_name=entity.first_name, 
-                            last_name=entity.last_name,
-                            address1=entity.address1,
-                            address2=entity.address2,
-                            city=entity.city,
-                            state=entity.state,
-                            zip=entity.zip,
-                            phone1=entity.phone1,
-                            phone2=entity.phone2,
-                            email=entity.email,
-                            comments=entity.comments)
-        else:
-            return None
+        return self.getCustomerFromCustomerEnt(entity)
         
     def searchForMatchingCustomers(self, searchCriteria):
         """ The model forms a query based on AND logic for the various
@@ -470,20 +464,20 @@ class MaintAppModel(object):
         customer_ent = CustomerEnt.get(db.Key(vehicle.customer_id))    
         #print "-- In saveVehicleInfo, customer_ent: ", customer_ent
         if entity:
-            entity.make = vehicle.make
-            entity.model = vehicle.model
+            entity.make = zn(vehicle.make)
+            entity.model = zn(vehicle.model)
             entity.year = int(vehicle.year)
-            entity.license = vehicle.license
-            entity.vin = vehicle.vin
-            entity.notes = vehicle.notes
+            entity.license = zn(vehicle.license)
+            entity.vin = zn(vehicle.vin)
+            entity.notes = zn(vehicle.notes)
             entity.customer = customer_ent
         else:    
-            entity = VehicleEnt(make=vehicle.make,
-                                model=vehicle.model,
+            entity = VehicleEnt(make=zn(vehicle.make),
+                                model=zn(vehicle.model),
                                 year=int(vehicle.year),
-                                license=vehicle.license,
-                                vin=vehicle.vin,
-                                notes=vehicle.notes,
+                                license=zn(vehicle.license),
+                                vin=zn(vehicle.vin),
+                                notes=zn(vehicle.notes),
                                 customer=customer_ent)
         
         key = entity.put()
@@ -500,12 +494,12 @@ class MaintAppModel(object):
             #print "--In getVehicleFromVehicleEnt, customer_key: " + customer_key    
             #print "--In getVehicleFromVehicleEnt, customer object:", vehicle_ent.customer    
             return Vehicle(id=str(vehicle_ent.key()), 
-                           make=vehicle_ent.make, 
-                           model=vehicle_ent.model, 
+                           make=nz(vehicle_ent.make), 
+                           model=nz(vehicle_ent.model), 
                            year=str(vehicle_ent.year),
-                           license=vehicle_ent.license,
-                           vin=vehicle_ent.vin,
-                           notes=vehicle_ent.notes,
+                           license=nz(vehicle_ent.license),
+                           vin=nz(vehicle_ent.vin),
+                           notes=nz(vehicle_ent.notes),
                            customer_id=customer_key)
         else:
             return None
@@ -646,26 +640,26 @@ class MaintAppModel(object):
 
         vehicle_ent = VehicleEnt.get(db.Key(workOrder.vehicle_id))    
         if entity:
-            entity.mileage = int(workOrder.mileage)
-            entity.status = workOrder.status
-            entity.date_created = workOrder.date_created
-            entity.customer_request = workOrder.customer_request
-            entity.mechanic = workOrder.mechanic
-            entity.task_list = workOrder.task_list
-            entity.work_performed = workOrder.work_performed
-            entity.notes = workOrder.notes
-            entity.date_closed = workOrder.date_closed
+            entity.mileage = int(workorder.mileage)
+            entity.status = zn(workorder.status)
+            entity.date_created = zn(workorder.date_created)
+            entity.customer_request = zn(workorder.customer_request)
+            entity.mechanic = zn(workorder.mechanic)
+            entity.task_list = zn(workorder.task_list)
+            entity.work_performed = zn(workorder.work_performed)
+            entity.notes = zn(workorder.notes)
+            entity.date_closed = zn(workorder.date_closed)
             entity.vehicle = vehicle_ent
         else:    
-            entity = WorkorderEnt(mileage=int(workOrder.mileage),
-                                  status=workOrder.status,
-                                  date_created=workOrder.date_created,
-                                  customer_request=workOrder.customer_request,
-                                  mechanic=workOrder.mechanic,
-                                  task_list=workOrder.task_list,
-                                  work_performed=workOrder.work_performed,
-                                  notes=workOrder.notes,
-                                  date_closed=workOrder.date_closed,
+            entity = WorkorderEnt(mileage=int(workorder.mileage),
+                                  status=zn(workorder.status),
+                                  date_created=zn(workorder.date_created),
+                                  customer_request=zn(workorder.customer_request),
+                                  mechanic=zn(workorder.mechanic),
+                                  task_list=zn(workorder.task_list),
+                                  work_performed=zn(workorder.work_performed),
+                                  notes=zn(workorder.notes),
+                                  date_closed=zn(workorder.date_closed),
                                   vehicle = vehicle_ent)
         key = entity.put()
         return str(key)
@@ -679,15 +673,15 @@ class MaintAppModel(object):
                 vehicle_key = str(workorder_ent.vehicle.key())
                 
             return Workorder(id=str(workorder_ent.key()), 
-                             mileage=workorder_ent.mileage, 
-                             status=workorder_ent.status, 
-                             date_created=workorder_ent.date_created,
-                             customer_request=workorder_ent.customer_request,
-                             mechanic=workorder_ent.mechanic,
-                             task_list=workorder_ent.task_list,
-                             work_performed=workorder_ent.work_performed,
-                             notes=workorder_ent.notes,
-                             date_closed=workorder_ent.date_closed,
+                             mileage=nz(workorder_ent.mileage), 
+                             status=nz(workorder_ent.status), 
+                             date_created=nz(workorder_ent.date_created),
+                             customer_request=nz(workorder_ent.customer_request),
+                             mechanic=nz(workorder_ent.mechanic),
+                             task_list=nz(workorder_ent.task_list),
+                             work_performed=nz(workorder_ent.work_performed),
+                             notes=nz(workorder_ent.notes),
+                             date_closed=nz(workorder_ent.date_closed),
                              vehicle_id=vehicle_key)
         else:
             return None
