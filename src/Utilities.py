@@ -34,11 +34,19 @@ def shortDate(strDate):
 ################################################################################
 
 def main():
+    """ Test the date/string conversion functions.
     date = datetime.now()
     print str(date)
     print dateToString(date)
     print shortDate(dateToString(date))
     print str(stringToDate(dateToString(date)))
-    
+    print
+    # Let's make sure that None is handled correctly as well.
+    date = None
+    print str(date)
+    print dateToString(date)
+    print shortDate(dateToString(date))
+    print str(stringToDate(dateToString(date)))
+        
 if __name__ == "__main__":
     main()
