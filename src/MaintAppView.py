@@ -89,8 +89,8 @@ class MaintAppView(object):
         """ Errors is a list of (field name, error type) tuples to be used to format
             errors and highlighting fields where data validation errors were detected.
         """
+        self.__customerPanel._configureErrorFields(errorObj.getFieldsWithErrors())
         self.__sidePanel._configureErrorMessages(errorObj)
-        pass
         
     def configureSidePanelContent(self, activeElement,
                                   openWorkorders,
@@ -286,6 +286,7 @@ class CustomerSubview(object):
         self.__searchMode = False
         self.__dispMode = False
         self.__searchResults = None
+        self.__errorFields = None
         return None
     
     def _configure_content(self, customerInfo):
@@ -307,13 +308,16 @@ class CustomerSubview(object):
         self.__displayMode = True
         return None
  
-    
     def _configure_search_results(self, customer_list):
         self.__searchMode = True
         self__displayMode = False
         self.__searchResults = customer_list
         return None
 
+    def _configureErrorFields(self, error_fields):
+        self.__errorFields = error_fields
+        return None
+    
     def _serve_content_old(self, reqhandler):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results while in find mode 
@@ -347,10 +351,16 @@ class CustomerSubview(object):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results when in find mode 
         """            
-        if ( self.__customer.getId() == "-1" ):
-            tempValuesDict = {}  # take care of None values if database object is empty.
-        else:
-            tempValuesDict = { 'customer':self.__customer }              
+        #if ( self.__customer.getId() == "-1" ):
+        #    tempValuesDict = {}  # take care of None values if database object is empty.
+        #else:
+        #    tempValuesDict = { 'customer':self.__customer }  
+        tempValuesDict = { 'customer':self.__customer }  
+                        
+        if self.__errorFields is not None:
+            for field in self.__errorFields:
+                tempValuesDict["e_" + field] = True
+                
         if (self.__searchMode == False):
             if self.__displayMode:
                 doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
