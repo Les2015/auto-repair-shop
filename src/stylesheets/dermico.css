@@ -15,6 +15,11 @@ body
     padding-top: 0px;
 }
 
+.error
+{
+	color: red;
+}
+
 /* Styles for presentation of tables of names, etc. where
    we want the cells to be outlined & offset visually. */
 .my_table
