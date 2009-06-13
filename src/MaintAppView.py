@@ -157,7 +157,7 @@ class MaintAppView(object):
               <table class="my_table">
                 <tr>
                   <td rowspan="2" class="my_tleft">""")       
-        #doRender (reqhandler, 'top', {})   #moving html to templates         
+        #doRender (reqhandler, 'top', dict)   #moving some html code to templates         
         if self.__sidePanel is not None:
             self.__sidePanel._serve_content(reqhandler)
         reqhandler.response.out.write("""
@@ -591,7 +591,7 @@ class WorkorderSubview(object):
         reqhandler.response.out.write('</div>')        
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated() }
         tempValuesDict['date_closed'] = self.__workorder.getDateClosed()
-        mechanics = [{'value':'Select...','name':Workorder.NO_MECHANIC},
+        mechanics = [{'value':Workorder.NO_MECHANIC,'name':'Select...'},
                     {'value':'Jerome Calvo','name':'Jerome Calvo'},
                     {'value':'Les Faby','name':'Les Faby'},
                     {'value':'Brad Gaiser','name':'Brad Gaiser'},
