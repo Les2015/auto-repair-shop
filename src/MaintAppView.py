@@ -368,9 +368,6 @@ class VehicleSubview(object):
     def _configureErrorFields(self, error_fields):
         self.__errorFields = error_fields
         return None
-
-    
-
     
     def _serve_content(self, reqhandler):
         self.__retrieveActiveVehicle()
@@ -432,37 +429,11 @@ class WorkorderSubview(object):
         self.__retrieveActiveWorkorder()
         self.__output_workorder_header(reqhandler)
         self.__output_workorder_form(reqhandler)
-        return None
-    
+        return None    
+
     def __output_workorder_header(self, reqhandler):
-        reqhandler.response.out.write("""
-            <table>
-            <tr>
-                <td>
-                    Customer info:
-                </td>
-                <td>""")
-        reqhandler.response.out.write("%s %s; Contact: %s" %
-                                      (self.__customer.first_name,
-                                       self.__customer.last_name,
-                                       self.__customer.phone1))
-        reqhandler.response.out.write("""
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    Vehicle info:
-                </td>
-                <td>""")
-        reqhandler.response.out.write("%s %s %s; License: %s" %
-                                      (self.__vehicle.year,
-                                       self.__vehicle.make,
-                                       self.__vehicle.model,
-                                       self.__vehicle.license))
-        reqhandler.response.out.write("""
-                </td>
-            </tr>
-            </table>""")
+        tempValuesDict = { 'customer':self.__customer, 'vehicle':self.__vehicle }    
+        doRender (reqhandler, 'workorderSubviewHeader', tempValuesDict)      
         return None
     
     def __format_tabs(self, reqhandler):
