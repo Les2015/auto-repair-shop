@@ -371,13 +371,10 @@ class VehicleSubview(object):
     def _configureErrorFields(self, error_fields):
         self.__errorFields = error_fields
         return None
-<<<<<<< .mine
 
     def _configure_workorder_count(self, workorder_count):
         self.__workorderCount = workorder_count
         return None
-=======
->>>>>>> .r132
     
     def _serve_content(self, reqhandler):
         self.__retrieveActiveVehicle()
