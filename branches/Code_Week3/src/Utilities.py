@@ -1,3 +1,12 @@
+'''
+Created on May 27, 2009
+
+@author: Les Faby, Brad Gaiser
+
+This module provides a utility data logger to help with debugging and
+some conversion routines.
+
+'''
 import sys
 from datetime import datetime
 
