@@ -1,7 +1,7 @@
 '''
 Created on May 25, 2009
 
-@author: Brad Gaiser
+@author: Brad Gaiser, Jerome Calvo
 
 This module provides a prototype implementation of the View in the MVC
 implementation of the Maintenance Records System for Dermico Auto.  The
@@ -13,7 +13,10 @@ control flow managed by the Controller classes works.
 This also is providing a 'spec' for the full implementation of the UI
 using Django templates to be provided by Jerome Calvo.  This code has
 been written with the intent that all if not most of the code will be
-replaced.  As such, minimal effort has been put into documention.
+replaced.  As such, minimal effort has been put into documentation.
+
+06/12/09 Template code for customerSubview and vehicleSubview completed
+         with support for error handling
 '''
 
 NEW_CUSTOMER = 1
@@ -28,6 +31,9 @@ import Utilities
 
 
 def doRender(handler,temp,dict):
+    """ Helper function rendering a template given a template name and
+        a dictionary of values.
+    """
     path = os.path.join ( os.path.dirname(__file__), 'templates/' + temp + '.html' )
     outstr = template.render ( path, dict )
     handler.response.out.write(outstr)
@@ -90,6 +96,7 @@ class MaintAppView(object):
             errors and highlighting fields where data validation errors were detected.
         """
         self.__customerPanel._configureErrorFields(errorObj.getFieldsWithErrors())
+        self.__vehiclePanel._configureErrorFields(errorObj.getFieldsWithErrors())
         self.__sidePanel._configureErrorMessages(errorObj)
         
     def configureSidePanelContent(self, activeElement,
@@ -317,50 +324,15 @@ class CustomerSubview(object):
     def _configureErrorFields(self, error_fields):
         self.__errorFields = error_fields
         return None
-    
-    def _serve_content_old(self, reqhandler):
-        """ Uses template customerSubview.html and its children to compose and display customer info sub view
-            as well as search results while in find mode 
-        """ 
-        tempValuesDict = {'customer_first_name':self.__customer.first_name,
-                'customer_last_name':self.__customer.last_name,
-                'customer_address1':self.__customer.address1,
-                'customer_address2':self.__customer.address2,
-                'customer_city':self.__customer.city,
-                'customer_state':self.__customer.state,
-                'customer_zip':self.__customer.zip,
-                'customer_phone1':self.__customer.phone1,
-                'customer_phone2':self.__customer.phone2,
-                'customer_email':self.__customer.email,
-                'customer_comments': self.__customer.comments
-                }
-              
-        if (self.__searchMode == False):
-            if self.__displayMode:
-                doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
-            else:
-                doRender (reqhandler, 'customerSubviewNewCust', tempValuesDict)
-        else: 
-            doRender (reqhandler, 'customerSubviewFindCust', tempValuesDict) 
-            if self.__searchResults is not None:          
-                tempValuesDict = { 'customers':self.__searchResults }    
-                doRender (reqhandler, 'customerSearchResults', tempValuesDict)
-        return None
-    
+        
     def _serve_content(self, reqhandler):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results when in find mode 
         """            
-        #if ( self.__customer.getId() == "-1" ):
-        #    tempValuesDict = {}  # take care of None values if database object is empty.
-        #else:
-        #    tempValuesDict = { 'customer':self.__customer }  
-        tempValuesDict = { 'customer':self.__customer }  
-                        
+        tempValuesDict = { 'customer':self.__customer }                                
         if self.__errorFields is not None:
             for field in self.__errorFields:
-                tempValuesDict["e_" + field] = True
-                
+                tempValuesDict["e_" + field] = True                
         if (self.__searchMode == False):
             if self.__displayMode:
                 doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
@@ -375,6 +347,7 @@ class CustomerSubview(object):
    
 class VehicleSubview(object):
     def __init__(self):
+        self.__errorFields = None
         return None
     
     def _configureActiveVehicle(self, vehicle_id):
@@ -392,128 +365,37 @@ class VehicleSubview(object):
                 break
         return None
     
-    def _serve_content_old(self, reqhandler):
-        self.__retrieveActiveVehicle()
-        reqhandler.response.out.write('<div style="width:100%">')
-        tabNum = -1
-        for eachVehicle in self.__vehicles:
-            tabNum += 1
-            if eachVehicle.getId() == self.__activeVehicleId:
-                style = "selected_tab_button"
-            else:
-                style = "tab_button"
-            if eachVehicle.getId() == "-1":
-                reqhandler.response.out.write( \
-                    '<input class="%s" type="submit" name="submit_vtab_%d" value="New Vehicle" />' % \
-                    (style, tabNum, ))
-            else:
-                reqhandler.response.out.write( \
-                    '<input class="%s" type="submit" name="submit_vtab_%d" value="%s" />' % \
-                    (style, tabNum, str(eachVehicle.year)))
-        #<input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
-        #<input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
-        reqhandler.response.out.write("""
-            <hr style="width=102%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
-            </div>
-            <table style="margin-top:15px; width:90%; margin-left:auto; margin-right:auto;">
-            <tr>
-            <td>
-            <label for="make">Make: </label>
-            </td>
-            <td>""")
-        reqhandler.response.out.write('<input type="text" name="make" value="%s" />' %
-                                        self.__vehicle.make)
-        reqhandler.response.out.write("""
-            </td>
-            <td>
-            <label for="model" style="padding-left:10px">Model: </label>
-            </td>
-            <td>""")
-        reqhandler.response.out.write('<input type="text" name="model" value="%s" />' %
-                                        self.__vehicle.model)
-        reqhandler.response.out.write("""
-            </td>
-            <td>
-            <label for="year" style="padding-left:10px">Year: </label>
-            </td>
-            <td>""")
-        reqhandler.response.out.write('<input type="text" name="year" size="8" value="%s" />' %
-                                        self.__vehicle.year)
-        reqhandler.response.out.write("""
-            </td>
-            </tr>
-            <tr>
-            <td>
-            <label for="license">License Plate: </label>
-            </td>
-            <td>""")
-        reqhandler.response.out.write('<input type="text" name="license" value="%s" />' %
-                                        self.__vehicle.license)
-        reqhandler.response.out.write("""
-            <input type="hidden" name="mileage" value="150000" />
-            </td>
-            <td>
-            <label for="vin" style="padding-left:10px">VIN: </label>
-            </td>
-            <td colspan="3">""")
-        reqhandler.response.out.write('<input type="text" name="vin" size="40" value="%s" />' %
-                                        self.__vehicle.vin)
-        reqhandler.response.out.write("""
-            </td>
-            </tr>
-            <tr>
-            <td colspan="6"><br />
-            <label for="notes">Notes: </label><br />
-            <textarea name="notes" rows="3" cols="65">""")
-        reqhandler.response.out.write(self.__vehicle.notes)
-        reqhandler.response.out.write("""
-            </textarea>
-            </td>
-            </tr>            
-        """)
-        reqhandler.response.out.write("""
-            <tr><td colspan="3">
-            <p style="width:100%; text-align:left;">
-            <input type="submit" name="submit_savevhcl" value="Save Vehicle Info" />
-            <input type="submit" name="submit_rstrvhcl" value="Clear Vehicle Info" />
-            </p>
-            </td><td colspan="3">
-            <p style="width:100%; text-align:right;">
-            <input type="submit" name="submit_newwo" value="New Work Order" />
-            <input type="submit" name="submit_showwos" value="Show Work Order History" />
-            </p>
-            </td></tr>
-            </table>
-            """)
+    def _configureErrorFields(self, error_fields):
+        self.__errorFields = error_fields
         return None
+
+    
+
     
     def _serve_content(self, reqhandler):
         self.__retrieveActiveVehicle()
-        reqhandler.response.out.write('<div style="width:100%">')
-        tabNum = -1
+        tabNum = -1       
+        tabs=[]
         for eachVehicle in self.__vehicles:
+            tab = {}
             tabNum += 1
+            tab['num'] = tabNum
             if eachVehicle.getId() == self.__activeVehicleId:
-                style = "selected_tab_button"
+                tab['style'] = "selected_tab_button"
             else:
-                style = "tab_button"
+                tab['style'] = "tab_button"
             if eachVehicle.getId() == "-1":
-                reqhandler.response.out.write( \
-                    '<input class="%s" type="submit" name="submit_vtab_%d" value="New Vehicle" />' % \
-                    (style, tabNum, ))
+                tab['vehicle'] = "New Vehicle"
             else:
-                reqhandler.response.out.write( \
-                    '<input class="%s" type="submit" name="submit_vtab_%d" value="%s" />' % \
-                    (style, tabNum, str(eachVehicle.year)))
-        #<input class="tab_button" type="submit" name="submit_vtab_1" value="2008 Toyota Tercel" />
-        #<input class="selected_tab_button" type="submit" name="submit_vtab_2" value="New Vehicle" />
-        reqhandler.response.out.write("""
-            <hr style="width=102%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />
-            </div>""")
-        if ( self.__vehicle.getId() == "-1" ):
-            tempValuesDict = {}
-        else:
-            tempValuesDict = { 'vehicle':self.__vehicle }    
+                tab['vehicle'] = "%s %s %s" % (str(eachVehicle.year),\
+                                               str(eachVehicle.make),\
+                                               str(eachVehicle.model))
+            tabs.append(tab)
+        tempValuesDict = { 'tabs':tabs }
+        if self.__errorFields is not None:
+            for field in self.__errorFields:
+                tempValuesDict["e_" + field] = True                
+        tempValuesDict ['vehicle' ] = self.__vehicle  
         doRender (reqhandler, 'vehicleSubview', tempValuesDict)       
         return None
         
@@ -720,12 +602,13 @@ class DialogSubview(object):
         return None
     
     def _serve_content(self, reqhandler):
-        dialogTemp = os.path.join ( os.path.dirname(__file__), 'templates/dialogTemplate.html' )
+        #dialogTemp = os.path.join ( os.path.dirname(__file__), 'templates/dialogTemplate.html' )
         tempValuesDict = {'request_button':self.__request_button,
                           'request_tag':self.__request_tag }
                 
-        outstr = template.render ( dialogTemp, tempValuesDict )
-        reqhandler.response.out.write(outstr)
+        #outstr = template.render ( dialogTemp, tempValuesDict )
+        #reqhandler.response.out.write(outstr)
+        doRender(reqhandler,"dialogTemplate",tempValuesDict)
         return None
     
     
