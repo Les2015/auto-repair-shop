@@ -61,7 +61,7 @@
 		</td><td colspan="3">
 			<p style="width:100%; text-align:right;">
 				<input type="submit" name="submit_newwo" value="New Work Order" {% ifequal vehicle.id "-1" %}disabled="disabled"{% endifequal %} />
-				<input type="submit" name="submit_showwos" value="Show Work Order History" {% ifequal vehicle.id "-1" %}disabled="disabled"{% endifequal %} />
+				<input type="submit" name="submit_showwos" value="Show Work Order History" {% if workorder_unavail %}disabled="disabled"{% endif %} />
 			</p>
 		</td>
 	</tr>
