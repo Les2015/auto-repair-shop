@@ -468,7 +468,7 @@ class WorkorderSubview(object):
                 '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
                     (selClass, woIndex, label))
     
-    def __output_workorder_form(self, reqhandler):
+    def __output_workorder_form_old(self, reqhandler):
         reqhandler.response.out.write('<div style="width:100%">')
         self.__format_tabs(reqhandler)
         #<input style="margin-top:25px;" class="selected_tab_button" type="submit" name="submit_wotab_0" value="New Workorder" />
@@ -582,6 +582,23 @@ class WorkorderSubview(object):
                     </td>
                 </tr>
             </table>""")
+        return None
+
+    def __output_workorder_form(self, reqhandler):
+        reqhandler.response.out.write('<div style="width:100%">')
+        self.__format_tabs(reqhandler)
+        reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
+        reqhandler.response.out.write('</div>')        
+        tempValuesDict = { 'date_created':self.__workorder.getDateCreated() }
+        tempValuesDict['date_closed'] = self.__workorder.getDateClosed()
+        mechanics = [{'value':'Select...','name':Workorder.NO_MECHANIC},
+                    {'value':'Jerome Calvo','name':'Jerome Calvo'},
+                    {'value':'Les Faby','name':'Les Faby'},
+                    {'value':'Brad Gaiser','name':'Brad Gaiser'},
+                    {'value':'Win Wong','name':'Win Wong'}]
+        tempValuesDict ['mechanics'] = mechanics
+        tempValuesDict ['workorder'] = self.__workorder
+        doRender(reqhandler,'workorderSubviewForm', tempValuesDict)
         return None
 
 class DialogSubview(object):
