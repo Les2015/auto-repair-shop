@@ -1,6 +1,8 @@
 <!-- Customer Subview 
 	06/05/09 Handle customerSubview 
 	06/09/09 Added search results block
+	06/12/09 Brad added error handling
+	06/12/09 Added filters capfirst and upper for relevant fields
 	~ Jerome Calvo
 -->
 
@@ -12,13 +14,13 @@
 			<label {% if e_first_name %}class="error"{% endif %} for="first_name">First Name: </label>
 		</td>
 		<td>
-			<input type="text" name="first_name" value="{{ customer.first_name }}" />
+			<input type="text" name="first_name" value="{{ customer.first_name|capfirst}}" />
 		</td>
 		<td>
 			<label {% if e_last_name %}class="error"{% endif %} for="last_name" style="padding-left:10px">Last Name: </label>
 		</td>
 		<td>
-			<input type="text" name="last_name" value="{{ customer.last_name }}" />
+			<input type="text" name="last_name" value="{{ customer.last_name|capfirst}}" />
 		</td>
 	</tr>
 	<tr>
@@ -26,7 +28,7 @@
 			<label {% if e_address1 %}class="error"{% endif %} for="address1">Address: </label>
 		</td>
 		<td>
-			<input type="text" name="address1" value="{{ customer.address1 }}" />
+			<input type="text" name="address1" value="{{ customer.address1|capfirst }}" />
 		</td>
 		<td>
 			<label {% if e_phone1 %}class="error"{% endif %} for="phone1" style="padding-left:10px">Primary Phone: </label>
@@ -40,7 +42,7 @@
 			<label {% if e_address2 %}class="error"{% endif %} for="address2">Address: </label>
 		</td>
 		<td>
-			<input type="text" name="address2" value="{{ customer.address2 }}" />
+			<input type="text" name="address2" value="{{ customer.address2|capfirst }}" />
 		</td>
 		<td>
 			<label {% if e_phone2 %}class="error"{% endif %} for="phone2" style="padding-left:10px">Secondary Phone: </label>
@@ -54,7 +56,7 @@
 			<label {% if e_city %}class="error"{% endif %} for="city">City: </label>
 		</td>
 		<td>
-			<input type="text" name="city" value="{{ customer.city }}" />
+			<input type="text" name="city" value="{{ customer.city|capfirst }}" />
 		</td>
 		<td>
 			<label {% if e_email %}class="error"{% endif %} for="email" style="padding-left:10px">Email: </label>
@@ -68,7 +70,7 @@
 			<label {% if e_state %}class="error"{% endif %} for="state">State: </label>
 		</td>
 		<td>
-			<input type="text" name="state" value="{{ customer.state }}" />
+			<input type="text" name="state" value="{{ customer.state|upper }}" />
 		</td>
 		<td>
 			<label {% if e_zip %}class="error"{% endif %} for="zip" style="padding-left:10px">Zip: </label>
