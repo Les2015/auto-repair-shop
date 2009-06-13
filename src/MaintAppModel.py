@@ -135,7 +135,7 @@ class MaintAppModel(object):
     requiredWorkOrdAll = ('vehicle_id', 'mileage', 'status',
                        'customer_request', 'mechanic', 'date_created')
     # additional required fields for work orders that are ready for customer pickup (not open) 
-    reqdWorkOrdDone = ('task_list', 'work_performed', 'notes')
+    requiredWorkOrdDone = ('task_list', 'work_performed', 'notes')
 
     OK, MISSING, INVALID = (0,1,2)
     
@@ -588,7 +588,7 @@ class MaintAppModel(object):
              Save a list of missing and invalid attributes and add errortext
              for each missing or invalid field.
         """
-        requiredWorkOrd = MaintAppModel.requiredWorkOrdAll
+        requiredWorkOrd = list(MaintAppModel.requiredWorkOrdAll)
         if workOrder.status != Workorder.OPEN:
             requiredWorkOrd.extend(MaintAppModel.requiredWorkOrdDone)
         if workOrder.status == Workorder.CLOSED:
