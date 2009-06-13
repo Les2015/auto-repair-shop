@@ -116,6 +116,9 @@ class MaintAppView(object):
         
     def configureVehicleContent(self, vehicle_list):
         self.__vehiclePanel._configure_content(vehicle_list)
+    
+    def configureWorkorderCount(self, workorder_count):
+        self.__vehiclePanel._configure_workorder_count(workorder_count)
         
     def configureWorkorderHeader(self, customer, vehicle):
         self.__workorderPanel._configureHeader(customer, vehicle)
@@ -368,6 +371,13 @@ class VehicleSubview(object):
     def _configureErrorFields(self, error_fields):
         self.__errorFields = error_fields
         return None
+<<<<<<< .mine
+
+    def _configure_workorder_count(self, workorder_count):
+        self.__workorderCount = workorder_count
+        return None
+=======
+>>>>>>> .r132
     
     def _serve_content(self, reqhandler):
         self.__retrieveActiveVehicle()
@@ -393,6 +403,7 @@ class VehicleSubview(object):
             for field in self.__errorFields:
                 tempValuesDict["e_" + field] = True                
         tempValuesDict ['vehicle' ] = self.__vehicle  
+        tempValuesDict['workorder_unavail'] = (self.__workorderCount == 0)
         doRender (reqhandler, 'vehicleSubview', tempValuesDict)       
         return None
         
