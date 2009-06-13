@@ -38,6 +38,18 @@ body
     width: 1000px;
 }
 
+.my_table2
+{
+    margin-left: auto;
+    margin-right: auto;
+    color: black;
+    background: #99ff99;
+    font-size: small;
+    text-align: left;
+    padding: 0.2em 0.5ex 0.2em 0.5ex;
+    width: 400px;
+}
+
 .my_tleft
 {
     color: black;
