@@ -7,6 +7,7 @@
 """
 
 import sys
+from Utilities import myLog
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template    # [1]
@@ -141,13 +142,13 @@ class MaintAppController(object):
         if whichButton in self.__contextChangingActions and self.__fieldsNeedSaving():
             self.__view.showSaveDialog(whichButton, bIndex)
             self.__regenerateCurrentView()
-            sys.stderr.write("Dialog %s_%s" % (whichButton, bIndex))
+            myLog.write("Dialog %s_%s" % (whichButton, bIndex))
         else:    
             dispatch_function = self.__dispatch_table[whichButton]
             if dispatch_function is not None:
                 dispatch_function(self, reqhandler, bIndex)
             else:
-                sys.stderr.write("Button '%s' not found in dispatch list." % whichButton)
+                myLog.write("Button '%s' not found in dispatch list." % whichButton)
                 self.__regenerateCurrentView()
                 
         self.__configureHiddenIdFields()
@@ -212,7 +213,7 @@ class MaintAppController(object):
         """
         retVehicle = None
         for vehicle in vehicleList:
-            sys.stderr.write("%s -- %s\n" % (vehicle.getId(), self.__activeVehicleId))
+            myLog.write("%s -- %s\n" % (vehicle.getId(), self.__activeVehicleId))
             if vehicle.getId() == self.__activeVehicleId:
                 retVehicle = vehicle
                 break
@@ -290,12 +291,33 @@ class MaintAppController(object):
         return None
     
     def __configureVehicleContent(self, activeVehicleList):
+        """ Determine the number of open workorders for the active vehicle
+            (for disabling the workorder history button when the count is 0).
+            Also, see if there is an unclosed workorder so that we can
+            disable the New Workorder button.
+        """
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         workorder_count = len(workorders)
+        has_unclosed_workorder = self.__hasUnclosedWorkorder()
+        if has_unclosed_workorder:
+            myLog.write("Vehicle has an unclosed workorder.")
         self.__view.configureVehicleContent(activeVehicleList)
         self.__view.configureWorkorderCount(workorder_count)
+        self.__view.configureWorkorderStatus(has_unclosed_workorder)
         return None
     
+    def __hasUnclosedWorkorder(self):
+        """ Determine if the active vehicle has any unclosed workorders. """
+        retVal = False
+        if self.__activeVehicleId != "-1":
+            unclosedWorkorders = self.__model.getOpenWorkorders() + \
+                                 self.__model.getCompletedWorkorders()
+            for vehicle, workorder in unclosedWorkorders:
+                if vehicle is not None and vehicle.getId() == self.__activeVehicleId:
+                    retVal = True
+                    break
+        return retVal
+        
     def __configureWorkorderCustomerVehicleInfo(self):
         """ The work order form has some basic information for the active customer
             and the active vehicle to which the work order belongs.  This method
