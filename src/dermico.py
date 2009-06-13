@@ -366,6 +366,9 @@ class MaintAppController(object):
         except ValidationErrors, e:
             self.__view.configureErrorMessages(e)
             self.__regenerateCurrentView()
+        #except DuplicateCustomer, e:
+        #    self.__view.configureErrorMessages(e)
+        #    self.__regenerateCurrentView()
         else:
             activeCustomer.setId(customerDbId)
             self.__view.configureCustomerContent(activeCustomer)
