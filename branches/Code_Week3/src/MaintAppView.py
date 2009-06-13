@@ -120,6 +120,9 @@ class MaintAppView(object):
     def configureWorkorderCount(self, workorder_count):
         self.__vehiclePanel._configure_workorder_count(workorder_count)
         
+    def configureWorkorderStatus(self, has_unclosed_workorder):
+        self.__vehiclePanel._configure_workorder_status(has_unclosed_workorder)
+        
     def configureWorkorderHeader(self, customer, vehicle):
         self.__workorderPanel._configureHeader(customer, vehicle)
     
@@ -351,6 +354,8 @@ class CustomerSubview(object):
 class VehicleSubview(object):
     def __init__(self):
         self.__errorFields = None
+        self.__workorderCount = 0
+        self.__hasUnclosedWorkorder = False
         return None
     
     def _configureActiveVehicle(self, vehicle_id):
@@ -376,6 +381,9 @@ class VehicleSubview(object):
         self.__workorderCount = workorder_count
         return None
     
+    def _configure_workorder_status(self, has_unclosed_workorder):
+        self.__hasUnclosedWorkorder = has_unclosed_workorder
+        
     def _serve_content(self, reqhandler):
         self.__retrieveActiveVehicle()
         tabNum = -1       
@@ -401,6 +409,8 @@ class VehicleSubview(object):
                 tempValuesDict["e_" + field] = True                
         tempValuesDict ['vehicle' ] = self.__vehicle  
         tempValuesDict['workorder_unavail'] = (self.__workorderCount == 0)
+        tempValuesDict['new_wo_button_inactive'] = \
+            (self.__activeVehicleId == "-1") or self.__hasUnclosedWorkorder
         doRender (reqhandler, 'vehicleSubview', tempValuesDict)       
         return None
         
