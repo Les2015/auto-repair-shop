@@ -286,7 +286,14 @@ class MaintAppController(object):
         if self.__vehicleActive():
             activeVehicle.loadFromDictionary(self.__userValues)
             activeVehicle.setId(self.__activeVehicleId)
+        self.__configureVehicleContent(activeVehicleList)
+        return None
+    
+    def __configureVehicleContent(self, activeVehicleList):
+        workorders = self.__model.getWorkorderList(self.__activeVehicleId)
+        workorder_count = len(workorders)
         self.__view.configureVehicleContent(activeVehicleList)
+        self.__view.configureWorkorderCount(workorder_count)
         return None
     
     def __configureWorkorderCustomerVehicleInfo(self):
@@ -440,7 +447,7 @@ class MaintAppController(object):
         customer.loadFromDictionary(self.__userValues)
         self.__view.configureCustomerContent(customer)
 
-        self.__view.configureVehicleContent(vehicleList)
+        self.__configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Vehicle Tab Change")
         self.__view.set_customer_vehicle_mode()
         return None
@@ -603,8 +610,8 @@ class MaintAppController(object):
 
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         vehicleList.append(Vehicle())
-        self.__view.configureVehicleContent(vehicleList)
         self.__activeVehicleId = vehicleList[0].getId()
+        self.__configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Showing Customer")
         self.__view.set_customer_vehicle_mode()
         return None
@@ -677,7 +684,7 @@ class MaintAppController(object):
         
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         vehicleList.append(Vehicle())
-        self.__view.configureVehicleContent(vehicleList)
+        self.__configureVehicleContent(vehicleList)
         
         self.__configureSidePanel(0, "Restoring Vehicle Info")
         self.__view.set_customer_vehicle_mode()
