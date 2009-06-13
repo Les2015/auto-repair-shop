@@ -715,7 +715,7 @@ class MaintAppController(object):
                 # This situation will correspond to new vehicle mode rather than
                 # search mode because error dialog only occurs for when entering
                 # info that might be lost. (We don't care in search mode.
-                self.__configureSidePanel(1, "Regenerated New Veh. Mode")
+                self.__configureSidePanel(1, "Regenerated New Cust. Mode")
                 self.__view.set_new_customer_mode()
             else:
                 self.__regenerateVehicleView()
