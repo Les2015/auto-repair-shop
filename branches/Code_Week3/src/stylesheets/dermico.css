@@ -18,6 +18,13 @@ body
 .error
 {
 	color: red;
+	font-weight: bold;
+}
+
+.error_field
+{
+	background-color: #ffcc99; 
+ 	border: 1px solid red;
 }
 
 /* Styles for presentation of tables of names, etc. where
