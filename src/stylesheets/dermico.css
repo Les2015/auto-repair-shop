@@ -40,13 +40,11 @@ body
 
 .my_table2
 {
-    margin-left: auto;
+	margin-left: auto;
     margin-right: auto;
-    color: black;
     background: #99ff99;
-    font-size: small;
-    text-align: left;
     padding: 0.2em 0.5ex 0.2em 0.5ex;
+    border: medium solid #006600;
     width: 400px;
 }
 
