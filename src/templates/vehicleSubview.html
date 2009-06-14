@@ -1,6 +1,7 @@
-<!-- template for vehicle subview 
+<!-- template for VehicleSubview 
 	06/12/09 	added tab section and Brad's code for error handling 
 				added filters capfirst and upper to relevant fields
+	06/14/09	added highlighting for error fields
 -->
 
 <div style="width:100%">
@@ -16,19 +17,19 @@
 			<label {% if e_make %}class="error"{% endif %} for="make">Make: </label>
 		</td>
 		<td>
-			<input type="text" name="make" value="{{ vehicle.make|capfirst }}" />
+			<input type="text" name="make" {% if e_make %}class="error_field"{% endif %} value="{{ vehicle.make|capfirst }}" />
 		</td>
 		<td>
 			<label {% if e_model %}class="error"{% endif %} for="model">Model: </label>
 		</td>
 		<td>
-			<input type="text" name="model" value="{{ vehicle.model|capfirst }}" />
+			<input type="text" name="model" {% if e_model %}class="error_field"{% endif %} value="{{ vehicle.model|capfirst }}" />
 		</td>
 		<td>
 			<label {% if e_year %}class="error"{% endif %} for="year">Year: </label>
 		</td>
 		<td>
-			<input type="text" name="year" size="8" value="{{ vehicle.year }}" />
+			<input type="text" name="year" size="8" {% if e_year %}class="error_field"{% endif %} value="{{ vehicle.year }}" />
 		</td>
 	</tr>
 	<tr>
@@ -36,14 +37,14 @@
 			<label {% if e_license %}class="error"{% endif %} for="license">License Plate: </label>
 		</td>
 		<td>
-			<input type="text" name="license" value="{{ vehicle.license|upper }}" />
+			<input type="text" name="license" {% if e_license %}class="error_field"{% endif %} value="{{ vehicle.license|upper }}" />
 			<input type="hidden" name="mileage" value="{{ vehicle.mileage }}" />
 		</td>
 		<td>
 			<label {% if e_vin %}class="error"{% endif %} for="vin">VIN: </label>
 		</td>
 		<td colspan="3">
-			<input type="text" name="vin" size="40" value="{{ vehicle.vin|upper }}" />
+			<input type="text" name="vin" size="40" {% if e_vin %}class="error_field"{% endif %} value="{{ vehicle.vin|upper }}" />
 		</td>
 	</tr>
 	<tr>
