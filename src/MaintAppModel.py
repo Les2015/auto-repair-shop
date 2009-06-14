@@ -750,6 +750,14 @@ class MaintAppModel(object):
             result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
         return result
     
+    #---------------------------- List of Mechanics --------------------------------
+    
+    def getMechanics(self):
+        """ Open and read the contents of config/mechanics.cfg and return
+            the contents as a list of strings, skipping comment lines and
+            blank lines. """ 
+        return ['Jerome Calvo', 'Les Faby', 'Brad Gaiser', 'Wing Wong']
+    
 
 class TestMaintAppModel(object):
     ''' unit test '''
