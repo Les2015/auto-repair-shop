@@ -17,6 +17,7 @@ replaced.  As such, minimal effort has been put into documentation.
 
 06/12/09 Template code for customerSubview and vehicleSubview completed
          with support for error handling
+06/13/09 Template code for workorderSubview Header and Form completed
 '''
 
 NEW_CUSTOMER = 1
@@ -286,7 +287,7 @@ class SidePanelSubview(object):
         if self.__errorObj is not None:
             errors = "<br />".join(str(self.__errorObj).split("\n"))
             reqhandler.response.out.write( \
-                '<p style="margin-left:15px; color:red;">%s</p>' % errors)        
+                '<p style="margin-left:15px; color:red; font-weight:bold">%s</p>' % errors)        
         reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
         reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
         reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
@@ -468,138 +469,31 @@ class WorkorderSubview(object):
             reqhandler.response.out.write( \
                 '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
                     (selClass, woIndex, label))
-    
-    def __output_workorder_form_old(self, reqhandler):
-        reqhandler.response.out.write('<div style="width:100%">')
-        self.__format_tabs(reqhandler)
-        #<input style="margin-top:25px;" class="selected_tab_button" type="submit" name="submit_wotab_0" value="New Workorder" />
-        #<input class="tab_button" type="submit" name="submit_wotab_1" value="12-Dec-2008" />
-        #<input class="tab_button" type="submit" name="submit_wotab_2" value="04-Mar-2009" />
-        reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
-        reqhandler.response.out.write('</div>')
-        dateText = self.__workorder.getDateCreated() # Reused below for visible text
-        reqhandler.response.out.write( \
-            '<input type="hidden" name="date_created" value="%s" />' % \
-            dateText)
-        reqhandler.response.out.write( \
-            '<input type="hidden" name="date_closed" value="%s" />' % \
-            self.__workorder.getDateClosed())
-        reqhandler.response.out.write("""
-            <table style="margin-top:30px;">
-                <tr>
-                    <td>
-                        Customer's Service Request:
-                    </td>
-                    <td style="text-align:right;">
-                        <label for="mileage">Odometer Reading:</label>""")
-        reqhandler.response.out.write( \
-            '<input type="text" name="mileage" value="%s" />' % \
-            self.__workorder.mileage)
-        reqhandler.response.out.write("""
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <textarea name="customer_request" rows="3" cols="85">""")
-        reqhandler.response.out.write(self.__workorder.customer_request)
-        reqhandler.response.out.write("""
-                        </textarea>
-                    </td>
-                </tr>
-                <tr><td colspan="2"><hr /></td></tr>
-                <tr>
-                    <td>""")
-        reqhandler.response.out.write( \
-            "Work Order Date: %s" % dateText)
-        reqhandler.response.out.write("""
-                    </td>
-                    <td style="text-align:right;">
-                        <label for "mechanic">Mechanic:</label>
-                        <select name="mechanic">""")
-        reqhandler.response.out.write( \
-            '<option value="%s">Select...</option>' % Workorder.NO_MECHANIC)
-        reqhandler.response.out.write( \
-            '<option value="Jerome Calvo"%s>Jerome Calvo</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="Jerome Calvo" else ""))
-        reqhandler.response.out.write( \
-            '<option value="Les Faby"%s>Les Faby</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="Les Faby" else ""))
-        reqhandler.response.out.write( \
-            '<option value="Brad Gaiser"%s>Brad Gaiser</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="Brad Gaiser" else ""))
-        reqhandler.response.out.write( \
-            '<option value="Wing Wong"%s>Wing Wong</option>' % \
-                (' selected="selected"' if self.__workorder.mechanic=="Wing Wong" else ""))
-        reqhandler.response.out.write("""
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <label for "mechanics_tasks">Mechanics Tasks:</label><br />
-                        <textarea name="task_list" rows="7" cols="40">""")
-        reqhandler.response.out.write(self.__workorder.task_list)
-        reqhandler.response.out.write("""
-                        </textarea>
-                    </td>
-                    <td>
-                        <label for "work_done">Work Performed:</label><br />
-                        <textarea name="work_performed" rows="7" cols="40">""")
-        reqhandler.response.out.write(self.__workorder.work_performed)
-        reqhandler.response.out.write("""
-                        </textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <label for "next_service">Notes and next service recommendations:</label><br />
-                        <textarea name="notes" rows="4" cols="85">""")
-        reqhandler.response.out.write(self.__workorder.notes)
-        reqhandler.response.out.write("""
-                        </textarea>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="text-align:center;">
-                        <label for "status">Work Order Status:</label>""")
-        reqhandler.response.out.write( \
-            '<input style="margin-left:15px;" type="radio" name="status" value="Open" %s /> Open' % \
-                ('checked="checked"' if self.__workorder.status == Workorder.OPEN else ''))
-        reqhandler.response.out.write( \
-            '<input style="margin-left:25px;" type="radio" name="status" value="Completed" %s /> Completed' % \
-                ('checked="checked"' if self.__workorder.status == Workorder.COMPLETED else ''))
-        reqhandler.response.out.write( \
-            '<input style="margin-left:15px;" type="radio" name="status" value="Closed" %s /> Closed' % \
-                ('checked="checked"' if self.__workorder.status == Workorder.CLOSED else ''))
-        reqhandler.response.out.write("""
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <p style="width:100%; text-align:center;">
-                        <input type="submit" name="submit_savewo" value="Save Work Order" />
-                        <input type="submit" name="submit_rstrwo" value="Restore Work Order" />
-                        </p>
-                    </td>
-                </tr>
-            </table>""")
-        return None
 
     def __output_workorder_form(self, reqhandler):
         reqhandler.response.out.write('<div style="width:100%">')
         self.__format_tabs(reqhandler)
         reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
         reqhandler.response.out.write('</div>')        
-        tempValuesDict = { 'date_created':self.__workorder.getDateCreated() }
-        tempValuesDict['date_closed'] = self.__workorder.getDateClosed()
-        mechanics = [{'value':Workorder.NO_MECHANIC,'name':'Select...'},
-                    {'value':'Jerome Calvo','name':'Jerome Calvo'},
-                    {'value':'Les Faby','name':'Les Faby'},
-                    {'value':'Brad Gaiser','name':'Brad Gaiser'},
-                    {'value':'Win Wong','name':'Win Wong'}]
+        tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
+                          'date_closed':self.__workorder.getDateClosed() }
+        mechanics = [{ 'value':Workorder.NO_MECHANIC,'name':'Select...' },
+                     { 'value':'Jerome Calvo','name':'Jerome Calvo' },
+                     { 'value':'Les Faby','name':'Les Faby' },
+                     { 'value':'Brad Gaiser','name':'Brad Gaiser' },
+                     { 'value':'Win Wong','name':'Win Wong' }]
+        """ Code to support a list of Mechanics.
+            an other way will be to inject {'value':Workorder.NO_MECHANIC,'name':'Select...'}
+            for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
+            of the drop down list with associated changes in the form template.
+            
+        mechanics = [{ 'value':Workorder.NO_MECHANIC,'name':'Select...' }]
+        for eachMechanic in self.__mechanics:
+            mechanics.append( { 'value':eachMechanic,'name':eachMechanic } )
+        """
         tempValuesDict ['mechanics'] = mechanics
         tempValuesDict ['workorder'] = self.__workorder
-        doRender(reqhandler,'workorderSubviewForm', tempValuesDict)
+        doRender( reqhandler,'workorderSubviewForm', tempValuesDict )
         return None
 
 class DialogSubview(object):
@@ -609,13 +503,9 @@ class DialogSubview(object):
         return None
     
     def _serve_content(self, reqhandler):
-        #dialogTemp = os.path.join ( os.path.dirname(__file__), 'templates/dialogTemplate.html' )
-        tempValuesDict = {'request_button':self.__request_button,
+        tempValuesDict = { 'request_button':self.__request_button,
                           'request_tag':self.__request_tag }
-                
-        #outstr = template.render ( dialogTemp, tempValuesDict )
-        #reqhandler.response.out.write(outstr)
-        doRender(reqhandler,"dialogTemplate",tempValuesDict)
+        doRender( reqhandler,"dialogTemplate",tempValuesDict )
         return None
     
     
