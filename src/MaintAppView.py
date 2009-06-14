@@ -477,20 +477,25 @@ class WorkorderSubview(object):
         reqhandler.response.out.write('</div>')        
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
                           'date_closed':self.__workorder.getDateClosed() }
+        """ 
         mechanics = [{ 'value':Workorder.NO_MECHANIC,'name':'Select...' },
                      { 'value':'Jerome Calvo','name':'Jerome Calvo' },
                      { 'value':'Les Faby','name':'Les Faby' },
                      { 'value':'Brad Gaiser','name':'Brad Gaiser' },
-                     { 'value':'Win Wong','name':'Win Wong' }]
-        """ Code to support a list of Mechanics.
-            an other way will be to inject {'value':Workorder.NO_MECHANIC,'name':'Select...'}
-            for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
-            of the drop down list with associated changes in the form template.
-            
-        mechanics = [{ 'value':Workorder.NO_MECHANIC,'name':'Select...' }]
-        for eachMechanic in self.__mechanics:
-            mechanics.append( { 'value':eachMechanic,'name':eachMechanic } )
+                     { 'value':'Win Wong','name':'Win Wong' },]
         """
+                     
+        """ Code to support a list of Mechanics.
+            Another way will be to inject {'value':Workorder.NO_MECHANIC,'name':'Select...'}
+            for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
+            of the drop down list with associated changes in the form template. """
+        
+        ### temporary list ###
+        self.__mechanics = [ 'Jerome Calvo', 'Les Faby', 'Brad Gaiser', \
+                            'Wing Wong', 'Elaine Haight', ]   
+        ###################### 
+        mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
+        mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })        
         tempValuesDict ['mechanics'] = mechanics
         tempValuesDict ['workorder'] = self.__workorder
         doRender( reqhandler,'workorderSubviewForm', tempValuesDict )
