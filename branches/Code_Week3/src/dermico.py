@@ -230,6 +230,18 @@ class MaintAppController(object):
                 break
         return retIndex
 
+    def __hasUnclosedWorkorder(self):
+        """ Determine if the active vehicle has any unclosed workorders. """
+        retVal = False
+        if self.__activeVehicleId != "-1":
+            unclosedWorkorders = self.__model.getOpenWorkorders() + \
+                                 self.__model.getCompletedWorkorders()
+            for vehicle, workorder in unclosedWorkorders:
+                if vehicle is not None and vehicle.getId() == self.__activeVehicleId:
+                    retVal = True
+                    break
+        return retVal
+        
     ##############################################################################
     # The following three functions are refactored code that was repeated a
     # number of times when setting up the contents of the various panels in
@@ -306,18 +318,6 @@ class MaintAppController(object):
         self.__view.configureWorkorderStatus(has_unclosed_workorder)
         return None
     
-    def __hasUnclosedWorkorder(self):
-        """ Determine if the active vehicle has any unclosed workorders. """
-        retVal = False
-        if self.__activeVehicleId != "-1":
-            unclosedWorkorders = self.__model.getOpenWorkorders() + \
-                                 self.__model.getCompletedWorkorders()
-            for vehicle, workorder in unclosedWorkorders:
-                if vehicle is not None and vehicle.getId() == self.__activeVehicleId:
-                    retVal = True
-                    break
-        return retVal
-        
     def __configureWorkorderCustomerVehicleInfo(self):
         """ The work order form has some basic information for the active customer
             and the active vehicle to which the work order belongs.  This method
@@ -490,7 +490,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId == "-1"  # Creating a new work order.
         workorders.insert(0, Workorder())
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(0, "New Workorder")
         self.__view.set_workorder_mode()
         return None
@@ -507,7 +508,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId = workorders[0].getId()
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Show Workorder History")
         self.__view.set_workorder_mode()
         return None
@@ -553,7 +555,8 @@ class MaintAppController(object):
         else:
             self.__activeWorkorderId = workorderDbId
             workorders = self.__model.getWorkorderList(self.__activeVehicleId)
-            self.__view.configureWorkorderContent(workorders)
+            mechanics = self.__model.getMechanics()
+            self.__view.configureWorkorderContent(mechanics, workorders)
             self.__configureWorkorderCustomerVehicleInfo()
             
         self.__configureSidePanel(3, "Save Workorder")
@@ -574,7 +577,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId = workorders[int(tag)].getId()
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Workorder Tab Change")
         self.__view.set_workorder_mode()
         return None
@@ -606,7 +610,8 @@ class MaintAppController(object):
         
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Display Open/Completed Workorder")
         self.__view.set_workorder_mode()
         return None
@@ -731,7 +736,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         if self.__activeWorkorderId == "-1":  # Creating a new work order.
             workorders.insert(0, Workorder())
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Restoring Workorder Info")
         self.__view.set_workorder_mode()
         return None
@@ -794,7 +800,8 @@ class MaintAppController(object):
             workorders.insert(workorderIndex, workorder)
             
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         return None
 
     # The following methods will be used to determine if the user edited values

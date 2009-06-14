@@ -126,8 +126,8 @@ class MaintAppView(object):
     def configureWorkorderHeader(self, customer, vehicle):
         self.__workorderPanel._configureHeader(customer, vehicle)
     
-    def configureWorkorderContent(self, workorder_list):
-        self.__workorderPanel._configureWorkorderContent(workorder_list)
+    def configureWorkorderContent(self, mechanics, workorder_list):
+        self.__workorderPanel._configureWorkorderContent(mechanics, workorder_list)
     
     def showSaveDialog(self, request_button, request_tag):
         """ This method is called to set the UI up to display a save dialog
@@ -432,7 +432,8 @@ class WorkorderSubview(object):
         self.__activeWorkorderId = workorder_id
         return None
 
-    def _configureWorkorderContent(self, workorder_list):
+    def _configureWorkorderContent(self, mechanics, workorder_list):
+        self.__mechanics = mechanics
         self.__workorders = workorder_list
         return None
     
