@@ -18,6 +18,9 @@ replaced.  As such, minimal effort has been put into documentation.
 06/12/09 Template code for customerSubview and vehicleSubview completed
          with support for error handling
 06/13/09 Template code for workorderSubview Header and Form completed
+06/14/09 Template code for workorderSubview Tab completed
+06/15/09 Added support for drop-down menu with list of States in 
+         customerSubview.html
 '''
 
 NEW_CUSTOMER = 1
@@ -181,7 +184,7 @@ class MaintAppView(object):
                           <td class="my_tright_bottom">""")
                 if self.__vehiclePanel is not None:
                     self.__vehiclePanel._serve_content(reqhandler)                    
-        #doRender(reqhandler, 'bottom', {})
+        #doRender(reqhandler, 'bottom', {})   #moving some html code to templates 
         reqhandler.response.out.write("""
                   </td>
                 </tr>
@@ -331,12 +334,20 @@ class CustomerSubview(object):
     def _configureErrorFields(self, error_fields):
         self.__errorFields = error_fields
         return None
+    
         
     def _serve_content(self, reqhandler):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results when in find mode 
-        """            
-        tempValuesDict = { 'customer':self.__customer }                                
+        """
+        ### temporary tuple of states to test drop-down menu in customerSubview.html
+        states =  ('AA', 'AE', 'AK', 'AL', 'AP', 'AR', 'AS', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'FM', 'GA', \
+                   'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MH', 'MI', 'MN', 'MO', \
+                   'MP', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'PR', \
+                   'PW', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY')         
+        ###
+        tempValuesDict = { 'customer':self.__customer }    
+        tempValuesDict['states'] = states                         
         if self.__errorFields is not None:
             for field in self.__errorFields:
                 tempValuesDict["e_" + field] = True                
@@ -487,25 +498,9 @@ class WorkorderSubview(object):
         doRender( reqhandler, 'workorderSubviewTabs', tempValuesDict )
 
     def __output_workorder_form(self, reqhandler):
-        #reqhandler.response.out.write('<div style="width:100%">')
         self.__format_tabs(reqhandler)
-        #reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
-        #reqhandler.response.out.write('</div>')        
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
                           'date_closed':self.__workorder.getDateClosed() }
-        """ 
-        mechanics = [{ 'value':Workorder.NO_MECHANIC,'name':'Select...' },
-                     { 'value':'Jerome Calvo','name':'Jerome Calvo' },
-                     { 'value':'Les Faby','name':'Les Faby' },
-                     { 'value':'Brad Gaiser','name':'Brad Gaiser' },
-                     { 'value':'Win Wong','name':'Win Wong' },]
-        """
-                     
-        """ Code to support a list of Mechanics.
-            Another way will be to inject {'value':Workorder.NO_MECHANIC,'name':'Select...'}
-            for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
-            of the drop down list with associated changes in the form template. """
-        
         mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
         mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })        
         tempValuesDict ['mechanics'] = mechanics
