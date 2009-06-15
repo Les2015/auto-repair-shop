@@ -756,7 +756,16 @@ class MaintAppModel(object):
         """ Open and read the contents of config/mechanics.cfg and return
             the contents as a list of strings, skipping comment lines and
             blank lines. """ 
-        return ['Jerome Calvo', 'Les Faby', 'Brad Gaiser', 'Wing Wong']
+        mechPath = os.path.join ( os.path.dirname(__file__), 'config/mechanics.cfg' )
+        mechanics = []
+        for line in  file(mechPath,'r'):
+              mechanic = line.rstrip('\n ').strip()
+              if len(mechanic) == 0:
+                  continue
+              if mechanic[0] in "\"\'\#":
+                 continue
+              mechanics.append(mechanic)
+        return mechanics
     
 
 class TestMaintAppModel(object):
