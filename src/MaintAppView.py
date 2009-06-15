@@ -456,7 +456,7 @@ class WorkorderSubview(object):
         doRender (reqhandler, 'workorderSubviewHeader', tempValuesDict)      
         return None
     
-    def __format_tabs(self, reqhandler):
+    def __format_tabs_old(self, reqhandler):
         woIndex = -1
         for workorder in self.__workorders:
             woIndex += 1
@@ -470,11 +470,27 @@ class WorkorderSubview(object):
                 '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
                     (selClass, woIndex, label))
 
+    def __format_tabs(self, reqhandler):
+        """ templatized! """
+        woIndex = -1
+        tabs=[]
+        for workorder in self.__workorders:
+            tab={}
+            woIndex += 1
+            tab['num'] = woIndex
+            tab['style'] = "selected_tab_button" if ( workorder.id==self.__activeWorkorderId ) \
+                                             else "tab_button"
+            tab['label'] = "New Work Order" if ( workorder.id == "-1" ) \
+                                        else Utilities.shortDate(workorder.date_created)           
+            tabs.append(tab)
+        tempValuesDict = { 'tabs':tabs }
+        doRender( reqhandler, 'workorderSubviewTabs', tempValuesDict )
+
     def __output_workorder_form(self, reqhandler):
-        reqhandler.response.out.write('<div style="width:100%">')
+        #reqhandler.response.out.write('<div style="width:100%">')
         self.__format_tabs(reqhandler)
-        reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
-        reqhandler.response.out.write('</div>')        
+        #reqhandler.response.out.write('<hr style="width=100%; margin-top:-1px; padding-top:0px; padding-bottom:0px;" />')
+        #reqhandler.response.out.write('</div>')        
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
                           'date_closed':self.__workorder.getDateClosed() }
         """ 
@@ -490,10 +506,9 @@ class WorkorderSubview(object):
             for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
             of the drop down list with associated changes in the form template. """
         
-        ### temporary list ###
+        ### temporary list
         self.__mechanics = [ 'Jerome Calvo', 'Les Faby', 'Brad Gaiser', \
-                            'Wing Wong', 'Elaine Haight', ]   
-        ###################### 
+                            'Wing Wong', 'Elaine Haight', ]    
         mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
         mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })        
         tempValuesDict ['mechanics'] = mechanics
