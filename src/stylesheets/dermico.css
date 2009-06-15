@@ -15,6 +15,18 @@ body
     padding-top: 0px;
 }
 
+.error
+{
+	color: red;
+	font-weight: bold;
+}
+
+.error_field
+{
+	background-color: #ffcc99; 
+ 	border: 1px solid red;
+}
+
 /* Styles for presentation of tables of names, etc. where
    we want the cells to be outlined & offset visually. */
 .my_table
@@ -31,6 +43,16 @@ body
     border: medium ridge #800000;
     height: 650px;
     width: 1000px;
+}
+
+.my_table2
+{
+	margin-left: auto;
+    margin-right: auto;
+    background: #99ff99;
+    padding: 0.2em 0.5ex 0.2em 0.5ex;
+    border: medium solid #006600;
+    width: 400px;
 }
 
 .my_tleft
@@ -106,17 +128,39 @@ body
     border: 1pt solid gray;
 }
 
+.dialog
+{
+	position: relative;
+	top: 80px;
+	left: 0px;
+	border-style: solid;
+	border-width: thick;
+	text-align: left;
+	width: 460px;
+	height: 290px;
+	margin-left: auto;
+	margin-right: auto;
+	vertical-align: middle;
+	background-color: Silver;
+	z-index: 1;
+}
+
+.dialog-button
+{
+	width: 80px;
+}
+
 /* Style for tab links */
 
 .tab_button
 {
     position: relative;
-    border-color: #EEEEEE #EEEEEE #000000 #EEEEEE;
+    border-color: #EEEEEE #EEEEEE #C0C0C0 #EEEEEE;
     border-style: solid;
     font-family: Arial, Helvetica, sans-serif;
     font-size: x-small;
     font-weight: bold;
-    border-width: thin;
+    border-width: 2px;
     width: 15em;
     background-color: #C0C0C0;
     margin-left: .5ex;
@@ -134,14 +178,25 @@ body
     font-family: Arial, Helvetica, sans-serif;
     font-size: x-small;
     font-weight: bold;
-    border-width: thin;
+    border-width: 2px;
     width: 15em;
     background-color: #EEEEEE;
     margin-left: .5ex;
     padding-left: .5ex;
     padding-right: .5ex;
     text-decoration: none;
-    bottom: -1px;
+    bottom: -2px;
+}
+
+.tab_line
+{
+	height:2px;
+	border-width:0;
+	color:black;
+	background-color:black; 
+	margin-top:0px; 
+	padding-top:0px; 
+	padding-bottom:0px;
 }
 
 .s_side_links
@@ -151,12 +206,12 @@ body
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
     color: #000000;
-    text-decoration: none; /* suppress the underscore on hyperlinks */
     font-weight: normal;
     background-color: #99CCFF;
     width: 90%;
     display: block;
     border-bottom-style: dotted;
+    margin-left: 10px;
 }
 
 .s_active_side_links
@@ -165,10 +220,41 @@ body
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
     color: #FFFFFF;
-    text-decoration: none; /* suppress the underscore on hyperlinks */
     font-weight: normal;
     background-color: #000080;
     width: 90%;
     display: block;
+    margin-left: 10px;
 }
+
+.s_side_wo
+{
+    padding: 0.2ex 0.5em 0.2ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #504782;
+    font-weight: normal;
+    background-color: #C0C0C0;
+    width: 90%;
+    display: block;
+    margin-top: 2px;
+    margin-left: 10px;
+}
+
+.s_active_side_wo
+{
+    padding: 0.2ex 0.5em 0.2ex 0.5em;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #FFFFFF;
+    font-weight: normal;
+    background-color: #000000;
+    width: 90%;
+    display: block;
+    margin-top: 2px;
+    margin-left: 10px;
+}
+
+input.s_side_links:hover {color: #FFFFFF; background-color: #4488FF}   /* mouse over link */
+input.s_side_wo:hover {color: #FFFFFF; background-color: #808080}   /* mouse over link */
 

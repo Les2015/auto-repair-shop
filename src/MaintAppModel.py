@@ -4,6 +4,7 @@ Created on May 27, 2009
 @author: Wing Wong
 
 2009-06-05  Add customer Validation   Les Faby
+2009-06-05  Add vehicle Validation    Les Faby
 
 '''
 
@@ -15,20 +16,76 @@ from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import datastore_file_stub 
 from MaintAppObjects import Customer, Vehicle, Workorder 
 from DatastoreModels import CustomerEnt, VehicleEnt, WorkorderEnt
+from Utilities import myLog, dateToString, stringToDate
 
 APP_ID = u'auto-repair-shop'
 os.environ['APPLICATION_ID'] = APP_ID  
 
+def nz(value):
+    """ if input value is None, convert it to empty string """
+    return ("" if value is None else value)
+
+def zn(strValue):
+    """ if input string is empty, convert it to None """
+    return (None if strValue=="" else strValue)
+
+
 #================================================================
 class ValidationErrors(Exception):
+    '''
+    Exception raised in case of an invalid record.
+    usage
+    try: 
+        ... 
+    catch ValidationErrors, ve:
+       print ve    prints all the error text for all the fields in error
+       errorMsg = str(ve)  puts that text in the variable
+       ve.getFieldsWithErrors() to get a list of the field names in error
+    '''
     def __init__(self, errTxt, badFldLst):
         self.errTxt = errTxt
         self.badFldLst = badFldLst
+        
     def __str__(self):
+        '''returns error text for all fields in error or required and missing' fields.'''
         return self.errTxt
+    
     def getFieldsWithErrors(self):
+        '''returns a list of fields in error.'''
         return self.badFldLst
 #================================================================
+class InternalErrors(ValidationErrors):
+    '''
+    Exception raised in case of an invalid record.
+    usage
+    try: 
+        ... 
+    catch InternalErrors, ie:
+       print ie    prints all the error text for all the fields in error
+       errorMsg = str(ie)  puts that text in the variable
+       ve.getFieldsWithErrors() to get a list of the field names in error
+    '''
+    pass
+#================================================================
+
+class DuplicateCustomer(ValidationErrors):
+    '''
+    Exception raised in case of duplicate record.
+    usage
+    try: 
+        ... 
+    catch DuplicateCustomer, de:
+       print de    prints all the error text for all the fields in error
+       errorMsg = str(de)  puts that text in the variable
+       de.getDuplicateCustomer() to get the customer object that is already in the datastore
+    '''
+    def __init__(self, errTxt, badFldLst, duplicate):
+        ValidationErrors.__init__(self, errTxt, badFldLst)
+        self.duplicate = duplicate
+
+    def getDuplicateCustomer(self):
+        '''returns the customer that is already saved in the datastore.'''
+        return self.duplicate
 
 def isState(s):
     #states, DX, possesions, territories and military bases
@@ -83,8 +140,7 @@ def isZip(s):
 def lenOK(s,minLen, maxLen):
     if s == None:
        return (False,"needs to have a length between %i and %i" % ( minLen, maxLen))
-    aLen = len(s)
-    if (aLen >= minLen) & (aLen <= maxLen): 
+    if minLen <= len(s) <= maxLen: 
        return (True, "")
     else:
        return (False, "needs to have a length between %i and %i" % ( minLen, maxLen))
@@ -94,6 +150,12 @@ def isMissing(s):
 
 class MaintAppModel(object):
     requiredCust = ('last_name', 'address1', 'city', 'state', 'zip', 'phone1')
+    requiredVehicle = ('customer_id', 'make', 'model', 'year', 'license')
+    requiredWorkOrdAll = ('vehicle_id', 'mileage', 'status',
+                       'customer_request', 'mechanic', 'date_created')
+    # additional required fields for work orders that are ready for customer pickup (not open) 
+    requiredWorkOrdDone = ('task_list', 'work_performed', 'notes')
+
     OK, MISSING, INVALID = (0,1,2)
     
     def __init__(self):
@@ -112,8 +174,15 @@ class MaintAppModel(object):
             the UI and the setup of the database.
         """
         pass
-     
-     #---------------------------- customer -----------------------------------------------
+      
+    #---------------------------- customer -----------------------------------------------
+    
+    #================================================================================
+    #  For each customer attribute to validate, there is a chk_attribute method that
+    #  returns True if valid, else False
+    #================================================================================
+    
+    
     def chk_id(self,id):
         return True
     
@@ -158,7 +227,7 @@ class MaintAppModel(object):
         return status
     
     def chk_comments(self, comments):
-        status, msg = lenOK(comments,1,999)
+        status, msg = lenOK(comments,1,5000)
         return status
     
     def getInvFldNames(self):
@@ -176,9 +245,11 @@ class MaintAppModel(object):
         returns boolean: True if valid else False
         for each attribute, 
              check the attribute by calling corresponding chk_attribute(customer.attribute)
+             method.
              Save a list of missing and invalid attributes and add errortext
              for each missing or invalid field.
         """
+        
         for a in customer.__dict__.keys():
              check_attr_meth = getattr(self, 'chk_'+a, None)
              if check_attr_meth == None: continue
@@ -195,7 +266,9 @@ class MaintAppModel(object):
         return (len(self.missing) + len(self.invFld)) == 0
     
     def saveCustomerInfo(self, customer):
-        """ Write customer object to data store.  If id in customer is '-1',
+        """ 
+        If customer is invalid, raise exception.
+        Write customer object to data store.  If id in customer is '-1',
             create the record; otherwise, update the record.  Return the 
             primary key of the customer (the new one if creating, the existing
             one if updating.)
@@ -205,6 +278,15 @@ class MaintAppModel(object):
            raise ValidationErrors(self.errTxt, resLst)
        
         if customer.id == '-1':
+            # supposed to be new record here; check if it is a duplicate of an existing record before trying to add
+            # if it is a duplicate (defined by first_name, last_name and phone1), raise exception (DuplicateCustomer);  
+            searchCriteria = Customer(first_name=customer.first_name, 
+                                      last_name=customer.last_name, 
+                                      phone1=customer.phone1)
+            match = self.searchForMatchingCustomers(searchCriteria)
+            if len(match) > 0:
+                self.errTxt += 'Customer ' + customer.first_name + ' ' + customer.last_name + ' already in database\n'
+                raise DuplicateCustomer(self.errTxt, [], match[0])          
             entity = None
         else:
             try:
@@ -213,29 +295,29 @@ class MaintAppModel(object):
                 entity = None
        
         if entity:
-            entity.first_name = customer.first_name
-            entity.last_name = customer.last_name
-            entity.address1 = customer.address1
-            entity.address2 = customer.address2
-            entity.city = customer.city
-            entity.state = customer.state
-            entity.zip = customer.zip
-            entity.phone1 = customer.phone1
-            entity.phone2 = customer.phone2
-            entity.email = customer.email
-            entity.comments = customer.comments
+            entity.first_name = zn(customer.first_name)
+            entity.last_name = zn(customer.last_name)
+            entity.address1 = zn(customer.address1)
+            entity.address2 = zn(customer.address2)
+            entity.city = zn(customer.city)
+            entity.state = zn(customer.state)
+            entity.zip = zn(customer.zip)
+            entity.phone1 = zn(customer.phone1)
+            entity.phone2 = zn(customer.phone2)
+            entity.email = zn(customer.email)
+            entity.comments = zn(customer.comments)
         else:    
-            entity = CustomerEnt(first_name=customer.first_name,
-                                 last_name=customer.last_name,
-                                 address1=customer.address1,
-                                 address2=customer.address2,
-                                 city=customer.city,
-                                 state=customer.state,
-                                 zip=customer.zip,
-                                 phone1=customer.phone1,
-                                 phone2=customer.phone2,
-                                 email=customer.email,
-                                 comments=customer.comments)
+            entity = CustomerEnt(first_name=zn(customer.first_name),
+                                 last_name=zn(customer.last_name),
+                                 address1=zn(customer.address1),
+                                 address2=zn(customer.address2),
+                                 city=zn(customer.city),
+                                 state=zn(customer.state),
+                                 zip=zn(customer.zip),
+                                 phone1=zn(customer.phone1),
+                                 phone2=zn(customer.phone2),
+                                 email=zn(customer.email),
+                                 comments=zn(customer.comments))
         key = entity.put()
         return str(key)
             
@@ -244,17 +326,17 @@ class MaintAppModel(object):
         """
         if customer_ent:
             return Customer(id=str(customer_ent.key()), 
-                            first_name=customer_ent.first_name, 
-                            last_name=customer_ent.last_name,
-                            address1=customer_ent.address1,
-                            address2=customer_ent.address2,
-                            city=customer_ent.city,
-                            state=customer_ent.state,
-                            zip=customer_ent.zip,
-                            phone1=customer_ent.phone1,
-                            phone2=customer_ent.phone2,
-                            email=customer_ent.email,
-                            comments=customer_ent.comments)
+                            first_name=nz(customer_ent.first_name), 
+                            last_name=nz(customer_ent.last_name),
+                            address1=nz(customer_ent.address1),
+                            address2=nz(customer_ent.address2),
+                            city=nz(customer_ent.city),
+                            state=nz(customer_ent.state),
+                            zip=nz(customer_ent.zip),
+                            phone1=nz(customer_ent.phone1),
+                            phone2=nz(customer_ent.phone2),
+                            email=nz(customer_ent.email),
+                            comments=nz(customer_ent.comments))
         else:
             return None
 
@@ -268,21 +350,7 @@ class MaintAppModel(object):
         except Exception:
             entity = None
 
-        if entity:
-            return Customer(id=customer_id, 
-                            first_name=entity.first_name, 
-                            last_name=entity.last_name,
-                            address1=entity.address1,
-                            address2=entity.address2,
-                            city=entity.city,
-                            state=entity.state,
-                            zip=entity.zip,
-                            phone1=entity.phone1,
-                            phone2=entity.phone2,
-                            email=entity.email,
-                            comments=entity.comments)
-        else:
-            return None
+        return self.getCustomerFromCustomerEnt(entity)
         
     def searchForMatchingCustomers(self, searchCriteria):
         """ The model forms a query based on AND logic for the various
@@ -290,7 +358,7 @@ class MaintAppModel(object):
             The searchCriteria object is an instance of the Customer class.
             For now we will assume exact matches:
                 e.g., 'SELECT .... WHERE (customer_table.first_name=%d)' %
-                                                searchCriteria.getFirstName()
+                                                searchCriteria.first_name
             In the future we may consider supporting wild card matching.
             A list of Customer objects corresponding to the customer records
             The objects in the list are ordered by last_name, then first_name
@@ -327,85 +395,91 @@ class MaintAppModel(object):
         return result
          
     #---------------------------- vehicle -----------------------------------------------
+    
+    #================================================================================
+    #  For each vehicle attribute to validate, there is a chk_attribute method that
+    #  returns True if valid, else False
+    #================================================================================
+    def chk_customer_id(self, customer_id):
+        return True
+    
     def chk_make(self, make):
-        if isMissing(zip):
-           self.missing.append('make')
-           return False
         status,msg = lenOK(make,1,30)
-        if len(msg):
-            self.invFld.append('make')
-            self.errTxt += 'make ' + msg  + '\n'
         return status
       
     def chk_model(self, model):
-        if isMissing(model):
-           self.missing.append('zip')
-           return False
         status,msg = lenOK(model,1,30)
-        if len(msg):
-            self.invFld.append('model')
-            self.errTxt += 'model ' + msg  + '\n'
         return status
       
     def chk_year(self, year):
-        if isMissing(zip):
-           self.missing.append('year')
-           return False
+        # FIXME: is year already an integer, not a string????
         if (year.isdigit() == False):
-            self.invFld.append('year')
-            self.errTxt += 'year must be a 4-digit number\n'
             return False
-        maxYr = datetime.today().year + 3
-        if (int(year) < 1925) | (int(year) > maxYr) :
-            self.invFld.append('year')
-            self.errTxt += 'year must be between 1925 and 2 years after current year\n'
+        maxYr = datetime.datetime.today().year + 3
+        myLog.write("maxYr = %i\nyear=%s" % (maxYr, year ))
+        if  not (1925 < int(year) <  maxYr) :
             return False
         status,msg = lenOK(year,4,4)
-        if len(msg):
-            self.invFld.append('year')
-            self.errTxt += 'year ' + msg  + '\n'
         return status
-      
+              
     def chk_license(self, license):
-        if isMissing(zip):
-           self.missing.append('license')
-           return False
         status,msg = lenOK(license,1,30)
-        if len(msg):
-            self.invFld.append('liense')
-            self.errTxt += 'license ' + msg  + '\n'
         return status
       
     def chk_vin(self, vin):
         # Note:  see http://www.vinguard.org/vin.htm for the full story. This is not a complete check
         # For example, the year is encoded (vin[9]) as well as a check digit (vin[8])
-        if isMissing(vin):
-            return True
         if (vin.isalnum() == False):
-            self.invFld.append('vin')
-            self.errTxt += 'vin must be only numbers and letters\n'
             return False
         status,msg = lenOK(vin,16,17)
-        if len(msg):
-            self.invFld.append('vin')
-            self.errTxt += 'vin ' + msg  + '\n'
         return status
       
     def chk_notes(self, notes):
-        if isMissing(notes):
-            return True
-        status,msg = lenOK(notes,1,999)
-        if len(msg):
-            self.invFld.append('notes')
-            self.errTxt += 'notes ' + msg  + '\n'
+        status,msg = lenOK(notes,1,5000)
         return status
     
-    
+    def validateVehicle(self,vehicle):
+        """
+        given a vehicle instance,
+        returns boolean: True if valid else False
+        for each attribute, 
+             check the attribute by calling corresponding chk_attribute(vehicle.attribute)
+             Save a list of missing and invalid attributes and add errortext
+             for each missing or invalid field.
+        """
+        myLog.write('validateVehicle')
+        for a in vehicle.__dict__.keys():
+             myLog.write('validating ' +a)
+             check_attr_meth = getattr(self, 'chk_'+a, None)
+             if check_attr_meth == None: continue
+             anAttr = getattr(vehicle, a, None)
+             if isMissing(anAttr):
+                 if a in MaintAppModel.requiredVehicle:
+                     self.missing.append(a)
+                     self.errTxt += 'missing ' + a + '\n'
+                 else: pass
+             elif check_attr_meth(anAttr)  == False: 
+                  self.invFld.append(a)
+                  self.errTxt += 'invalid ' + a + '\n'    
+        # if there are no required missing fields  or invalid fields, everything is ok
+        return (len(self.missing) + len(self.invFld)) == 0
+       
     def saveVehicleInfo(self, vehicle):
-        """ Write vehicle object to data store.  If id in vehicle object is
+        """ 
+        If vehicle is invalid, raise exception.
+        Write vehicle object to data store.  If id in vehicle object is
             -1, create the record; otherwise, update the existing record
             in the database.  Return primary key of the vehicle.
         """
+        myLog.write('saveVehicleInfo')
+        if self.validateVehicle(vehicle) == False: 
+           resLst = self.getInvFldNames()
+           if 'customer_id' in resLst:
+              trap = InternalErrors
+           else:
+              trap = ValidationErrors
+           raise trap(self.errTxt, resLst)
+        myLog.write('validated Vehicle')
         if vehicle.id == '-1':
             entity = None
         else:
@@ -419,20 +493,20 @@ class MaintAppModel(object):
         customer_ent = CustomerEnt.get(db.Key(vehicle.customer_id))    
         #print "-- In saveVehicleInfo, customer_ent: ", customer_ent
         if entity:
-            entity.make = vehicle.make
-            entity.model = vehicle.model
+            entity.make = zn(vehicle.make)
+            entity.model = zn(vehicle.model)
             entity.year = int(vehicle.year)
-            entity.license = vehicle.license
-            entity.vin = vehicle.vin
-            entity.notes = vehicle.notes
+            entity.license = zn(vehicle.license)
+            entity.vin = zn(vehicle.vin)
+            entity.notes = zn(vehicle.notes)
             entity.customer = customer_ent
         else:    
-            entity = VehicleEnt(make=vehicle.make,
-                                model=vehicle.model,
+            entity = VehicleEnt(make=zn(vehicle.make),
+                                model=zn(vehicle.model),
                                 year=int(vehicle.year),
-                                license=vehicle.license,
-                                vin=vehicle.vin,
-                                notes=vehicle.notes,
+                                license=zn(vehicle.license),
+                                vin=zn(vehicle.vin),
+                                notes=zn(vehicle.notes),
                                 customer=customer_ent)
         
         key = entity.put()
@@ -449,12 +523,12 @@ class MaintAppModel(object):
             #print "--In getVehicleFromVehicleEnt, customer_key: " + customer_key    
             #print "--In getVehicleFromVehicleEnt, customer object:", vehicle_ent.customer    
             return Vehicle(id=str(vehicle_ent.key()), 
-                           make=vehicle_ent.make, 
-                           model=vehicle_ent.model, 
+                           make=nz(vehicle_ent.make), 
+                           model=nz(vehicle_ent.model), 
                            year=str(vehicle_ent.year),
-                           license=vehicle_ent.license,
-                           vin=vehicle_ent.vin,
-                           notes=vehicle_ent.notes,
+                           license=nz(vehicle_ent.license),
+                           vin=nz(vehicle_ent.vin),
+                           notes=nz(vehicle_ent.notes),
                            customer_id=customer_key)
         else:
             return None
@@ -475,7 +549,7 @@ class MaintAppModel(object):
             if no vehicles are found.
         """
         result = []
-        limit = 10 # get at most 10 vehicle for each customer
+        limit = 10 # get at most 10 vehicles for each customer
         try:
             customer = CustomerEnt.get(db.Key(customer_id))
         except Exception:
@@ -488,41 +562,135 @@ class MaintAppModel(object):
         return result
     
     #---------------------------- work order -----------------------------------------------
-    def saveWorkorder(self, workorder):
-        """ Write contents of workorder object to data store.  If id in workorder
-            object is -1, create the record; otherwise, update the existing record
-            in the database.  Return primary key of the workorder.
+    
+    #================================================================================
+    #  For each workOrder attribute to validate, there is a chk_w_attribute method
+    # that returns True if valid, else False
+    #================================================================================
+    
+    def chk_w_vehicle_id(self, vehicle_id):
+        return True
+    
+    def chk_w_date_created(self, date_created):
+        return True
+    
+    def chk_w_date_closed(self, date_closed):
+        return True
+    
+    def chk_w_mileage(self, mileage):
+        status,msg = lenOK(mileage, 1,7)
+        if status == False:
+            return False
+        if mileage.isdigit():
+            return ( 0 < int(mileage)  < 1000000)
+        else:
+            return False
+    
+    def chk_w_status(self, status):
+        return status in (Workorder.OPEN, Workorder.COMPLETED, Workorder.CLOSED )
+    
+    def chk_w_customer_request(self, customer_request):
+        status,msg = lenOK(customer_request,1,5000)
+        return status
+ 
+    def chk_w_mechanic(self, mechanic):
+        status,msg = lenOK(mechanic, 1,50)
+        return status
+    
+    def chk_w_task_list(self, task_list):
+        isOK,msg = lenOK(task_list, 1,5000)
+        return isOK
+    
+    def chk_w_work_performed(self, work_performed):
+        status,msg = lenOK(work_performed,1,5000)
+        return status
+    
+    #FIXME: what about date fields?
+    
+    def validateWorkOrder(self,workOrder):
         """
+        given a work order instance,
+        returns True if valid else False
+        for each attribute, 
+             check the attribute by calling corresponding chk_attribute(vehicle.attribute)
+             Save a list of missing and invalid attributes and add errortext
+             for each missing or invalid field.
+        """
+        requiredWorkOrd = list(MaintAppModel.requiredWorkOrdAll)
+        if workOrder.status != Workorder.OPEN:
+            requiredWorkOrd.extend(MaintAppModel.requiredWorkOrdDone)
+        if workOrder.status == Workorder.CLOSED:
+             requiredWorkOrd.append('date_closed') 
+           
+        
+        
+        for a in workOrder.__dict__.keys():
+             myLog.write('checking ' + a + '...')
+             check_attr_meth = getattr(self, 'chk_w_'+a, None)
+             if check_attr_meth == None: continue
+             anAttr = getattr(workOrder, a, None)
+             if isMissing(anAttr):
+                 if a in requiredWorkOrd:
+                     self.missing.append(a)
+                     self.errTxt += 'missing ' + a + '\n'
+                 else: pass
+             elif check_attr_meth(anAttr)  == False: 
+                  self.invFld.append(a)
+                  self.errTxt += 'invalid ' + a + '\n'  
+        
+        # if there are no required missing fields  or invalid fields, everything is ok
+        return (len(self.missing) + len(self.invFld)) == 0
+       
+    def saveWorkorder(self, workorder):
+        """ 
+        If workorder is invalid, raise exception.
+        Write contents of workorder object to data store.  
+        If id in workorder object is -1, create the record; 
+        otherwise, update the existing record
+        in the database.  Return primary key of the workorder.
+        """
+        if self.validateWorkOrder(workorder) == False: 
+           resLst = self.getInvFldNames()
+           if ('date_created' in resLst) or \
+              ('date_closed' in resLst) or \
+               ('vehicle_id' in resLst) :
+              trap = InternalErrors
+           else:
+              trap = ValidationErrors   
+           raise trap(self.errTxt, resLst)
+        
+        myLog.write("----> %s" % workorder.id)
         if workorder.id == '-1':
             entity = None
         else:
             try:
                 entity = WorkorderEnt.get(db.Key(workorder.id))
-            except Exception:
+            except Exception, e:
+                myLog.write("db error: " + str(e))
                 entity = None
 
         vehicle_ent = VehicleEnt.get(db.Key(workorder.vehicle_id))    
         if entity:
             entity.mileage = int(workorder.mileage)
-            entity.status = workorder.status
-            entity.date_created = workorder.date_created
-            entity.customer_request = workorder.customer_request
-            entity.mechanic = workorder.mechanic
-            entity.task_list = workorder.task_list
-            entity.work_performed = workorder.work_performed
-            entity.notes = workorder.notes
-            entity.date_closed = workorder.date_closed
+            entity.status = zn(workorder.status)
+            entity.date_created = stringToDate(workorder.date_created)
+            entity.customer_request = zn(workorder.customer_request)
+            entity.mechanic = zn(workorder.mechanic)
+            entity.task_list = zn(workorder.task_list)
+            entity.work_performed = zn(workorder.work_performed)
+            entity.notes = zn(workorder.notes)
+            entity.date_closed = stringToDate(workorder.date_closed)
             entity.vehicle = vehicle_ent
         else:    
             entity = WorkorderEnt(mileage=int(workorder.mileage),
-                                  status=workorder.status,
-                                  date_created=workorder.date_created,
-                                  customer_request=workorder.customer_request,
-                                  mechanic=workorder.mechanic,
-                                  task_list=workorder.task_list,
-                                  work_performed=workorder.work_performed,
-                                  notes=workorder.notes,
-                                  date_closed=workorder.date_closed,
+                                  status=zn(workorder.status),
+                                  date_created=stringToDate(workorder.date_created),
+                                  customer_request=zn(workorder.customer_request),
+                                  mechanic=zn(workorder.mechanic),
+                                  task_list=zn(workorder.task_list),
+                                  work_performed=zn(workorder.work_performed),
+                                  notes=zn(workorder.notes),
+                                  date_closed=stringToDate(workorder.date_closed),
                                   vehicle = vehicle_ent)
         key = entity.put()
         return str(key)
@@ -536,15 +704,15 @@ class MaintAppModel(object):
                 vehicle_key = str(workorder_ent.vehicle.key())
                 
             return Workorder(id=str(workorder_ent.key()), 
-                             mileage=workorder_ent.mileage, 
-                             status=workorder_ent.status, 
-                             date_created=workorder_ent.date_created,
-                             customer_request=workorder_ent.customer_request,
-                             mechanic=workorder_ent.mechanic,
-                             task_list=workorder_ent.task_list,
-                             work_performed=workorder_ent.work_performed,
-                             notes=workorder_ent.notes,
-                             date_closed=workorder_ent.date_closed,
+                             mileage=str(workorder_ent.mileage), 
+                             status=nz(workorder_ent.status), 
+                             date_created=dateToString(workorder_ent.date_created),
+                             customer_request=nz(workorder_ent.customer_request),
+                             mechanic=nz(workorder_ent.mechanic),
+                             task_list=nz(workorder_ent.task_list),
+                             work_performed=nz(workorder_ent.work_performed),
+                             notes=nz(workorder_ent.notes),
+                             date_closed=dateToString(workorder_ent.date_closed),
                              vehicle_id=vehicle_key)
         else:
             return None
@@ -564,13 +732,13 @@ class MaintAppModel(object):
             by vehicle_id.  Return an empty list if no workorders are found.
         """
         result = []
-        limit = 10 # get at most 10 workorder for each vehicle
+        limit = 10 # get at most 10 work orders for each vehicle
         try:
             vehicle = VehicleEnt.get(db.Key(vehicle_id))
         except Exception:
             return result
         
-        query = WorkorderEnt.gql("WHERE vehicle = :key", key=vehicle)
+        query = WorkorderEnt.gql("WHERE vehicle = :key ORDER BY date_created DESC", key=vehicle)
         workorders = query.fetch(limit) 
         for workorder_ent in workorders:
             result.append(self.getWorkorderFromWorkorderEnt(workorder_ent))
@@ -581,40 +749,55 @@ class MaintAppModel(object):
             is 'open'.  Also retrieve the vehicle associated with each
             work order.  Return a list of (vehicle, workorder) tuples filled in
             with the results of the query.
+            The list is sorted by workorder date_created in descending order
         """
-        return []
+        result = []
+        limit = 100 # get at most 100 open workorders 
+        
+        query = WorkorderEnt.gql("WHERE status = :status ORDER BY date_created DESC", status=Workorder.OPEN)
+        workorders = query.fetch(limit) 
+        for workorder_ent in workorders:
+            vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
+            result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
+        return result
     
     def getCompletedWorkorders(self):
         """ Query the database for all work orders where the work order status
             is 'completed'.  Also retrieve the vehicle associated with each
             work order.  Return a list of (vehicle, workorder) tuples filled in
             with the results of the query.
+            The list is sorted by workorder date_created in descending order
         """
-        return []
+        result = []
+        limit = 100 # get at most 100 completed workorders 
+        
+        query = WorkorderEnt.gql("WHERE status = :status ORDER BY date_created DESC", status=Workorder.COMPLETED)
+        workorders = query.fetch(limit) 
+        for workorder_ent in workorders:
+            vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
+            result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
+        return result
     
-    def validateCustomerInfo(self, customer):
-        """ Validate the data fields in the 'customer' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
+    #---------------------------- List of Mechanics --------------------------------
     
-    def validateVehicleInfo(self, vehicle):
-        """ Validate the data fields in the 'vehicle' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
-    
-    def validateWorkorderInfo(self, workorder):
-        """ Validate the data fields in the 'workorder' object for data errors 
-            and required fields before save to db.  Return list of 
-            (field name, error type) tuples.
-        """
-        return []
+    def getMechanics(self):
+        """ Open and read the contents of config/mechanics.cfg and return
+            the contents as a list of strings, skipping comment lines and
+            blank lines. """ 
+        mechPath = os.path.join ( os.path.dirname(__file__), 'config/mechanics.cfg' )
+        mechanics = []
+        for line in  file(mechPath,'r'):
+              mechanic = line.rstrip('\n ').strip()
+              if len(mechanic) == 0:
+                  continue
+              if mechanic[0] in "\"\'\#":
+                 continue
+              mechanics.append(mechanic)
+        return mechanics
     
 
 class TestMaintAppModel(object):
+    ''' unit test '''
     def __init__(self): 
         # Start with a fresh api proxy. 
         apiproxy_stub_map.apiproxy = apiproxy_stub_map.APIProxyStubMap() 
@@ -624,6 +807,7 @@ class TestMaintAppModel(object):
         apiproxy_stub_map.apiproxy.RegisterStub('datastore_v3', stub) 
         
     def testSaveAndGet(self):
+        ''' unit test '''
         appModel = MaintAppModel()
         print "** testing customer save..."
         c1 = Customer(id='-1',
@@ -675,9 +859,9 @@ class TestMaintAppModel(object):
         v1 = Vehicle(id='-1',
                      make='Honda', 
                      model='Civic', 
-                     year=2001,
+                     year="2001",
                      license='AB1234',
-                     vin='VIN',
+                     vin='',
                      notes='',
                      customer_id=c1_key)
         v1_key = appModel.saveVehicleInfo(v1)
@@ -686,9 +870,9 @@ class TestMaintAppModel(object):
         v2 = Vehicle(id='v2',
                      make='Honda', 
                      model='Accord', 
-                     year=2007,
+                     year="2007",
                      license='XY1234',
-                     vin='VIN',
+                     vin='',
                      notes='',
                      customer_id=c2_key)
         v2_key = appModel.saveVehicleInfo(v2)
@@ -697,9 +881,9 @@ class TestMaintAppModel(object):
         v3 = Vehicle(id='v3',
                      make='Honda', 
                      model='SUV', 
-                     year=2008,
+                     year="2008",
                      license='XY9999',
-                     vin='VIN',
+                     vin='',
                      notes='also belong to c2',
                      customer_id=c2_key)
         v3_key = appModel.saveVehicleInfo(v3)
@@ -758,8 +942,28 @@ class TestMaintAppModel(object):
             print i
         print
         
+        print "\n** testing duplicate customer"
+        duplicate_c = Customer(id='-1',
+                      first_name='Fiona',
+                      last_name='Wong',
+                      address1='addr',
+                      address2='',
+                      city='San Jose',
+                      state='CA',
+                      zip='95135',
+                      phone1='111.111.1111',
+                      phone2='222.222.2222',
+                      email='fionawhwong@yahoo.com',
+                      comments='')
+        try:
+            duplicate_key = appModel.saveCustomerInfo(duplicate_c)
+        except DuplicateCustomer, e:
+            print e
+            print "duplicate found: ", e.getDuplicateCustomer()
+        
 
 def main( ):
+    ''' unit test '''
     test = TestMaintAppModel()
     test.testSaveAndGet()
 

@@ -7,6 +7,16 @@ handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
-- url: /.*
+- url: /
   script: dermico.py
+    
+- url: /index\.html
+  script: dermico.py
+    
+- url: /Customer
+  script: dermico.py
+    
+- url: /Search
+  script: dermico.py
+    
     

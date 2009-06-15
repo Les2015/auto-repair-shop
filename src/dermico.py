@@ -7,13 +7,14 @@
 """
 
 import sys
+from Utilities import myLog
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template    # [1]
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from MaintAppView import MaintAppView
-from MaintAppModel import MaintAppModel, ValidationErrors
+from MaintAppModel import MaintAppModel, ValidationErrors, DuplicateCustomer
 from MaintAppObjects import Customer, Vehicle, Workorder
 
 
@@ -39,6 +40,14 @@ class SearchLinkHandler(webapp.RequestHandler):
     
     
 class CustomerInput(webapp.RequestHandler):
+    def get(self):
+        """ Callback for handling special case of someone typing in 
+            http://..../Customer.  Without this handler, the user sees a
+            blank screen.  This puts the app in the standard startup mode.
+        """
+        MaintAppController.theController().handle_button_events(self, "newcust", "STARTUP")
+        return None
+
     def post(self):
         button_pressed = self.__getbutton()
         button_fields = button_pressed.split("_")
@@ -78,9 +87,10 @@ class MaintAppController(object):
         MaintAppController.__theController = self
         self.__view = MaintAppView(self)
         self.__app = webapp.WSGIApplication(
-                                            [('/',         DefaultConfiguration),
-                                             ('/Customer', CustomerInput),
-                                             ('/Search',   SearchLinkHandler)],
+                                            [('/',           DefaultConfiguration),
+                                             ('/index.html', DefaultConfiguration),
+                                             ('/Customer',   CustomerInput),
+                                             ('/Search',     SearchLinkHandler)],
                                              debug=True)
 
         self.__dispatch_table = {"newcust"   : MaintAppController.addNewCustomer,
@@ -98,7 +108,8 @@ class MaintAppController(object):
                                  "savewo"    : MaintAppController.saveWorkOrder,
                                  "wotab"     : MaintAppController.workOrderTabClicked,
                                  "activewo"  : MaintAppController.displayActiveWorkOrder,
-                                 "rstrwo"    : MaintAppController.restoreWorkOrder}
+                                 "rstrwo"    : MaintAppController.restoreWorkOrder,
+                                 "dialog"    : MaintAppController.handle_dialog_event }
         
         self.__contextChangingActions = \
             ["newcust", "findcust", "vtab", "showwos", "wotab", "activewo"]
@@ -129,18 +140,19 @@ class MaintAppController(object):
         # If button would result in context change where edits might be lost, 
         # display dialog prompting for save or not.
         if whichButton in self.__contextChangingActions and self.__fieldsNeedSaving():
-            self.__view.showSaveDialog(whichButton)
+            self.__view.showSaveDialog(whichButton, bIndex)
             self.__regenerateCurrentView()
+            myLog.write("Dialog %s_%s" % (whichButton, bIndex))
         else:    
             dispatch_function = self.__dispatch_table[whichButton]
             if dispatch_function is not None:
                 dispatch_function(self, reqhandler, bIndex)
             else:
-                sys.stderr.write("Button '%s' not found in dispatch list." % whichButton)
+                myLog.write("Button '%s' not found in dispatch list." % whichButton)
                 self.__regenerateCurrentView()
                 
-            self.__configureHiddenIdFields()
-            self.__view.serve_content(reqhandler)
+        self.__configureHiddenIdFields()
+        self.__view.serve_content(reqhandler)
         return None
     
     ##############################################################################
@@ -201,7 +213,7 @@ class MaintAppController(object):
         """
         retVehicle = None
         for vehicle in vehicleList:
-            sys.stderr.write("%s -- %s\n" % (vehicle.getId(), self.__activeVehicleId))
+            myLog.write("%s -- %s\n" % (vehicle.getId(), self.__activeVehicleId))
             if vehicle.getId() == self.__activeVehicleId:
                 retVehicle = vehicle
                 break
@@ -211,13 +223,25 @@ class MaintAppController(object):
         """ Search the list of work orders for the entry whose primary key matches
             the __activeWorkorderId.
         """
-        retWorkorder = None
-        for workorder in workorderList:
-            if workorder.getId() == self.__activeWorkorderId:
-                retWorkorder = workorder
+        retIndex = None
+        for index in range(len(workorderList)):
+            if workorderList[index].getId() == self.__activeWorkorderId:
+                retIndex = index
                 break
-        return retWorkorder
+        return retIndex
 
+    def __hasUnclosedWorkorder(self):
+        """ Determine if the active vehicle has any unclosed workorders. """
+        retVal = False
+        if self.__activeVehicleId != "-1":
+            unclosedWorkorders = self.__model.getOpenWorkorders() + \
+                                 self.__model.getCompletedWorkorders()
+            for vehicle, workorder in unclosedWorkorders:
+                if vehicle is not None and vehicle.getId() == self.__activeVehicleId:
+                    retVal = True
+                    break
+        return retVal
+        
     ##############################################################################
     # The following three functions are refactored code that was repeated a
     # number of times when setting up the contents of the various panels in
@@ -268,10 +292,30 @@ class MaintAppController(object):
             else:
                 activeVehicle = self.__findActiveVehicle(activeVehicleList)
         # Load any information that might have already been entered into the
-        # form fields into the active vehicle.
+        # form fields into the active vehicle.  If this is called right after
+        # saving a New Vehicle, the hidden vehicle_id field will have -1 rather
+        # than the new id value from the db.  Be sure to replace it with correct
+        # version from UI.
         if self.__vehicleActive():
             activeVehicle.loadFromDictionary(self.__userValues)
+            activeVehicle.setId(self.__activeVehicleId)
+        self.__configureVehicleContent(activeVehicleList)
+        return None
+    
+    def __configureVehicleContent(self, activeVehicleList):
+        """ Determine the number of open workorders for the active vehicle
+            (for disabling the workorder history button when the count is 0).
+            Also, see if there is an unclosed workorder so that we can
+            disable the New Workorder button.
+        """
+        workorders = self.__model.getWorkorderList(self.__activeVehicleId)
+        workorder_count = len(workorders)
+        has_unclosed_workorder = self.__hasUnclosedWorkorder()
+        if has_unclosed_workorder:
+            myLog.write("Vehicle has an unclosed workorder.")
         self.__view.configureVehicleContent(activeVehicleList)
+        self.__view.configureWorkorderCount(workorder_count)
+        self.__view.configureWorkorderStatus(has_unclosed_workorder)
         return None
     
     def __configureWorkorderCustomerVehicleInfo(self):
@@ -322,12 +366,13 @@ class MaintAppController(object):
         except ValidationErrors, e:
             self.__view.configureErrorMessages(e)
             self.__regenerateCurrentView()
+        except DuplicateCustomer, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateCurrentView()
         else:
             activeCustomer.setId(customerDbId)
             self.__view.configureCustomerContent(activeCustomer)
-            
             self.__configureVehicleInfo()
-            
             self.__activeCustomerId = customerDbId
             self.__configureSidePanel(0, "Save Customer Info")
             self.__view.set_customer_vehicle_mode()
@@ -388,35 +433,17 @@ class MaintAppController(object):
         vehicle = Vehicle()
         vehicle.loadFromDictionary(self.__userValues)
         vehicle.setCustomerId(self.__activeCustomerId)
-        errorList = self.__model.validateVehicleInfo(vehicle)
-        if len(errorList) == 0:
-            self.__activeVehicleId = self.__model.saveVehicleInfo(vehicle)
-            # Need to load the vehicle list after saving the vehicle so saved
-            # vehicle is in list.
-            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
-            vehicleList.append(Vehicle())
+        try:
+            vehicleDbId = self.__model.saveVehicleInfo(vehicle)
+        except ValidationErrors, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateCurrentView()
         else:
-            self.__view.configureErrorMessages(errorList)
-            vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
-            if self.__activeVehicleId == "-1":
-                # User was entering info for a new vehicle.  Just append the
-                # vehicle loaded from the UI to the end of the list as the
-                # new vehicle place holder.
-                vehicleList.append(vehicle)
-            else:
-                # Replace entry in list with the active one whose values were
-                #   loaded from the form fields.
-                vehicleIndex = self.__findActiveVehicle(vehicleList)
-                vehicleList.pop(vehicleIndex)
-                vehicleList.insert(vehicleIndex, vehicle)
-            
-        customer = Customer()
-        customer.loadFromDictionary(self.__userValues)
-        self.__view.configureCustomerContent(customer)
-    
-        self.__view.configureVehicleContent(vehicleList)
-        self.__configureSidePanel(0, "Save Vehicle Info")
-        self.__view.set_customer_vehicle_mode()
+            self.__activeVehicleId = vehicleDbId
+            self.__configureVehicleInfo()
+            self.__regenerateCustomerView()
+            self.__configureSidePanel(0, "Save Vehicle Info")
+            self.__view.set_customer_vehicle_mode()
         return None
 
     def vehicleTabClicked(self, reqhandler, tag):
@@ -445,7 +472,7 @@ class MaintAppController(object):
         customer.loadFromDictionary(self.__userValues)
         self.__view.configureCustomerContent(customer)
 
-        self.__view.configureVehicleContent(vehicleList)
+        self.__configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Vehicle Tab Change")
         self.__view.set_customer_vehicle_mode()
         return None
@@ -463,7 +490,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId == "-1"  # Creating a new work order.
         workorders.insert(0, Workorder())
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(0, "New Workorder")
         self.__view.set_workorder_mode()
         return None
@@ -480,7 +508,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId = workorders[0].getId()
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Show Workorder History")
         self.__view.set_workorder_mode()
         return None
@@ -511,33 +540,25 @@ class MaintAppController(object):
         """
         workorder = Workorder()
         workorder.loadFromDictionary(self.__userValues)
-        errorList = self.__model.validateWorkorderInfo(workorder) + \
-                    workorder.checkRequiredFieldsForCurrentState()
-        if len(errorList) == 0:
-            if self.__activeWorkorderId == "-1": # New workorder to be saved.
-                workorder.setDateCreated()
-                workorder.setVehicleId(self.__activeVehicleId)
-            elif workorder.status == Workorder.CLOSED and \
-                    workorder.getDateClosed() is not None:
-                workorder.setDateClosed()
-            self.__activeWorkorderId = self.__model.saveWorkorder(workorder)
-            
-            workorders = self.__model.getWorkorderList(self.__activeVehicleId)
+        workorder.setVehicleId(self.__activeVehicleId)
+        if self.__activeWorkorderId == "-1": # New workorder to be saved.
+            workorder.setDateCreated()
+        elif workorder.status == Workorder.CLOSED and \
+                workorder.getDateClosed() is not None:
+            workorder.setDateClosed()
+
+        try:
+            workorderDbId  = self.__model.saveWorkorder(workorder)
+        except ValidationErrors, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateWorkorderView()
         else:
-            self.__view.configureErrorMessages(errorList)
+            self.__activeWorkorderId = workorderDbId
             workorders = self.__model.getWorkorderList(self.__activeVehicleId)
-            if self.__activeWorkorderId == "-1":
-                # User is entering a new workorder.
-                workorders.insert(0, workorder)
-            else:
-                # Replace entry in list with the active one whose values were
-                #   loaded from the form fields.
-                workorderIndex = self.__findActiveWorkorder(workorders)
-                workorders.pop(workorderIndex)
-                workorders.insert(workorderIndex, workorder)
-                
-        self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+            mechanics = self.__model.getMechanics()
+            self.__view.configureWorkorderContent(mechanics, workorders)
+            self.__configureWorkorderCustomerVehicleInfo()
+            
         self.__configureSidePanel(3, "Save Workorder")
         self.__view.set_workorder_mode()
         return None
@@ -556,7 +577,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__activeWorkorderId = workorders[int(tag)].getId()
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Workorder Tab Change")
         self.__view.set_workorder_mode()
         return None
@@ -580,7 +602,7 @@ class MaintAppController(object):
             Set active customer/vehicle/workorder ids.
             Tell view to rerender.
         """
-        self.__activeWorkorderId = int(tag)
+        self.__activeWorkorderId = tag
         activeWorkorder = self.__model.getWorkorder(self.__activeWorkorderId)
         self.__activeVehicleId = activeWorkorder.getVehicleId()
         vehicle = self.__model.getVehicle(self.__activeVehicleId)
@@ -588,7 +610,8 @@ class MaintAppController(object):
         
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Display Open/Completed Workorder")
         self.__view.set_workorder_mode()
         return None
@@ -617,8 +640,8 @@ class MaintAppController(object):
 
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         vehicleList.append(Vehicle())
-        self.__view.configureVehicleContent(vehicleList)
         self.__activeVehicleId = vehicleList[0].getId()
+        self.__configureVehicleContent(vehicleList)
         self.__configureSidePanel(0, "Showing Customer")
         self.__view.set_customer_vehicle_mode()
         return None
@@ -643,20 +666,17 @@ class MaintAppController(object):
             The View is then requested to refresh (the configuration didn't change
               so we simply request a refresh.
         """
-        if self.__vehicleActive(): # This is a hack until the UI can reset the button
-                                   # this should really be going directly to the
-                                   # restore call.
-            self.restoreCustomerInfo(reqhandler, tag)
+        self.__clearHiddenIdFields()
+        self.__view.configureCustomerContent(Customer())
+        activeConfig = int(tag)
+        if activeConfig == 0:
+            # Reset info in new customer entry form
+            self.__configureSidePanel(1, "Clearing Customer Info")
+            self.__view.set_new_customer_mode()
         else:
-            self.__clearHiddenIdFields()
-            self.__view.configureCustomerContent(Customer())
-            activeConfig = int(tag)
-            if activeConfig == 0:
-                self.__configureSidePanel(1, "Clearing Customer Info")
-                self.__view.set_new_customer_mode()
-            else:
-                self.__configureSidePanel(2, "Clearing Customer Info")
-                self.__view.set_search_mode()
+            # Reset info in search form
+            self.__configureSidePanel(2, "Clearing Customer Info")
+            self.__view.set_search_mode()
         return None
     
     def restoreCustomerInfo(self, reqhandler, tag):
@@ -694,7 +714,7 @@ class MaintAppController(object):
         
         vehicleList = self.__model.getVehicleList(self.__activeCustomerId)
         vehicleList.append(Vehicle())
-        self.__view.configureVehicleContent(vehicleList)
+        self.__configureVehicleContent(vehicleList)
         
         self.__configureSidePanel(0, "Restoring Vehicle Info")
         self.__view.set_customer_vehicle_mode()
@@ -716,7 +736,8 @@ class MaintAppController(object):
         workorders = self.__model.getWorkorderList(self.__activeVehicleId)
         if self.__activeWorkorderId == "-1":  # Creating a new work order.
             workorders.insert(0, Workorder())
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         self.__configureSidePanel(3, "Restoring Workorder Info")
         self.__view.set_workorder_mode()
         return None
@@ -732,7 +753,7 @@ class MaintAppController(object):
                 # This situation will correspond to new vehicle mode rather than
                 # search mode because error dialog only occurs for when entering
                 # info that might be lost. (We don't care in search mode.
-                self.__configureSidePanel(1, "Regenerated New Veh. Mode")
+                self.__configureSidePanel(1, "Regenerated New Cust. Mode")
                 self.__view.set_new_customer_mode()
             else:
                 self.__regenerateVehicleView()
@@ -779,7 +800,8 @@ class MaintAppController(object):
             workorders.insert(workorderIndex, workorder)
             
         self.__configureWorkorderCustomerVehicleInfo()
-        self.__view.configureWorkorderContent(workorders)
+        mechanics = self.__model.getMechanics()
+        self.__view.configureWorkorderContent(mechanics, workorders)
         return None
 
     # The following methods will be used to determine if the user edited values
@@ -789,12 +811,18 @@ class MaintAppController(object):
     def __fieldsNeedSaving(self):
         """ Compare the form fields on the screen with the version saved in the
             database (or against an empty record if creating a new item).  Return
-            True if any field has changed.  False otherwise.
+            True if any field has changed.  False otherwise.  Since search mode
+            looks much the same as the modes where the customer info is being
+            added or edited, we need to do an additional check to keep from flagging
+            data as changed when moving away from search mode.
         """
-        # return self.__customerFieldsChanged() or \
-        #        self.__vehicleFieldsChanged() or \
-        #        self.__workorderFieldsChanged()
-        return False # Stub this out so we don't go through the save dialog path for now.
+        if self.__customerActive() and ('comments' not in self.__userValues.keys()):
+            retVal = False
+        else:
+            retVal =  self.__customerFieldsChanged() or \
+                      self.__vehicleFieldsChanged() or \
+                      self.__workorderFieldsChanged()
+        return retVal
     
     def __customerFieldsChanged(self):
         """ Compares the form fields for the customer section against the 
@@ -810,7 +838,7 @@ class MaintAppController(object):
                 compCust = self.__model.getCustomer(self.__activeCustomerId)
             activeCust = Customer()
             activeCust.loadFromDictionary(self.__userValues)
-            retVal = (compCust == activeCust)
+            retVal = (compCust != activeCust)
         else:
             retVal = False
             
@@ -826,12 +854,12 @@ class MaintAppController(object):
         """
         if self.__vehicleActive():
             if self.__activeVehicleId == "-1":
-                compVehicle = Vehicle()
+                compVehicle = Vehicle(customer_id=self.__activeCustomerId)
             else:
-                compVehicle = self.__model.getCustomer(self.__activeVehicleId)
+                compVehicle = self.__model.getVehicle(self.__activeVehicleId)
             activeVehicle = Vehicle()
             activeVehicle.loadFromDictionary(self.__userValues)
-            retVal = (compVehicle == activeVehicle)
+            retVal = (compVehicle != activeVehicle)
         else:
             retVal = False
             
@@ -846,12 +874,12 @@ class MaintAppController(object):
         """
         if self.__workorderActive():
             if self.__activeWorkorderId == "-1":
-                compWorkorder = Workorder()
+                compWorkorder = Workorder(vehicle_id=self.__activeVehicleId)
             else:
-                compWorkorder = self.__model.getCustomer(self.__activeWorkorderId)
+                compWorkorder = self.__model.getWorkorder(self.__activeWorkorderId)
             activeWorkorder = Workorder()
             activeWorkorder.loadFromDictionary(self.__userValues)
-            retVal = (compWorkorder == activeWorkorder)
+            retVal = (compWorkorder != activeWorkorder)
         else:
             retVal = False
             
@@ -879,42 +907,86 @@ class MaintAppController(object):
             is never on the screen when the customer fields are active, we negate
             the customerActive test.
         """
-        return not self.__customerActive()
+        return ('mechanic' in self.__userValues.keys())
     
     # The following method is not active in any way.  It was put together as
     # a way of 'thinking' about how we might handle a situation that would
     # require a full-blown dialog.  The need to keep track of this is still
     # important, so I'm leaving this in for now.
-    def handle_dialog_event(self, reqhandler, response, whichButton, tag):
+    def handle_dialog_event(self, reqhandler, response):
         """ User requested context change that required a confirmation dialog for
             saving or not before leaving the current context.  Based on the response,
             perform the save operation, ignore it, or cancel the operation and
             stay in current context.  If save is successful, change to the context
             specified by the requested_change string.
         """
-        if response == "Yes":
+        sys.stderr.write("handle_dialog_event: " + response)
+        if response == "yes":
             # Do the save.  The only tricky issue here is what to do if the
             # save operation cannot be performed because of bad data...
             self.__saveOk = True
             if self.__customerFieldsChanged():
-                # QQQQ Do customer save operation
-                pass
+                activeCustomer = Customer()
+                activeCustomer.loadFromDictionary(self.__userValues)
+                try:
+                    customerDbId = self.__model.saveCustomerInfo(activeCustomer)
+                except ValidationErrors, e:
+                    self.__view.configureErrorMessages(e)
+                    self.__regenerateCurrentView()
+                    self.__saveOk = False
+                else:
+                    activeCustomer.setId(customerDbId)
+                    self.__activeCustomerId = customerDbId
             if self.__saveOk and self.__vehicleFieldsChanged():
-                # QQQQ Do vehicle save operation
-                pass
+                vehicle = Vehicle()
+                vehicle.loadFromDictionary(self.__userValues)
+                vehicle.setCustomerId(self.__activeCustomerId)
+                try:
+                    vehicleDbId = self.__model.saveVehicleInfo(vehicle)
+                except ValidationErrors, e:
+                    self.__view.configureErrorMessages(e)
+                    self.__regenerateCurrentView()
+                    self.__saveOk = False
+                else:
+                    self.__activeVehicleId = vehicleDbId
             if self.__saveOk and self.__workorderFieldsChanged():
-                # QQQQ Do workorder save operation
-                pass
+                workorder = Workorder()
+                workorder.loadFromDictionary(self.__userValues)
+                workorder.setVehicleId(self.__activeVehicleId)
+                if self.__activeWorkorderId == "-1": # New workorder to be saved.
+                    workorder.setDateCreated()
+                elif workorder.status == Workorder.CLOSED and \
+                        workorder.getDateClosed() is not None:
+                    workorder.setDateClosed()
+                try:
+                    workorderDbId  = self.__model.saveWorkorder(workorder)
+                except ValidationErrors, e:
+                    self.__view.configureErrorMessages(e)
+                    self.__regenerateWorkorderView()
+                    self.__saveOk = False
+                else:
+                    self.__activeWorkorderId = workorderDbId
             if self.__saveOk:
-                self.handle_button_events(reqhandler, whichButton, tag)
+                    self.__continueWithRequestedAction(reqhandler)
             else:
                 self.__regenerateCurrentView()
-        elif response == "No":
-            # Continue on to originally required context.  Edits will be lost.
-            self.handle_button_events(reqhandler, whichButton, tag)
+        elif response == "no":
+            self.__continueWithRequestedAction(reqhandler)
         else: # response == "Cancel"
             self.__regenerateCurrentView()
-        
+    
+    def __continueWithRequestedAction(self, reqhandler):
+        """ Continue on to originally required context.  Used after a successful 
+            save or no-save to move on to the context the user requested. """
+        whichButton = self.__userValues['request_button']
+        tag = self.__userValues['request_tag']
+        sys.stderr.write("%s:%s" % (whichButton, tag))
+        # Need to dispatch the previously requested configuration change.
+        # Run the function indicated by the button,tag hidden fields.
+        dispatch_function = self.__dispatch_table[whichButton]
+        if dispatch_function is not None:
+            dispatch_function(self, reqhandler, tag)
+
     def run(self):
         run_wsgi_app(self.__app)
 

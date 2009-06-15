@@ -1,0 +1,11 @@
+<!-- template for WorkorderSubview tabs area:  __format_tabs()
+	06/14/09 dynamic tab implementation; may move to form template in next revision. 
+-->
+
+<div style="width:100%">
+	{% for tab in tabs %}
+		<input style="margin-top:25px;" class="{{tab.style}}" type="submit" 
+				name="submit_wotab_{{tab.num}}" value="{{tab.label}}" />
+	{% endfor %}
+	<hr class="tab_line" style="width:100%" />
+</div>

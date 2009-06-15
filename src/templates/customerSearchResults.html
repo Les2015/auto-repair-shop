@@ -1,0 +1,17 @@
+<!-- template for searchResult lower pane in customerSubview 
+when search comes back with a customer list
+-->
+
+
+{% block searchResult %}
+<hr \>
+{% if customers %}
+	{% for customer in customers %}
+		<p>
+		<a href="/Search?cid={{customer.id}}">{{customer.last_name}}, {{customer.first_name}} | {{customer.phone1}}</a>
+		</p>
+	{% endfor %}
+{% else %}
+	<p><strong>No customers match the search you requested.</strong></p>
+{% endif %}
+{% endblock searchResult %}
