@@ -14,7 +14,7 @@ from google.appengine.ext.webapp import template    # [1]
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 from MaintAppView import MaintAppView
-from MaintAppModel import MaintAppModel, ValidationErrors
+from MaintAppModel import MaintAppModel, ValidationErrors, DuplicateCustomer
 from MaintAppObjects import Customer, Vehicle, Workorder
 
 
@@ -366,9 +366,9 @@ class MaintAppController(object):
         except ValidationErrors, e:
             self.__view.configureErrorMessages(e)
             self.__regenerateCurrentView()
-        #except DuplicateCustomer, e:
-        #    self.__view.configureErrorMessages(e)
-        #    self.__regenerateCurrentView()
+        except DuplicateCustomer, e:
+            self.__view.configureErrorMessages(e)
+            self.__regenerateCurrentView()
         else:
             activeCustomer.setId(customerDbId)
             self.__view.configureCustomerContent(activeCustomer)
