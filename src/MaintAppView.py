@@ -506,9 +506,6 @@ class WorkorderSubview(object):
             for the first input (value,name) and {'mechanics':self.__mechanics} for the rest
             of the drop down list with associated changes in the form template. """
         
-        ### temporary list
-        self.__mechanics = [ 'Jerome Calvo', 'Les Faby', 'Brad Gaiser', \
-                            'Wing Wong', 'Elaine Haight', ]    
         mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
         mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })        
         tempValuesDict ['mechanics'] = mechanics
