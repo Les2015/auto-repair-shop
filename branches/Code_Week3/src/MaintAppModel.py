@@ -68,6 +68,25 @@ class InternalErrors(ValidationErrors):
     pass
 #================================================================
 
+class DuplicateCustomer(ValidationErrors):
+    '''
+    Exception raised in case of duplicate record.
+    usage
+    try: 
+        ... 
+    catch DuplicateCustomer, de:
+       print de    prints all the error text for all the fields in error
+       errorMsg = str(de)  puts that text in the variable
+       de.getDuplicateCustomer() to get the customer object that is already in the datastore
+    '''
+    def __init__(self, errTxt, badFldLst, duplicate):
+        ValidationErrors.__init__(self, errTxt, badFldLst)
+        self.duplicate = duplicate
+
+    def getDuplicateCustomer(self):
+        '''returns the customer that is already saved in the datastore.'''
+        return self.duplicate
+
 def isState(s):
     #states, DX, possesions, territories and military bases
     states =  ("WA", "VA", "DE", "DC", "WI", "WV", "HI", "AE", "FL", "FM", "WY", "NH", "NJ", "NM", "TX", "LA", "NC", "ND", "NE", "TN", "NY", "PA", "CA", "NV", "AA", "PW", "GU", "CO", "VI", "AK", "AL", "AP", "AS", "AR", "VT", "IL", "GA", "IN", "IA", "OK", "AZ", "ID", "CT", "ME", "MD", "MA", "OH", "UT", "MO", "MN", "MI", "MH", "RI", "KS", "MT", "MP", "MS", "PR", "SC", "KY", "OR", "SD")
@@ -259,6 +278,15 @@ class MaintAppModel(object):
            raise ValidationErrors(self.errTxt, resLst)
        
         if customer.id == '-1':
+            # supposed to be new record here; check if it is a duplicate of an existing record before trying to add
+            # if it is a duplicate (defined by first_name, last_name and phone1), raise exception (DuplicateCustomer);  
+            searchCriteria = Customer(first_name=customer.first_name, 
+                                      last_name=customer.last_name, 
+                                      phone1=customer.phone1)
+            match = self.searchForMatchingCustomers(searchCriteria)
+            if len(match) > 0:
+                self.errTxt += 'Customer ' + customer.first_name + ' ' + customer.last_name + ' already in database\n'
+                raise DuplicateCustomer(self.errTxt, [], match[0])          
             entity = None
         else:
             try:
@@ -393,7 +421,7 @@ class MaintAppModel(object):
             return False
         status,msg = lenOK(year,4,4)
         return status
-      
+              
     def chk_license(self, license):
         status,msg = lenOK(license,1,30)
         return status
@@ -831,9 +859,9 @@ class TestMaintAppModel(object):
         v1 = Vehicle(id='-1',
                      make='Honda', 
                      model='Civic', 
-                     year=2001,
+                     year="2001",
                      license='AB1234',
-                     vin='VIN',
+                     vin='',
                      notes='',
                      customer_id=c1_key)
         v1_key = appModel.saveVehicleInfo(v1)
@@ -842,9 +870,9 @@ class TestMaintAppModel(object):
         v2 = Vehicle(id='v2',
                      make='Honda', 
                      model='Accord', 
-                     year=2007,
+                     year="2007",
                      license='XY1234',
-                     vin='VIN',
+                     vin='',
                      notes='',
                      customer_id=c2_key)
         v2_key = appModel.saveVehicleInfo(v2)
@@ -853,9 +881,9 @@ class TestMaintAppModel(object):
         v3 = Vehicle(id='v3',
                      make='Honda', 
                      model='SUV', 
-                     year=2008,
+                     year="2008",
                      license='XY9999',
-                     vin='VIN',
+                     vin='',
                      notes='also belong to c2',
                      customer_id=c2_key)
         v3_key = appModel.saveVehicleInfo(v3)
@@ -913,6 +941,25 @@ class TestMaintAppModel(object):
         for i in customer_list:
             print i
         print
+        
+        print "\n** testing duplicate customer"
+        duplicate_c = Customer(id='-1',
+                      first_name='Fiona',
+                      last_name='Wong',
+                      address1='addr',
+                      address2='',
+                      city='San Jose',
+                      state='CA',
+                      zip='95135',
+                      phone1='111.111.1111',
+                      phone2='222.222.2222',
+                      email='fionawhwong@yahoo.com',
+                      comments='')
+        try:
+            duplicate_key = appModel.saveCustomerInfo(duplicate_c)
+        except DuplicateCustomer, e:
+            print e
+            print "duplicate found: ", e.getDuplicateCustomer()
         
 
 def main( ):
