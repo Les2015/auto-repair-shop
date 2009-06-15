@@ -1,0 +1,70 @@
+<!-- template for VehicleSubview 
+	06/12/09 	added tab section and Brad's code for error handling 
+				added filters capfirst and upper to relevant fields
+	06/14/09	added highlighting for error fields
+	06/15/09	removed template filters
+-->
+
+<div style="width:100%">
+	{% for tab in tabs %}
+		<input class="{{tab.style}}" type="submit" name="submit_vtab_{{tab.num}}" value="{{tab.vehicle}}" />
+	{% endfor %}
+	<hr class="tab_line" style="width:100%" />
+</div>
+
+<table style="margin-top:15px; width:90%; margin-left:auto; margin-right:auto;">
+	<tr>
+		<td>
+			<label {% if e_make %}class="error"{% endif %} for="make">Make: </label>
+		</td>
+		<td>
+			<input type="text" name="make" {% if e_make %}class="error_field"{% endif %} value="{{ vehicle.make }}" />
+		</td>
+		<td>
+			<label {% if e_model %}class="error"{% endif %} for="model">Model: </label>
+		</td>
+		<td>
+			<input type="text" name="model" {% if e_model %}class="error_field"{% endif %} value="{{ vehicle.model }}" />
+		</td>
+		<td>
+			<label {% if e_year %}class="error"{% endif %} for="year">Year: </label>
+		</td>
+		<td>
+			<input type="text" name="year" size="8" {% if e_year %}class="error_field"{% endif %} value="{{ vehicle.year }}" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label {% if e_license %}class="error"{% endif %} for="license">License Plate: </label>
+		</td>
+		<td>
+			<input type="text" name="license" {% if e_license %}class="error_field"{% endif %} value="{{ vehicle.license }}" />
+			<input type="hidden" name="mileage" value="{{ vehicle.mileage }}" />
+		</td>
+		<td>
+			<label {% if e_vin %}class="error"{% endif %} for="vin">VIN: </label>
+		</td>
+		<td colspan="3">
+			<input type="text" name="vin" size="40" {% if e_vin %}class="error_field"{% endif %} value="{{ vehicle.vin }}" />
+		</td>
+	</tr>
+	<tr>
+		<td colspan="6"><br />
+			<label for="notes">Notes: </label><br />
+			<textarea name="notes" rows="3" cols="65">{{ vehicle.notes }}</textarea>
+		</td>
+	</tr>            
+	<tr>
+		<td colspan="3">
+			<p style="width:100%; text-align:left;">
+				<input type="submit" name="submit_savevhcl" value="Save Vehicle Info" />
+				<input type="submit" name="submit_rstrvhcl" value="Clear Vehicle Info" />
+			</p>
+		</td><td colspan="3">
+			<p style="width:100%; text-align:right;">
+				<input type="submit" name="submit_newwo" value="New Work Order" {% if new_wo_button_inactive %}disabled="disabled"{% endif %} />
+				<input type="submit" name="submit_showwos" value="Show Work Order History" {% if workorder_unavail %}disabled="disabled"{% endif %} />
+			</p>
+		</td>
+	</tr>
+</table>

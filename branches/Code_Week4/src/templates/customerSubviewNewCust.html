@@ -1,0 +1,21 @@
+<!-- New Customer Subview 
+	06/04/09 Inherit from mainview.html; add a sidePanelSubview and a customerSubview.
+	06/05/09 Handle customerSubview for testing use case #1 only
+	~ Jerome Calvo
+-->
+
+{% extends "customerSubview.html" %}
+
+{% block lowerPanel %} 
+<tr>
+	<td colspan="6">
+		<br /><label for="comments">Comments:</label><br />
+		<textarea name="comments" rows="3" cols="65">{{customer.comments}}</textarea>
+		<p style="width:100%; text-align:center;">
+			<input type="submit" name="submit_savecust" value="Save Customer Info" />
+			<input type="submit" name="submit_resetcust_0" value="Reset Customer Info" />
+		</p>
+	</td>
+</tr>
+{% endblock lowerPanel %}  
+

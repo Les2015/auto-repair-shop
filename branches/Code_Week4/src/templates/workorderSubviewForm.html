@@ -1,0 +1,73 @@
+<input type="hidden" name="date_created" value="{{date_created}}" />
+<input type="hidden" name="date_closed" value="{{date_closed}}" />
+<table style="margin-top:30px;">
+    <tr>
+        <td>
+            Customer's Service Request:
+        </td>
+        <td style="text-align:right;">
+            <label for="mileage">Odometer Reading:</label><input type="text" name="mileage" value="{{workorder.mileage}}" />
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <textarea name="customer_request" rows="3" cols="85">{{workorder.customer_request}}
+            </textarea>
+        </td>
+    </tr>
+    <tr><td colspan="2"><hr /></td></tr>
+    <tr>
+        <td>
+        	Work Order Date: {{date_created}}
+        </td>
+        <td style="text-align:right;">
+            <label for "mechanic">Mechanic:</label>
+             <select name='mechanic'>
+            {% for mechanic in mechanics %}
+              <option value='{{ mechanic.value }}' 
+              {% ifequal workorder.mechanic mechanic.value %} selected="selected"{% endifequal %}>
+                {{ mechanic.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for "mechanics_tasks">Mechanics Tasks:</label><br />
+            <textarea name="task_list" rows="7" cols="40">{{workorder.task_list}}
+            </textarea>
+        </td>
+        <td>
+            <label for "work_done">Work Performed:</label><br />
+            <textarea name="work_performed" rows="7" cols="40">{{workorder.work_performed}}
+            </textarea>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <label for "next_service">Notes and next service recommendations:</label><br />
+            <textarea name="notes" rows="4" cols="85">{{workorder.notes}}
+            </textarea>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center;">
+            <label for "status">Work Order Status:</label>
+            <input style="margin-left:15px;" type="radio" 
+            name="status" value="Open" {% ifequal workorder.status 1 %}checked="checked"{% endifequal %} /> Open
+            <input style="margin-left:25px;" type="radio" 
+            name="status" value="Completed" {% ifequal workorder.status 2 %}checked="checked"{% endifequal %} /> Completed
+            <input style="margin-left:15px;" type="radio"
+            name="status" value="Closed" {% ifequal workorder.status 3 %}checked="checked"{% endifequal %} /> Closed
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <p style="width:100%; text-align:center;">
+            <input type="submit" name="submit_savewo" value="Save Work Order" />
+            <input type="submit" name="submit_rstrwo" value="Restore Work Order" />
+            </p>
+        </td>
+    </tr>
+</table>
