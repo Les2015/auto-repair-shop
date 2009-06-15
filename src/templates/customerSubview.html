@@ -4,82 +4,101 @@
 	06/12/09 Brad added error handling
 	06/12/09 Added filters capfirst and upper for relevant fields
 	06/13/09 Added field highlighting for errors
+	06/14/09 Re-arranged field to match mock-up doc.
+			 Removed template filters
+	06/15/09 Added drop-down menu for field State
 	~ Jerome Calvo
 -->
-
 
 <h3>Customer Information</h3>
 <table style="margin-top:15px; margin-left:auto; margin-right:auto;">
 	<tr>
-		<td>
-			<label {% if e_first_name %}class="error"{% endif %} for="first_name">First Name: </label>
-		</td>
-		<td>
-			<input type="text" name="first_name" {% if e_first_name %}class="error_field"{% endif %} value="{{ customer.first_name|title}}" />
-		</td>
-		<td>
-			<label {% if e_last_name %}class="error"{% endif %} for="last_name" style="padding-left:10px">Last Name: </label>
-		</td>
-		<td>
-			<input type="text" name="last_name" {% if e_last_name %}class="error_field"{% endif %} value="{{ customer.last_name|title }}" />
-		</td>
+	  <td>
+	  	<label {% if e_first_name %}class="error"{% endif %} for="first_name">First Name: </label>
+	  </td>
+	  <td colspan="3">
+	  	<input type="text" name="first_name" size="27" {% if e_first_name %}class="error_field"{% endif %} value="{{ customer.first_name}}" />
+	  </td>
+	  <td></td>
+	  <td></td>
 	</tr>
 	<tr>
-		<td>
-			<label {% if e_address1 %}class="error"{% endif %} for="address1">Address: </label>
-		</td>
-		<td>
-			<input type="text" name="address1" {% if e_address1 %}class="error_field"{% endif %} value="{{ customer.address1|capfirst }}" />
-		</td>
-		<td>
-			<label {% if e_phone1 %}class="error"{% endif %} for="phone1" style="padding-left:10px">Primary Phone: </label>
-		</td>
-		<td>
-			<input type="text" name="phone1" {% if e_phone1 %}class="error_field"{% endif %} value="{{ customer.phone1 }}" />
-		</td>
-	</tr>
-	<tr>	
-		<td>
-			<label {% if e_address2 %}class="error"{% endif %} for="address2">Address: </label>
-		</td>
-		<td>
-			<input type="text" name="address2" {% if e_address2 %}class="error_field"{% endif %} value="{{ customer.address2|capfirst }}" />
-		</td>
-		<td>
-			<label {% if e_phone2 %}class="error"{% endif %} for="phone2" style="padding-left:10px">Secondary Phone: </label>
-		</td>
-		<td>
-			<input type="text" name="phone2" {% if e_phone2 %}class="error_field"{% endif %} value="{{ customer.phone2 }}" />
-		</td>
+	  <td>
+	  	<label {% if e_last_name %}class="error"{% endif %} for="last_name">Last Name: </label>
+	  </td>
+	  <td colspan="3">
+	  	<input type="text" name="last_name" size="27" {% if e_last_name %}class="error_field"{% endif %} value="{{ customer.last_name }}" />
+	  </td>
+	  <td></td>
+	  <td></td>
 	</tr>
 	<tr>
-		<td>
-			<label {% if e_city %}class="error"{% endif %} for="city">City: </label>
-		</td>
-		<td>
-			<input type="text" name="city" {% if e_city %}class="error_field"{% endif %} value="{{ customer.city|title }}" />
-		</td>
-		<td>
-			<label {% if e_email %}class="error"{% endif %} for="email" style="padding-left:10px">Email: </label>
-		</td>
-		<td>
-			<input type="text" name="email" {% if e_email %}class="error_field"{% endif %} value="{{ customer.email }}" />
-		</td>
+	  <td>
+	  	<label {% if e_address1 %}class="error"{% endif %} for="address1">Address: </label>
+	  </td>
+	  <td colspan="3">
+	  	<input type="text" name="address1" size="27" {% if e_address1 %}class="error_field"{% endif %} value="{{ customer.address1 }}" />
+	  </td>
+	  <td>
+	  	<label {% if e_phone1 %}class="error"{% endif %} for="phone1" style="padding-left:10px">Primary Phone: </label>
+	  </td>
+	  <td>
+	  	<input type="text" name="phone1" {% if e_phone1 %}class="error_field"{% endif %} value="{{ customer.phone1 }}" />
+	  </td>
 	</tr>
 	<tr>
-		<td>
-			<label {% if e_state %}class="error"{% endif %} for="state">State: </label>
-		</td>
-		<td>
-			<input type="text" name="state" {% if e_state %}class="error_field"{% endif %} value="{{ customer.state|upper }}" />
-		</td>
-		<td>
-			<label {% if e_zip %}class="error"{% endif %} for="zip" style="padding-left:10px">Zip: </label>
-		</td>
-		<td>
-			<input type="text" name="zip" {% if e_zip %}class="error_field"{% endif %} value="{{ customer.zip }}" />
-		</td>
+	  <td>
+	  	<label {% if e_address2 %}class="error"{% endif %} for="address2">Address: </label>
+	  </td>
+	  <td colspan="3">
+	  	<input type="text" name="address2" size="27" {% if e_address2 %}class="error_field"{% endif %} value="{{ customer.address2 }}" />
+	  </td>
+	  <td>
+	  	<label {% if e_phone2 %}class="error"{% endif %} for="phone2" style="padding-left:10px">Secondary Phone: </label>
+	  </td>
+	  <td>
+	  	<input type="text" name="phone2" {% if e_phone2 %}class="error_field"{% endif %} value="{{ customer.phone2 }}" />
+	  </td>
 	</tr>
+	<tr>
+	  <td>
+	  	<label {% if e_city %}class="error"{% endif %} for="city">City: </label>
+	  </td>
+	  <td colspan="3">
+	  	<input type="text" name="city" size="27" {% if e_city %}class="error_field"{% endif %} value="{{ customer.city }}" />
+	  </td>
+	  <td>
+	  	<label {% if e_email %}class="error"{% endif %} for="email" style="padding-left:10px">Email: </label>
+	  </td>
+	  <td>
+	  	<input type="text" name="email" {% if e_email %}class="error_field"{% endif %} value="{{ customer.email }}" />
+	  </td>
+	</tr>
+	<tr>
+	  <td>
+	   	<label for "state">State: </label>
+	   </td>
+	   <td>
+	  	<select name='state'>
+	  		<option value=''>Select...</option>
+	        {% for state in states %}
+	          <option value='{{ state }}' 
+	          {% ifequal customer.state state %} selected="selected"{% endifequal %}>
+	            {{ state }}
+	          </option>
+	        {% endfor %}
+	      </select>
+	  </td>
+	  <td>
+	  	<label {% if e_zip %}class="error"{% endif %} for="zip" style="padding-left:10px">Zip: </label>
+	  </td>
+	  <td>
+	  	<input type="text" name="zip" size="10" {% if e_zip %}class="error_field"{% endif %} value="{{ customer.zip }}" />
+	  </td>
+	  <td></td>
+	  <td></td>
+	</tr>
+
 	
 	{% block lowerPanel %}
 		Shouldn't not display this...
