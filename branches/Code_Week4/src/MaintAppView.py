@@ -103,6 +103,11 @@ class MaintAppView(object):
         self.__vehiclePanel._configureErrorFields(errorObj.getFieldsWithErrors())
         self.__sidePanel._configureErrorMessages(errorObj)
         
+    def configureDuplicateCustomerMessage(self, errorObj):
+        """ Set up to report duplicate customer information to user. """
+        self.__customerPanel._configureDuplicateCustomerMessage(errorObj.getDuplicateCustomer())
+        self.__sidePanel._configureErrorMessages(errorObj)
+        
     def configureSidePanelContent(self, activeElement,
                                   openWorkorders,
                                   completedWorkorders,
@@ -304,6 +309,7 @@ class CustomerSubview(object):
         self.__dispMode = False
         self.__searchResults = None
         self.__errorFields = None
+        self.__duplicateCustomerInfo = None
         return None
     
     def _configure_content(self, customerInfo):
@@ -335,6 +341,8 @@ class CustomerSubview(object):
         self.__errorFields = error_fields
         return None
     
+    def _configureDuplicateCustomerMessage(self, duplicateCustomerInfo):
+        self.__duplicateCustomerInfo = duplicateCustomerInfo
         
     def _serve_content(self, reqhandler):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
@@ -356,6 +364,9 @@ class CustomerSubview(object):
                 doRender (reqhandler, 'customerSubviewDispCust', tempValuesDict)
             else:
                 doRender (reqhandler, 'customerSubviewNewCust', tempValuesDict)
+                if  self.__duplicateCustomerInfo is not None:
+                    tempValuesDict['dupCustomer'] = self.__duplicateCustomerInfo
+                    doRender (reqhandler, 'customerSubviewDupCust', tempValuesDict)
         else: 
             doRender (reqhandler, 'customerSubviewFindCust', tempValuesDict) 
             if self.__searchResults is not None:          

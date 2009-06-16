@@ -350,10 +350,10 @@ class MaintAppController(object):
         activeCustomer.loadFromDictionary(self.__userValues)
         try:
             customerDbId = self.__model.saveCustomerInfo(activeCustomer)
-        except ValidationErrors, e:
-            self.__view.configureErrorMessages(e)
-            self.__regenerateCurrentView()
         except DuplicateCustomer, e:
+            self.__view.configureDuplicateCustomerMessage(e)
+            self.__regenerateCurrentView()
+        except ValidationErrors, e:
             self.__view.configureErrorMessages(e)
             self.__regenerateCurrentView()
         else:
