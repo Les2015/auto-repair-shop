@@ -776,8 +776,32 @@ class MaintAppModel(object):
         for workorder_ent in workorders:
             vehicle = self.getVehicleFromVehicleEnt(workorder_ent.vehicle)
             result.append((vehicle, self.getWorkorderFromWorkorderEnt(workorder_ent)))
-        return result
+        return result    
     
+    def getNumberOfWorkorders(self, vehicle_id):
+        """ Returns the number of workorders that have been saved for the
+            vehicle specified by 'vehicle_id'
+        """
+        workorders = self.getWorkorderList(vehicle_id)
+        return len(workorders)
+        
+    def hasUnclosedWorkorder(self, vehicle_id):
+        """ Determine if the vehicle specified by 'vehicle_id' has any 
+            unclosed workorders.  Returns True if there is an unclosed
+            workorder for the vehicle.  Returns False if there are no
+            workorders, if the vehicle_id=='-1' (unsaved, new vehicle)
+            or if all of them are closed. 
+        """
+        retVal = False
+        if vehicle_id != "-1":
+            unclosedWorkorders = self.getOpenWorkorders() + \
+                                 self.getCompletedWorkorders()
+            for vehicle, workorder in unclosedWorkorders:
+                if vehicle is not None and vehicle.getId() == vehicle_id:
+                    retVal = True
+                    break
+        return retVal
+        
     #---------------------------- List of Mechanics --------------------------------
     
     def getMechanics(self):

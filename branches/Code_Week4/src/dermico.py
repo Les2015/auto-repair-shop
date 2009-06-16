@@ -230,18 +230,6 @@ class MaintAppController(object):
                 break
         return retIndex
 
-    def __hasUnclosedWorkorder(self):
-        """ Determine if the active vehicle has any unclosed workorders. """
-        retVal = False
-        if self.__activeVehicleId != "-1":
-            unclosedWorkorders = self.__model.getOpenWorkorders() + \
-                                 self.__model.getCompletedWorkorders()
-            for vehicle, workorder in unclosedWorkorders:
-                if vehicle is not None and vehicle.getId() == self.__activeVehicleId:
-                    retVal = True
-                    break
-        return retVal
-        
     ##############################################################################
     # The following three functions are refactored code that was repeated a
     # number of times when setting up the contents of the various panels in
@@ -308,11 +296,10 @@ class MaintAppController(object):
             Also, see if there is an unclosed workorder so that we can
             disable the New Workorder button.
         """
-        workorders = self.__model.getWorkorderList(self.__activeVehicleId)
-        workorder_count = len(workorders)
-        has_unclosed_workorder = self.__hasUnclosedWorkorder()
-        if has_unclosed_workorder:
-            myLog.write("Vehicle has an unclosed workorder.")
+        workorder_count = \
+            self.__model.getNumberOfWorkorders(self.__activeVehicleId)
+        has_unclosed_workorder = \
+            self.__model.hasUnclosedWorkorder(self.__activeVehicleId)
         self.__view.configureVehicleContent(activeVehicleList)
         self.__view.configureWorkorderCount(workorder_count)
         self.__view.configureWorkorderStatus(has_unclosed_workorder)
