@@ -1,0 +1,44 @@
+<!-- Duplicate Customer Subview 
+	06/15/09 Created to display duplicate customer message.
+	~ Brad Gaiser
+-->
+
+{% block duplicateCustomer %}
+<hr \>
+<h4 class="error">Duplicate Customer Found</h4>
+<p>
+The customer information you entered matched that of a customer already
+in the database.  Please confirm the customer's name and primary phone
+number.  If this is a returning customer, simply click on the link below
+to bring up his or her information.  If this is not the same customer as
+the one shown below, correct the name or phone number and try saving again.
+</p>
+<table style="margin-left:50px;">
+	<tr>
+		<td>Name:</td>
+		<td>
+			<strong><a href="/Search?cid={{dupCustomer.id}}">{{dupCustomer.first_name}} {{dupCustomer.last_name}}</a></strong>
+		</td>
+		<td style="padding-left:2ex;">Primary Phone No.:</td>
+		<td><strong>{{dupCustomer.phone1}}</strong></td>
+	</tr>
+	<tr>
+		<td>Address:</td>
+		<td><strong>{{dupCustomer.address1}}</strong></td>
+		<td style="padding-left:2ex;">Secondary Phone:</td>
+		<td><strong>{{dupCustomer.phone2}}</strong></td>
+	</tr>
+	<tr>
+		<td>Address:</td>
+		<td><strong>{{dupCustomer.address2}}</strong></td>
+		<td style="padding-left:2ex;">E-mail:</td>
+		<td><strong>{{dupCustomer.email}}</strong></td>
+	</tr>
+	<tr>
+		<td>City/State/Zip:</td>
+		<td><strong>{{dupCustomer.city}}, {{dupCustomer.state}} {{dupCustomer.zip}}</strong></td>
+		<td colspan="2"></td>
+	</tr>
+</table>
+{% endblock duplicateCustomer %}
+  
