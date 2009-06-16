@@ -87,12 +87,16 @@ class DuplicateCustomer(ValidationErrors):
         '''returns the customer that is already saved in the datastore.'''
         return self.duplicate
 
-def isState(s):
-    #states, DX, possesions, territories and military bases
-    states =  ("WA", "VA", "DE", "DC", "WI", "WV", "HI", "AE", "FL", "FM", "WY", "NH", "NJ", "NM", "TX", "LA", "NC", "ND", "NE", "TN", "NY", "PA", "CA", "NV", "AA", "PW", "GU", "CO", "VI", "AK", "AL", "AP", "AS", "AR", "VT", "IL", "GA", "IN", "IA", "OK", "AZ", "ID", "CT", "ME", "MD", "MA", "OH", "UT", "MO", "MN", "MI", "MH", "RI", "KS", "MT", "MP", "MS", "PR", "SC", "KY", "OR", "SD")
-    if s in states:
-       return (True,"")
-    return (False,"Illegal State Name")
+################################################
+#    validated in View so no longer required
+################################################
+
+#def isState(s):
+#   #states, DX, possesions, territories and military bases
+#   states =  ("WA", "VA", "DE", "DC", "WI", "WV", "HI", "AE", "FL", "FM", "WY", "NH", "NJ", "NM", "TX", "LA", "NC", "ND", "NE", "TN", "NY", "PA", "CA", "NV", "AA", "PW", "GU", "CO", "VI", "AK", "AL", "AP", "AS", "AR", "VT", "IL", "GA", "IN", "IA", "OK", "AZ", "ID", "CT", "ME", "MD", "MA", "OH", "UT", "MO", "MN", "MI", "MH", "RI", "KS", "MT", "MP", "MS", "PR", "SC", "KY", "OR", "SD")
+#  if s in states:
+#       return (True,"")
+#    return (False,"Illegal State Name")
    
 def isPhone(s):
     """
@@ -205,10 +209,13 @@ class MaintAppModel(object):
     def chk_city(self,city):
           status, msg = lenOK(city,1,50)
           return status
-  
-    def chk_state(self,state):
-        status, msg = isState(state)
-        return status
+###################### 
+#  validation done in View so now
+#   always returns True
+###################### 
+   def chk_state(self,state):
+        #status, msg = isState(state)
+        return True
     
     def chk_zip(self,zip):
         status, msg = isZip(zip)
