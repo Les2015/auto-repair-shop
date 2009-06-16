@@ -213,7 +213,7 @@ class MaintAppModel(object):
 #  validation done in View so now
 #   always returns True
 ###################### 
-   def chk_state(self,state):
+    def chk_state(self,state):
         #status, msg = isState(state)
         return True
     
