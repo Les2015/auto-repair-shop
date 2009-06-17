@@ -154,6 +154,11 @@ class MaintAppView(object):
         self.__dialogPanel = DialogSubview(request_button, request_tag)
         return None
     
+    def reportInternalError(self, reqhandler, errorMessage):
+        dict = {'error_message':errorMessage}
+        doRender(reqhandler, 'internalError', dict)
+        return None
+    
     def serve_content(self, reqhandler):         
         self.__serve_header(reqhandler)
         reqhandler.response.out.write("""
