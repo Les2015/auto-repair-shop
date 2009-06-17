@@ -8,6 +8,7 @@
 
 import sys
 from Utilities import myLog
+from traceback import *
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template    # [1]
@@ -114,7 +115,6 @@ class MaintAppController(object):
         self.__contextChangingActions = \
             ["newcust", "findcust", "vtab", "showwos", "wotab", "activewo"]
         self.__model = MaintAppModel()
-        self.__model.initialize()
         self.__userValues = None
         self.__clearHiddenIdFields()
         
@@ -142,11 +142,18 @@ class MaintAppController(object):
         if whichButton in self.__contextChangingActions and self.__fieldsNeedSaving():
             self.__view.showSaveDialog(whichButton, bIndex)
             self.__regenerateCurrentView()
-            myLog.write("Dialog %s_%s" % (whichButton, bIndex))
         else:    
             dispatch_function = self.__dispatch_table[whichButton]
             if dispatch_function is not None:
-                dispatch_function(self, reqhandler, bIndex)
+                try:
+                    dispatch_function(self, reqhandler, bIndex)
+                except Exception, e:
+                    (type, value, tb) = sys.exc_info()
+                    error = "\n".join(format_exception_only(type, value))
+                    error += "\n".join(format_list(extract_tb(tb)))
+                    myLog.write(error)
+                    self.__view.reportInternalError(reqhandler, error)
+                    return None
             else:
                 myLog.write("Button '%s' not found in dispatch list." % whichButton)
                 self.__regenerateCurrentView()
