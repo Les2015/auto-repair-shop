@@ -29,11 +29,6 @@ def zn(strValue):
     """ if input strValue is empty, convert it to None """
     return (None if strValue=="" else strValue)
 
-def escape(strValue):
-    """ if input strValue contains a single quote ('), escape the single quote;
-    the escaped string is used as part of the GQL query string """
-    return (None if strValue=="" else strValue)
-
 #================================================================
 class ValidationErrors(Exception):
     '''
