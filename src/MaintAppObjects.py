@@ -52,9 +52,11 @@ class Customer(object):
         From the DataStore's perspective, it's not allowed. -- Wing
     """
     def setId(self, id):
+        """ Save the primary key into object. """
         self.id = id    
     
     def getId(self):
+        """ Retrieve primary customer key. """
         return self.id
     
     def loadFromDictionary(self, dictionary):
@@ -130,15 +132,19 @@ class Vehicle(object):
     """ Getters & setters go next. """
     
     def setId(self, id):
+        """ Save the primary key into object. """
         self.id = id
         
     def getId(self):
+        """ Retrieve the vehicle primary key from object. """
         return self.id
     
     def setCustomerId(self, id):
+        """ Save the customer foreign key in vehicle object. """
         self.customer_id = id
         
     def getCustomerId(self):
+        """ Retrieve the customer foreign key from object. """
         return self.customer_id
     
     def loadFromDictionary(self, dictionary):
@@ -218,38 +224,40 @@ class Workorder(object):
     """ Getters & setters go next. """
     
     def setId(self, id):
+        """ Save the workorder primary key in object. """
         self.id = id
         
     def getId(self):
+        """ Retrieve the workorder primary key from object. """
         return self.id
     
     def setVehicleId(self, id):
+        """ Save the vehicle foreign key in object. """
         self.vehicle_id = id
         
     def getVehicleId(self):
+        """ Retrieve the vehicle foreign key from object. """
         return self.vehicle_id
     
     def setDateCreated(self):
+        """ Trigger the setting of the date_created field for this object. 
+            Dates (like all fields) are saved in this object as strings. 
+        """
         self.date_created = dateToString(datetime.fromtimestamp(time()))
         
     def getDateCreated(self):
-        """ Do we want to format this as a string or return it as a date/time type? """
+        """ Retrieve the date_created string value. """
         return self.date_created
-        #if self.date_created == None:
-        #    return None
-        #else:
-        #    return self.date_created.strftime(Workorder.DATE_FORMAT)
     
     def setDateClosed(self):
+        """ Trigger the setting of the date_closed field for this object. 
+            Dates (like all fields) are saved in this object as strings. 
+        """
         self.date_closed = dateToString(datetime.fromtimestamp(time()))
         
     def getDateClosed(self):
-        """ Do we want to format this as a string or return it as a date/time type? """
+        """ Retrieve the date_closed string value. """
         return self.date_closed
-        #if self.date_closed == None:
-        #    return None
-        #else:
-        #    return self.date_closed.strftime(Workorder.DATE_FORMAT)
     
     def loadFromDictionary(self, dictionary):
         """ Load values from dictionary passed over from the view. 
@@ -261,19 +269,7 @@ class Workorder(object):
         self.customer_request = dictionary['customer_request']
         self.mileage = dictionary['mileage']
         self.date_created = dictionary['date_created']
-        #strDate = dictionary['date_created']
-        #if strDate == "":
-        #    self.date_created = None
-        #else:
-        #    self.date_created = \
-        #        datetime.strptime(strDate, Workorder.DATE_FORMAT)
         self.date_closed = dictionary['date_closed']
-        #strDate = dictionary['date_closed']
-        #if strDate == "":
-        #    self.date_closed = None
-        #else:
-        #    self.date_closed = \
-        #        datetime.strptime(strDate, Workorder.DATE_FORMAT)
         mechanic = dictionary['mechanic']
         if mechanic == Workorder.NO_MECHANIC:
             self.mechanic = None

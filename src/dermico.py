@@ -20,6 +20,10 @@ from MaintAppObjects import Customer, Vehicle, Workorder
 
 
 class DefaultConfiguration(webapp.RequestHandler):
+    """ Callback for main entry point of program.  Program is started in the
+        browser by typing in http://path-to-app-server/.  This results in an
+        HTTP get request that is handled by the get method of this class.
+    """
     def get(self):
         """ Callback for handling the initial startup configuration of the
             Maintenance Records System.
@@ -29,6 +33,8 @@ class DefaultConfiguration(webapp.RequestHandler):
 
 
 class SearchLinkHandler(webapp.RequestHandler):
+    """ Callback handler class for HTTP get requests for urls ending with /Search
+    """
     def get(self):
         """ Callback for 'get' events from user clicking on hyperlinks generated
             from the results of a customer search.  The results are fed back to the
@@ -41,6 +47,8 @@ class SearchLinkHandler(webapp.RequestHandler):
     
     
 class CustomerInput(webapp.RequestHandler):
+    """ Callback handler class for urls ending with /Customer 
+    """
     def get(self):
         """ Callback for handling special case of someone typing in 
             http://..../Customer.  Without this handler, the user sees a
@@ -50,6 +58,9 @@ class CustomerInput(webapp.RequestHandler):
         return None
 
     def post(self):
+        """ Callback entry point for HTTP post requests. This is the main entry
+            point for most of the callback events. 
+        """
         button_pressed = self.__getbutton()
         button_fields = button_pressed.split("_")
         button = button_fields[0]
@@ -85,6 +96,7 @@ class MaintAppController(object):
     __theController = None
     
     def __init__(self):
+        """ Initialize the controller. """
         MaintAppController.__theController = self
         self.__view = MaintAppView(self)
         self.__app = webapp.WSGIApplication(
@@ -122,11 +134,9 @@ class MaintAppController(object):
     
     @staticmethod
     def theController():
+        """ Static method so handlers can pass off control to the controller. """
         return MaintAppController.__theController
 
-    def view(self):
-        return self.__view
-    
     def handle_button_events(self, reqhandler, whichButton, bIndex):
         """ Retrieve form fields from request handler, then call the
             handler for the particular button or link that resulted 
@@ -982,11 +992,13 @@ class MaintAppController(object):
             dispatch_function(self, reqhandler, tag)
 
     def run(self):
+        """ Isolate the actual entry point to the google app engine api. """
         run_wsgi_app(self.__app)
 
 
 
 def main():
+    """ Create the controller object and start it running. """
     MaintAppController().run()
     
     
