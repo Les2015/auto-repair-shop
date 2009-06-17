@@ -43,8 +43,8 @@ def shortDate(strDate):
 ################################################################################
 
 def main():
-    from time import time
     """ Test the date/string conversion functions. """
+    from time import time
     date = datetime.now()
     print str(date)
     print dateToString(date)
