@@ -21,6 +21,8 @@ replaced.  As such, minimal effort has been put into documentation.
 06/14/09 Template code for workorderSubview Tab completed
 06/15/09 Added support for drop-down menu with list of States in 
          customerSubview.html
+06/16/09 Added validation error handling in workorderSubviewForm
+         Added handling of former mechanic no longer in the mechanic list.
 '''
 
 NEW_CUSTOMER = 1
@@ -101,6 +103,7 @@ class MaintAppView(object):
         """
         self.__customerPanel._configureErrorFields(errorObj.getFieldsWithErrors())
         self.__vehiclePanel._configureErrorFields(errorObj.getFieldsWithErrors())
+        self.__workorderPanel._configureErrorFields(errorObj.getFieldsWithErrors())
         self.__sidePanel._configureErrorMessages(errorObj)
         
     def configureDuplicateCustomerMessage(self, errorObj):
@@ -448,6 +451,7 @@ class WorkorderSubview(object):
         self.__customer = None
         self.__vehicle = None
         self.__activeWorkorderId = None
+        self.__errorFields = None
         self.__workorders = None
         self.__workorder = None
         return None
@@ -472,6 +476,10 @@ class WorkorderSubview(object):
                 self.__workorder = eachWorkorder
                 break
         return None
+    
+    def _configureErrorFields(self, error_fields):
+        self.__errorFields = error_fields
+        return None    
     
     def _serve_content(self, reqhandler):
         self.__retrieveActiveWorkorder()
@@ -517,9 +525,14 @@ class WorkorderSubview(object):
     def __output_workorder_form(self, reqhandler):
         self.__format_tabs(reqhandler)
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
-                          'date_closed':self.__workorder.getDateClosed() }
+                          'date_closed':self.__workorder.getDateClosed() }  
+        if self.__workorder.mechanic !="" and self.__workorder.mechanic not in self.__mechanics:
+                self.__mechanics.append(self.__workorder.mechanic)  
         mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
-        mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })        
+        mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })
+        if self.__errorFields is not None:
+            for field in self.__errorFields:
+                tempValuesDict["e_" + field] = True               
         tempValuesDict ['mechanics'] = mechanics
         tempValuesDict ['workorder'] = self.__workorder
         doRender( reqhandler,'workorderSubviewForm', tempValuesDict )

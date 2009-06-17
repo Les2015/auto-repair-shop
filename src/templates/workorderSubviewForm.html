@@ -1,20 +1,22 @@
 <!-- Template for WorkorderSubview Form
+	06/16/09 Added validation error handling
 -->
-
 <input type="hidden" name="date_created" value="{{date_created}}" />
 <input type="hidden" name="date_closed" value="{{date_closed}}" />
 <table style="margin-top:30px;">
     <tr>
         <td>
-            Customer's Service Request:
+            <label {% if e_customer_request %}class="error"{% endif %} for="customer_request">Customer's Service Request:</label>
         </td>
         <td style="text-align:right;">
-            <label for="mileage">Odometer Reading:</label><input type="text" name="mileage" value="{{workorder.mileage}}" />
+            <label {% if e_mileage %}class="error"{% endif %} for="mileage">Odometer Reading:</label>
+            <input type="text" name="mileage" {% if e_mileage %}class="error_field"{% endif %} value="{{workorder.mileage}}" />
         </td>
     </tr>
     <tr>
         <td colspan="2">
-            <textarea name="customer_request" rows="3" cols="85">{{workorder.customer_request}}</textarea>
+            <textarea {% if e_customer_request %}class="error_field"{% endif %} 
+            name="customer_request" rows="3" cols="85">{{workorder.customer_request}}</textarea>
         </td>
     </tr>
     <tr><td colspan="2"><hr /></td></tr>
@@ -23,8 +25,8 @@
         	Work Order Date: {{date_created}}
         </td>
         <td style="text-align:right;">
-            <label for "mechanic">Mechanic:</label>
-             <select name='mechanic'>
+            <label  {% if e_mechanic %}class="error"{% endif %} for="mechanic">Mechanic:</label>
+             <select name='mechanic' {% if e_mechanic %}class="error_field"{% endif %}>
             {% for mechanic in mechanics %}
               <option value='{{ mechanic.value }}' 
               {% ifequal workorder.mechanic mechanic.value %} selected="selected"{% endifequal %}>
