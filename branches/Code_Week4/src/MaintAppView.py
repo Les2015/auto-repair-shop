@@ -167,10 +167,11 @@ class MaintAppView(object):
         """)         
         if self.__dialogPanel is not None:
             self.__dialogPanel._serve_content(reqhandler)
+        rowspan = (2 if self.__mainMode == INPUT_CUSTOMER else 1)
         reqhandler.response.out.write("""
               <table class="my_table">
-                <tr>
-                  <td rowspan="2" class="my_tleft">""")       
+                <tr>""")
+        reqhandler.response.out.write('<td rowspan="%d" class="my_tleft">' % rowspan)       
         #doRender (reqhandler, 'top', dict)   #moving some html code to templates         
         if self.__sidePanel is not None:
             self.__sidePanel._serve_content(reqhandler)
