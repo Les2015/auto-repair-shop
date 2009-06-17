@@ -13,6 +13,9 @@ class CustomerEnt(db.Model):
     phone2 = db.StringProperty(verbose_name = "Secondary Phone", required=False)
     email = db.StringProperty(verbose_name = "Email Address", required=False)
     comments = db.TextProperty(verbose_name = "Comments", required=False) 
+    # these columns are for search only; user input for these fields are converted to all upper case for search
+    first_name_search = db.StringProperty(required=False)
+    last_name_search = db.StringProperty(required=False)
 
 class VehicleEnt(db.Model):
     """ Datastore model for Vehicle """

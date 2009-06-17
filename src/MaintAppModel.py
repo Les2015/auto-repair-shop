@@ -26,9 +26,13 @@ def nz(value):
     return ("" if value is None else value)
 
 def zn(strValue):
-    """ if input string is empty, convert it to None """
+    """ if input strValue is empty, convert it to None """
     return (None if strValue=="" else strValue)
 
+def escape(strValue):
+    """ if input strValue contains a single quote ('), escape the single quote;
+    the escaped string is used as part of the GQL query string """
+    return (None if strValue=="" else strValue)
 
 #================================================================
 class ValidationErrors(Exception):
@@ -168,16 +172,6 @@ class MaintAppModel(object):
          self.errTxt = ""
          self.invFld = []
          return
-
-    
-    def initialize(self):
-        """ Set up the connection.  This is being done as a means of controlling
-            the timing of the creation of the instance vs. the connection to the
-            database.  This app may not need this level of control, but it is
-            available in the event there are timing issues between the setup of
-            the UI and the setup of the database.
-        """
-        pass
       
     #---------------------------- customer -----------------------------------------------
     
@@ -313,6 +307,8 @@ class MaintAppModel(object):
             entity.phone2 = zn(customer.phone2)
             entity.email = zn(customer.email)
             entity.comments = zn(customer.comments)
+            entity.first_name_search = zn(customer.first_name.upper())
+            entity.last_name_search = zn(customer.last_name.upper())
         else:    
             entity = CustomerEnt(first_name=zn(customer.first_name),
                                  last_name=zn(customer.last_name),
@@ -324,7 +320,9 @@ class MaintAppModel(object):
                                  phone1=zn(customer.phone1),
                                  phone2=zn(customer.phone2),
                                  email=zn(customer.email),
-                                 comments=zn(customer.comments))
+                                 comments=zn(customer.comments),
+                                 first_name_search = zn(customer.first_name.upper()),
+                                 last_name_search = zn(customer.last_name.upper()))
         key = entity.put()
         return str(key)
             
@@ -372,11 +370,35 @@ class MaintAppModel(object):
         """
         result = []
         limit = 50 # return at most 50 customers matching the search criteria
+        
+        query = db.Query(CustomerEnt)
+        #query = CustomerEnt.all()
+        if searchCriteria.first_name: 
+            query.filter("first_name_search =", searchCriteria.first_name.upper())
+        if searchCriteria.last_name: 
+            query.filter("last_name_search =", searchCriteria.last_name.upper())
+        if searchCriteria.address1: 
+            query.filter("address1 =", searchCriteria.address1)
+        if searchCriteria.city: 
+            query.filter("city =", searchCriteria.city)
+        if searchCriteria.state: 
+            query.filter("state =", searchCriteria.state)
+        if searchCriteria.zip: 
+            query.filter("zip =", searchCriteria.zip)
+        if searchCriteria.phone1: 
+            query.filter("phone1 =", searchCriteria.phone1)
+        if searchCriteria.email: 
+            query.filter("email =", searchCriteria.email)
+
+        query.order("last_name_search")
+        query.order("first_name_search")
+
+        """
         query_string = ""
         if searchCriteria.first_name: 
-            query_string += " AND first_name='" + searchCriteria.first_name + "'"
+            query_string += " AND first_name_search='" + searchCriteria.first_name.upper() + "'"
         if searchCriteria.last_name: 
-            query_string += " AND last_name='" + searchCriteria.last_name + "'"
+            query_string += " AND last_name_search='" + searchCriteria.last_name.upper() + "'"
         if searchCriteria.address1: 
             query_string += " AND address1='" + searchCriteria.address1 + "'"
         if searchCriteria.city: 
@@ -392,10 +414,11 @@ class MaintAppModel(object):
             
         if query_string != "":
             query_string = "WHERE " + query_string[5:] # replace the beginning AND by WHERE
-        query_string += " ORDER BY last_name, first_name"
-        
+        query_string += " ORDER BY last_name_search, first_name_search"
+        """        
         #print "query_string: " + query_string
-        query = CustomerEnt.gql(query_string)
+        #print "args: ", args
+        #query = CustomerEnt.gql(query_string, args[0], args[1])
         customers = query.fetch(limit) 
         for customer_ent in customers:
             result.append(self.getCustomerFromCustomerEnt(customer_ent))
@@ -977,6 +1000,25 @@ class TestMaintAppModel(object):
         duplicate_c = Customer(id='-1',
                       first_name='Fiona',
                       last_name='Wong',
+                      address1='addr',
+                      address2='',
+                      city='San Jose',
+                      state='CA',
+                      zip='95135',
+                      phone1='111.111.1111',
+                      phone2='222.222.2222',
+                      email='fionawhwong@yahoo.com',
+                      comments='')
+        try:
+            duplicate_key = appModel.saveCustomerInfo(duplicate_c)
+        except DuplicateCustomer, e:
+            print e
+            print "duplicate found: ", e.getDuplicateCustomer()
+        
+        print "\n** testing duplicate customer; case-insensitive search on"
+        duplicate_c = Customer(id='-1',
+                      first_name='WING',
+                      last_name='WONG',
                       address1='addr',
                       address2='',
                       city='San Jose',
