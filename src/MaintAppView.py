@@ -23,6 +23,7 @@ replaced.  As such, minimal effort has been put into documentation.
          customerSubview.html
 06/16/09 Added validation error handling in workorderSubviewForm
          Added handling of former mechanic no longer in the mechanic list.
+06/17/09 Fixed issue with None value in mechanic list
 '''
 
 NEW_CUSTOMER = 1
@@ -279,7 +280,7 @@ class SidePanelSubview(object):
         reqhandler.response.out.write("</div>\n")
         return None
         
-    def _serve_content(self, reqhandler):
+    def _serve_content_old(self, reqhandler):
         linkClass = "s_side_links"
         activeLinkClass = "s_active_side_links"
         
@@ -289,6 +290,35 @@ class SidePanelSubview(object):
         css_class = activeLinkClass if (self.__itemSelected == 2) else linkClass
         reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_findcust" value="Find Customer" /></p>' % css_class)
         reqhandler.response.out.write('<p><strong>Open Work Orders:</strong></p>')
+        if len(self.__openWorkorders) == 0: 
+            reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
+        else:
+            self.__serve_workorderList(reqhandler, self.__openWorkorders)
+        reqhandler.response.out.write('<p><strong>Work Completed:</strong></p>')
+        if len(self.__completedWorkorders) == 0: 
+            reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
+        else:
+            self.__serve_workorderList(reqhandler, self.__completedWorkorders)
+        reqhandler.response.out.write('<hr />')
+        reqhandler.response.out.write('<p><strong>App Info:</strong></p>')
+        reqhandler.response.out.write('<p style="margin-left:15px;">%s</p>' % self.__comments)
+        if self.__errorObj is not None:
+            errors = "<br />".join(str(self.__errorObj).split("\n"))
+            reqhandler.response.out.write( \
+                '<p style="margin-left:15px; color:red; font-weight:bold">%s</p>' % errors)        
+        reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
+        reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
+        reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
+        return None
+
+    def _serve_content(self, reqhandler):
+        linkClass = "s_side_links"
+        activeLinkClass = "s_active_side_links"
+        
+        tempValuesDict = { 'new_css_class':(activeLinkClass if (self.__itemSelected == 1) else linkClass),
+                          'find_css_class':(activeLinkClass if (self.__itemSelected == 2) else linkClass) }
+        doRender( reqhandler, 'sidePanelSubview', tempValuesDict )
+           
         if len(self.__openWorkorders) == 0: 
             reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
         else:
@@ -488,26 +518,15 @@ class WorkorderSubview(object):
         return None    
 
     def __output_workorder_header(self, reqhandler):
+        """ Composes and renders the header section of the work order form 
+        """
         tempValuesDict = { 'customer':self.__customer, 'vehicle':self.__vehicle }    
         doRender (reqhandler, 'workorderSubviewHeader', tempValuesDict)      
         return None
     
-    def __format_tabs_old(self, reqhandler):
-        woIndex = -1
-        for workorder in self.__workorders:
-            woIndex += 1
-            selClass = "selected_tab_button" if workorder.id==self.__activeWorkorderId \
-                                             else "tab_button"
-            if workorder.id == "-1":
-                label = "New Work Order"
-            else:
-                label = Utilities.shortDate(workorder.date_created)
-            reqhandler.response.out.write( \
-                '<input style="margin-top:25px;" class="%s" type="submit" name="submit_wotab_%d" value="%s" />' %
-                    (selClass, woIndex, label))
-
     def __format_tabs(self, reqhandler):
-        """ templatized! """
+        """ Composes and renders the tab section of the work order form 
+        """
         woIndex = -1
         tabs=[]
         for workorder in self.__workorders:
@@ -523,11 +542,15 @@ class WorkorderSubview(object):
         doRender( reqhandler, 'workorderSubviewTabs', tempValuesDict )
 
     def __output_workorder_form(self, reqhandler):
+        """ Composes and renders the form section of the work order form 
+            with validation error(s) handling 
+        """
         self.__format_tabs(reqhandler)
         tempValuesDict = { 'date_created':self.__workorder.getDateCreated(),
                           'date_closed':self.__workorder.getDateClosed() }  
-        if self.__workorder.mechanic !="" and self.__workorder.mechanic not in self.__mechanics:
-                self.__mechanics.append(self.__workorder.mechanic)  
+        if ( self.__workorder.mechanic != "" and self.__workorder.mechanic is not None and \
+                    self.__workorder.mechanic not in self.__mechanics ):
+            self.__mechanics.append(self.__workorder.mechanic) 
         mechanics =[{'value':mechanic,'name':mechanic} for mechanic in self.__mechanics]
         mechanics.insert(0, { 'value':Workorder.NO_MECHANIC,'name':'Select...' })
         if self.__errorFields is not None:
@@ -539,6 +562,7 @@ class WorkorderSubview(object):
         return None
 
 class DialogSubview(object):
+    """ Composes and renders a dialog using dialogTemplate.html"""
     def __init__(self, request_button, request_tag):
         self.__request_button = request_button
         self.__request_tag = request_tag
