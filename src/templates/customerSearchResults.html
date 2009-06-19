@@ -6,11 +6,15 @@ when search comes back with a customer list
 {% block searchResult %}
 <hr \>
 {% if customers %}
+ 	<table id="searchResults">
 	{% for customer in customers %}
-		<p>
+	<tr id="{% cycle evenRow,oddRow %}">
+		<td>
 		<a href="/Search?cid={{customer.id}}">{{customer.last_name}}, {{customer.first_name}} | {{customer.phone1}}</a>
-		</p>
+		</td>
+	</tr>
 	{% endfor %}
+	</table>
 {% else %}
 	<p><strong>No customers match the search you requested.</strong></p>
 {% endif %}
