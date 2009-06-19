@@ -37,7 +37,7 @@ indexes:
   - name: phone1
   - name: last_name
 
-# Used once in query history.
+# Used 2 times in query history.
 - kind: CustomerEnt
   properties:
   - name: first_name_search
@@ -80,7 +80,7 @@ indexes:
   - name: zip
   - name: first_name
 
-# Used 9 times in query history.
+# Used 26 times in query history.
 - kind: CustomerEnt
   properties:
   - name: last_name_search
@@ -107,14 +107,14 @@ indexes:
   - name: last_name
   - name: first_name
 
-# Used 102 times in query history.
+# Used 366 times in query history.
 - kind: WorkorderEnt
   properties:
   - name: status
   - name: date_created
     direction: desc
 
-# Unused in query history -- copied from input.
+# Used 47 times in query history.
 - kind: WorkorderEnt
   properties:
   - name: vehicle
