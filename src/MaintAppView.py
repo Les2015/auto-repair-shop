@@ -163,12 +163,10 @@ class MaintAppView(object):
         doRender(reqhandler, 'internalError', dict)
         return None
     
-    def serve_content(self, reqhandler):         
-        self.__serve_header(reqhandler)
-        reqhandler.response.out.write("""
-          <body>
-            <form action="/Customer" method="post">
-        """)         
+    def serve_content(self, reqhandler):   
+         # moving some html code to templates      
+        doRender (reqhandler, 'top', {})
+        #               
         if self.__dialogPanel is not None:
             self.__dialogPanel._serve_content(reqhandler)
         rowspan = (2 if self.__mainMode == INPUT_CUSTOMER else 1)
@@ -176,7 +174,6 @@ class MaintAppView(object):
               <table class="my_table">
                 <tr>""")
         reqhandler.response.out.write('<td rowspan="%d" class="my_tleft">' % rowspan)       
-        #doRender (reqhandler, 'top', dict)   #moving some html code to templates         
         if self.__sidePanel is not None:
             self.__sidePanel._serve_content(reqhandler)
         reqhandler.response.out.write("""
@@ -198,36 +195,19 @@ class MaintAppView(object):
                         <tr>
                           <td class="my_tright_bottom">""")
                 if self.__vehiclePanel is not None:
-                    self.__vehiclePanel._serve_content(reqhandler)                    
-        #doRender(reqhandler, 'bottom', {})   #moving some html code to templates 
-        reqhandler.response.out.write("""
-                  </td>
-                </tr>
-                """)           
-        reqhandler.response.out.write("""
-              </table>
-            </form>
-          </body>
-        </html>
-        """)
+                    self.__vehiclePanel._serve_content(reqhandler) 
+        #moving some html code to templates            
+        tempValuesDict = { 'server_software': os.environ['SERVER_SOFTWARE'],
+                          'python_version': sys.version }                          
+        doRender(reqhandler, 'bottom', tempValuesDict)   
+        #
         return None
-    
-    def __serve_header(self, reqhandler):
-        reqhandler.response.out.write(
-"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-    <head>
-        <title>Dermico Auto Maintenance Records System</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-        <link href="/stylesheets/dermico.css" rel="stylesheet" type="text/css" />
-    </head>
-    """)
-        return None
-
     
 class SidePanelSubview(object):
     def __init__(self):
+        """ 
+        Constructor for SidePanelSubview() 
+        """
         self.__itemSelected = 1
         self.__comments = ""
         self.__customerId = "-1"
@@ -262,84 +242,54 @@ class SidePanelSubview(object):
     def _configureErrorMessages(self, errorObj):
         self.__errorObj = errorObj
         
-    def __serve_workorderList(self, reqhandler, woList):
-        reqhandler.response.out.write("<div>\n")
-        for pair in woList:
-            vehicle = pair[0]
-            workorder = pair[1]
-            #sys.stderr.write(str(vehicle))
-            #sys.stderr.write(str(workorder) + "\n")
-            if vehicle is not None:
-                if workorder.getId() == self.__workorderId:
-                    button_class = "s_active_side_wo"
-                else:
-                    button_class = "s_side_wo"
-                reqhandler.response.out.write( \
-                    '<input class="%s" type="submit" name="submit_activewo_%s" value="%s %s %s, \nLic# %s" />' % \
-                    (button_class, workorder.getId(), vehicle.year, vehicle.make, vehicle.model, vehicle.license))
-        reqhandler.response.out.write("</div>\n")
-        return None
-        
-    def _serve_content_old(self, reqhandler):
-        linkClass = "s_side_links"
-        activeLinkClass = "s_active_side_links"
-        
-        reqhandler.response.out.write('<p><strong>Customer Input:</strong></p>')
-        css_class = activeLinkClass if (self.__itemSelected == 1) else linkClass
-        reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_newcust" value="Add New Customer" /></p>' % css_class)
-        css_class = activeLinkClass if (self.__itemSelected == 2) else linkClass
-        reqhandler.response.out.write('<p><input class="%s" type="submit" name="submit_findcust" value="Find Customer" /></p>' % css_class)
-        reqhandler.response.out.write('<p><strong>Open Work Orders:</strong></p>')
-        if len(self.__openWorkorders) == 0: 
-            reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
-        else:
-            self.__serve_workorderList(reqhandler, self.__openWorkorders)
-        reqhandler.response.out.write('<p><strong>Work Completed:</strong></p>')
-        if len(self.__completedWorkorders) == 0: 
-            reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
-        else:
-            self.__serve_workorderList(reqhandler, self.__completedWorkorders)
-        reqhandler.response.out.write('<hr />')
-        reqhandler.response.out.write('<p><strong>App Info:</strong></p>')
-        reqhandler.response.out.write('<p style="margin-left:15px;">%s</p>' % self.__comments)
-        if self.__errorObj is not None:
-            errors = "<br />".join(str(self.__errorObj).split("\n"))
-            reqhandler.response.out.write( \
-                '<p style="margin-left:15px; color:red; font-weight:bold">%s</p>' % errors)        
-        reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
-        reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
-        reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
-        return None
-
+    def __build_workorderList(self, reqhandler, woList):
+        """ Build from woList a list of dictionaries to be used by
+            template sidePanelSubview.html to display Open and 
+            Completed work orders in the side panel.
+            Return 'workorders', a list of dictionaries.
+        """
+        workorders = []
+        if len(woList) != 0:
+            for pair in woList:
+                vehicle = pair[0]
+                workorder = pair[1]
+                if vehicle is not None:
+                    if workorder.getId() == self.__workorderId:
+                        button_class = "s_active_side_wo"
+                    else:
+                        button_class = "s_side_wo"              
+                    workorders.append({"button_class":button_class, "id":workorder.getId(),\
+                                       "vehicle_info": "%s %s %s, \nLic# %s" % \
+                                       (vehicle.year,vehicle.make, vehicle.model, vehicle.license) })
+        return workorders
+         
     def _serve_content(self, reqhandler):
+        """ Uses template sidePanelSubview.html to compose and display the side panel
+            with 3 sections:
+            - Buttons New & Find Customer
+            - Open & Completed work orders
+            - Messages: Application state and validation errors
+            and 3 hidden fields.
+        """
+        # Buttons New & Find Customer
         linkClass = "s_side_links"
-        activeLinkClass = "s_active_side_links"
-        
+        activeLinkClass = "s_active_side_links"        
         tempValuesDict = { 'new_css_class':(activeLinkClass if (self.__itemSelected == 1) else linkClass),
                           'find_css_class':(activeLinkClass if (self.__itemSelected == 2) else linkClass) }
-        doRender( reqhandler, 'sidePanelSubview', tempValuesDict )
-           
-        if len(self.__openWorkorders) == 0: 
-            reqhandler.response.out.write('<p style="margin-left:15px;">No Open Work Orders</p>')
-        else:
-            self.__serve_workorderList(reqhandler, self.__openWorkorders)
-        reqhandler.response.out.write('<p><strong>Work Completed:</strong></p>')
-        if len(self.__completedWorkorders) == 0: 
-            reqhandler.response.out.write('<p style="margin-left:15px;">No Completed Work Orders</p>')
-        else:
-            self.__serve_workorderList(reqhandler, self.__completedWorkorders)
-        reqhandler.response.out.write('<hr />')
-        reqhandler.response.out.write('<p><strong>App Info:</strong></p>')
-        reqhandler.response.out.write('<p style="margin-left:15px;">%s</p>' % self.__comments)
+        # Open & completed work orders
+        tempValuesDict['openWos'] = self.__build_workorderList(reqhandler, self.__openWorkorders)
+        tempValuesDict['completedWos'] = self.__build_workorderList(reqhandler, self.__completedWorkorders)
+        # Application state & validation error messages
+        errors = ""
         if self.__errorObj is not None:
-            errors = "<br />".join(str(self.__errorObj).split("\n"))
-            reqhandler.response.out.write( \
-                '<p style="margin-left:15px; color:red; font-weight:bold">%s</p>' % errors)        
-        reqhandler.response.out.write('<input type="hidden" name="customer_id"  value="%s" />' % self.__customerId)
-        reqhandler.response.out.write('<input type="hidden" name="vehicle_id"   value="%s" />' % self.__vehicleId)
-        reqhandler.response.out.write('<input type="hidden" name="workorder_id" value="%s" />' % self.__workorderId)
-        return None
-    
+            errors = str(self.__errorObj)
+        tempValuesDict['comments'] = self.__comments
+        tempValuesDict['errors'] = errors
+        tempValuesDict['customerId'] = self.__customerId
+        tempValuesDict['vehicleId'] = self.__vehicleId
+        tempValuesDict['workorderId'] = self.__workorderId
+        doRender( reqhandler, 'sidePanelSubview', tempValuesDict )
+        return None   
         
 class CustomerSubview(object):
     def __init__(self):
@@ -447,6 +397,8 @@ class VehicleSubview(object):
         self.__hasUnclosedWorkorder = has_unclosed_workorder
         
     def _serve_content(self, reqhandler):
+        """ Uses template vehicleSubview.html to compose and display vehicle info
+        """
         self.__retrieveActiveVehicle()
         tabNum = -1       
         tabs=[]
@@ -512,6 +464,8 @@ class WorkorderSubview(object):
         return None    
     
     def _serve_content(self, reqhandler):
+        """ Composes and renders the content of a work order 
+        """
         self.__retrieveActiveWorkorder()
         self.__output_workorder_header(reqhandler)
         self.__output_workorder_form(reqhandler)
@@ -562,7 +516,7 @@ class WorkorderSubview(object):
         return None
 
 class DialogSubview(object):
-    """ Composes and renders a dialog using dialogTemplate.html"""
+    """ Composes and renders a save dialog using dialogTemplate.html"""
     def __init__(self, request_button, request_tag):
         self.__request_button = request_button
         self.__request_tag = request_tag
