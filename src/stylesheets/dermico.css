@@ -1,6 +1,6 @@
 /* 
     dermico.css
-    Author: Brad Gaiser
+    Author: Brad Gaiser, Jerome Calvo
     Copyright  2009
     Class:  CIS 068K
     Style sheet applied to the Maintenance Records System Web Pages 
@@ -29,6 +29,21 @@ body
 
 /* Styles for presentation of tables of names, etc. where
    we want the cells to be outlined & offset visually. */
+   
+.my_theader
+{
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    color: black;
+    background: white;
+    text-align: left;
+    border: medium ridge #800000;
+    height: 52x;
+    width: 1000px;
+}
+
 .my_table
 {
     margin-left: auto;
@@ -52,7 +67,7 @@ body
     background: #99ff99;
     padding: 0.2em 0.5ex 0.2em 0.5ex;
     border: medium solid #006600;
-    width: 400px;
+    width: 500px;
 }
 
 .my_tleft
