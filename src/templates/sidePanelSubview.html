@@ -1,5 +1,8 @@
 <!-- template for SidePanelSubview()
 	06/17/09 Customer Input Buttons
+	06/18/09 Open & Completed work orders
+			 Application state & validation error messages
+	
 -->
  <p>
     <strong>Customer Input:</strong>
@@ -10,3 +13,31 @@
 <p>
     <input class="{{find_css_class}}" type="submit" name="submit_findcust" value="Find Customer" />
 </p>
+<p><strong>Open Work Orders:</strong></p>
+{% if openWos %}
+	<div>
+    {% for openWo in openWos %}
+    	<input class="{{openWo.button_class}}" type="submit" name="submit_activewo_{{openWo.id}}" value="{{openWo.vehicle_info}}" />
+    {% endfor %}
+	</div>
+{% else %}
+	<p style="margin-left:15px;">No Open Work Orders</p>
+{% endif %}
+<p><strong>Work Completed:</strong></p>
+{% if completedWos %}
+	<div>
+    {% for completedWo in completedWos %}
+    	<input class="{{completedWo.button_class}}" type="submit" name="submit_activewo_{{completedWo.id}}" value="{{completedWo.vehicle_info}}" />
+    {% endfor %}
+	</div>
+{% else %}
+	<p style="margin-left:15px;">No Completed Work Orders</p>
+{% endif %}
+<hr />
+<p><strong>App Info:</strong></p>
+<p style="margin-left:15px;">{{comments}}
+</p>
+<pre style="margin-left:15px; color:red; font-weight:bold">{{errors}}</pre>
+<input type="hidden" name="customer_id"  value="{{customerId}}" />
+<input type="hidden" name="vehicle_id"   value="{{vehicleId}}" />
+<input type="hidden" name="workorder_id" value="{{workorderId}}" />
