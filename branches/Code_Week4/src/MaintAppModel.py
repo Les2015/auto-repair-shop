@@ -714,8 +714,7 @@ class MaintAppModel(object):
             return None
 
     def getWorkorder(self, workorder_id):
-        """ Return the workorder record whose id is given by the workorder_id
-            parameter.
+        """ Return the workorder record whose id is given by the workorder_id parameter.
         """
         try:
             entity = WorkorderEnt.get(db.Key(workorder_id))
@@ -778,8 +777,17 @@ class MaintAppModel(object):
         """ Returns the number of workorders that have been saved for the
             vehicle specified by 'vehicle_id'
         """
-        workorders = self.getWorkorderList(vehicle_id)
-        return len(workorders)
+        try:
+            vehicle = VehicleEnt.get(db.Key(vehicle_id))
+        except Exception:
+            return 0
+        
+        query = WorkorderEnt.gql("WHERE vehicle = :key", key=vehicle)
+        workorders = query.fetch(limit=1000)
+        return len(workorders) 
+    
+        #workorders = self.getWorkorderList(vehicle_id)
+        #return len(workorders)
         
     def hasUnclosedWorkorder(self, vehicle_id):
         """ Determine if the vehicle specified by 'vehicle_id' has any 
@@ -790,12 +798,24 @@ class MaintAppModel(object):
         """
         retVal = False
         if vehicle_id != "-1":
-            unclosedWorkorders = self.getOpenWorkorders() + \
-                                 self.getCompletedWorkorders()
-            for vehicle, workorder in unclosedWorkorders:
-                if vehicle is not None and vehicle.getId() == vehicle_id:
-                    retVal = True
-                    break
+            try:
+                vehicle = VehicleEnt.get(db.Key(vehicle_id))
+            except Exception:
+                return retVal
+            
+            query = WorkorderEnt.gql("WHERE vehicle = :key AND status = :status", key=vehicle, status=Workorder.OPEN)
+            open_workorders = query.fetch(limit=100) 
+            query = WorkorderEnt.gql("WHERE vehicle = :key AND status = :status", key=vehicle, status=Workorder.COMPLETED)
+            completed_workorders = query.fetch(limit=100) 
+            if (len(open_workorders)>0 or len(completed_workorders)>0):
+                retVal = True
+
+#            unclosedWorkorders = self.getOpenWorkorders() + \
+#                                 self.getCompletedWorkorders()
+#            for vehicle, workorder in unclosedWorkorders:
+#                if vehicle is not None and vehicle.getId() == vehicle_id:
+#                    retVal = True
+#                    break
         return retVal
         
     #---------------------------- List of Mechanics --------------------------------
