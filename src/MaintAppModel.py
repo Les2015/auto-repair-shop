@@ -174,7 +174,7 @@ def isMissing(s):
     checks if s is None or an empty string
     Returns True if missing else False
     """
-       return (s == None) | (s == '')
+    return (s == None) | (s == '')
 
 class MaintAppModel(object):
     requiredCust = ('last_name', 'address1', 'city', 'state', 'zip', 'phone1')
@@ -215,7 +215,7 @@ class MaintAppModel(object):
         return status
     
     def chk_last_name(self,last_name):
-         """
+        """
         Check if last_name is no more than 50 characters
         Returns True if valid
         False if invalid
