@@ -36,12 +36,12 @@
     </tr>
     <tr>
         <td>
-            <label for "mechanics_tasks">Mechanics Tasks:</label><br />
-            <textarea name="task_list" rows="7" cols="40">{{workorder.task_list}}</textarea>
+            <label {% if e_task_list %}class="error"{% endif %} for "mechanics_tasks">Mechanics Tasks:</label><br />
+            <textarea name="task_list" {% if e_task_list %}class="error_field"{% endif %} rows="7" cols="40">{{workorder.task_list}}</textarea>
         </td>
         <td>
-            <label for "work_done">Work Performed:</label><br />
-            <textarea name="work_performed" rows="7" cols="40">{{workorder.work_performed}}</textarea>
+            <label {% if e_work_performed %}class="error"{% endif %} for "work_done">Work Performed:</label><br />
+            <textarea name="work_performed" {% if e_work_performed %}class="error_field"{% endif %} rows="7" cols="40">{{workorder.work_performed}}</textarea>
         </td>
     </tr>
     <tr>
