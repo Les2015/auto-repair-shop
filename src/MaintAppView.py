@@ -416,12 +416,10 @@ class CustomerSubview(object):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
             as well as search results when in find mode.  
         """
-        ### temporary tuple of states to test drop-down menu in customerSubview.html
         states =  ('AA', 'AE', 'AK', 'AL', 'AP', 'AR', 'AS', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'FM', 'GA', \
                    'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MH', 'MI', 'MN', 'MO', \
                    'MP', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'PR', \
                    'PW', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY')         
-        ###
         tempValuesDict = { 'customer':self.__customer }    
         tempValuesDict['states'] = states                         
         if self.__errorFields is not None:
