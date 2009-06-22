@@ -1,10 +1,19 @@
 '''
+File: MaintAppModel.py
 Created on May 27, 2009
 
-@author: Wing Wong
+@author: Wing Wong, Les Faby
 
-2009-06-05  Add customer Validation   Les Faby
-2009-06-05  Add vehicle Validation    Les Faby
+Hides the choice of database from the controller and view
+
+Responsible for 
+* validating data going into the data base
+* doing get and put of database entries
+* issuing sql-like gsql database queries 
+
+The database model itself is represented by 
+DataStoreModels.py. This module is its only client. 
+
 
 '''
 
@@ -126,6 +135,12 @@ def isPhone(s):
     
 
 def isZip(s):
+    """ 
+    Looks for a 5 or 9-digit zip code
+    Returns a tuple (Boolean, Error String)
+    (True,'') if valid
+    (False,'error message') if invalid
+    """
     aLen = len(s)
     if (aLen == 5) | (aLen == 9):
        if s.isdigit():
@@ -141,6 +156,12 @@ def isZip(s):
     return (False,"bad zip code")
     
 def lenOK(s,minLen, maxLen):
+    """ 
+    checks that minimum <= length(s)<= maximum length
+    Returns a tuple (Boolean, Error String)
+    (True,'') if valid
+    (False,'error message') if invalid
+    """
     if s == None:
        return (False,"needs to have a length between %i and %i" % ( minLen, maxLen))
     if minLen <= len(s) <= maxLen: 
@@ -149,6 +170,10 @@ def lenOK(s,minLen, maxLen):
        return (False, "needs to have a length between %i and %i" % ( minLen, maxLen))
    
 def isMissing(s):
+    """ 
+    checks if s is None or an empty string
+    Returns True if missing else False
+    """
        return (s == None) | (s == '')
 
 class MaintAppModel(object):
@@ -177,52 +202,102 @@ class MaintAppModel(object):
     
     
     def chk_id(self,id):
+        """ No validation is required for the database-generated id so returns true """
         return True
     
     def chk_first_name(self,first_name):
+        """
+        Check if first_name is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
         status, msg = lenOK(first_name,1,50)
         return status
     
     def chk_last_name(self,last_name):
+         """
+        Check if last_name is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
         status, msg = lenOK(last_name,1,50)
         return status
     
     def chk_address1(self,address):
+        """
+        Check if address is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
         status, msg = lenOK(address,1,50)
         return status
  
     def chk_address2(self,address):
-          status, msg = lenOK(address,1,50)
-          return status
+        """
+        Check if address is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
+        status, msg = lenOK(address,1,50)
+        return status
       
     def chk_city(self,city):
-          status, msg = lenOK(city,1,50)
-          return status
+        """
+        Check if city is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
+        status, msg = lenOK(city,1,50)
+        return status
+    
 ###################### 
 #  validation done in View so now
 #   always returns True
 ###################### 
     def chk_state(self,state):
+        """ Since validation is done by the view, returns True """
         #status, msg = isState(state)
         return True
     
     def chk_zip(self,zip):
+        """
+        Check if zip is valid, using isZip.
+        Returns True if valid else False
+        """
         status, msg = isZip(zip)
         return status
         
     def chk_phone1(self,phone):
+        """
+        Check if phone number is valid, using isPhone.
+        Returns True if valid else False
+        """
         status, msg = isPhone(phone)
         return status
         
     def chk_phone2(self,phone):
+        """
+        Check if phone number is valid, using isPhone.
+        Returns True if valid else False
+        """
         status, msg = isPhone(phone)
         return status
     
     def chk_email(self,email):
+        """
+        Check if email is no more than 50 characters
+        Returns True if valid
+        False if invalid
+        """
         status,msg = lenOK(email,1,50)
         return status
     
     def chk_comments(self, comments):
+        """
+        Check if email is no more than 5000 characters
+        Returns True if valid
+        False if invalid
+        """
         status, msg = lenOK(comments,1,5000)
         return status
     
@@ -564,15 +639,34 @@ class MaintAppModel(object):
     #================================================================================
     
     def chk_w_vehicle_id(self, vehicle_id):
+        """
+        Check if vehicle_id is ok
+        Returns True since this was database-
+        generated
+        """
         return True
     
     def chk_w_date_created(self, date_created):
+        """
+        Check if date created is ok
+        date_created was database generated
+        Returns True
+        """
         return True
     
     def chk_w_date_closed(self, date_closed):
+        """
+        Check if date closed is ok
+        date_closed was database generated
+        Returns True
+        """
         return True
     
     def chk_w_mileage(self, mileage):
+        """
+        Check if 0 < mileage <= mileage
+        Returns True else False
+        """
         status,msg = lenOK(mileage, 1,7)
         if status == False:
             return False
@@ -582,21 +676,43 @@ class MaintAppModel(object):
             return False
     
     def chk_w_status(self, status):
+        """
+        Check if workOrder status is one of OPEN, COMPLETED, CLOSED
+        Returns True else False
+        """
         return status in (Workorder.OPEN, Workorder.COMPLETED, Workorder.CLOSED )
     
     def chk_w_customer_request(self, customer_request):
+        """
+        Check if customer_request is between 1 and 5000 chars.
+        Returns True else False
+        """
         status,msg = lenOK(customer_request,1,5000)
         return status
  
     def chk_w_mechanic(self, mechanic):
+        """
+        Check if customer_request is between 1 and 50 chars.
+        Returns True else False
+        Note that the View uses a pull-down list for inputing
+        the mechanic name so it is pre-validated.
+        """
         status,msg = lenOK(mechanic, 1,50)
         return status
     
     def chk_w_task_list(self, task_list):
+        """
+        Check if task_list is between 1 and 5000 chars.
+        Returns True else False
+        """
         isOK,msg = lenOK(task_list, 1,5000)
         return isOK
     
     def chk_w_work_performed(self, work_performed):
+        """
+        Check if work_performed is between 1 and 5000 chars.
+        Returns True else False
+        """
         status,msg = lenOK(work_performed,1,5000)
         return status
     
