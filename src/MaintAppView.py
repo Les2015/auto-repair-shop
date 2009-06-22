@@ -355,7 +355,7 @@ class CustomerSubview(object):
         side of the main screen UI
     """
     def __init__(self):
-        """ Constructor for CustomerSubview(). Initiliaze Customer subview
+        """ Constructor for CustomerSubview(). Initialize Customer subview
             UI with default state and values.
         """
         self.__customer = None
@@ -414,7 +414,7 @@ class CustomerSubview(object):
         
     def _serve_content(self, reqhandler):
         """ Uses template customerSubview.html and its children to compose and display customer info sub view
-            as well as search results when in find mode 
+            as well as search results when in find mode.  
         """
         ### temporary tuple of states to test drop-down menu in customerSubview.html
         states =  ('AA', 'AE', 'AK', 'AL', 'AP', 'AR', 'AS', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'FM', 'GA', \
@@ -539,6 +539,9 @@ class WorkorderSubview(object):
         return None
     
     def _configureHeader(self, customer, vehicle):
+        """ Configure subview UI with data from a given customer 
+            and vehicle.
+        """
         self.__customer = customer
         self.__vehicle = vehicle
         return None
@@ -626,13 +629,19 @@ class WorkorderSubview(object):
         return None
 
 class DialogSubview(object):
-    """ Composes and renders a save dialog using dialogTemplate.html"""
+    """ Composes and renders a save dialog using dialogTemplate.html
+    """
     def __init__(self, request_button, request_tag):
+        """ Constructor for DialogSubview().Initialize dialog UI with 
+            request_button and request_tag.
+        """
         self.__request_button = request_button
         self.__request_tag = request_tag
         return None
     
     def _serve_content(self, reqhandler):
+        """ Composes and renders the dialog.
+        """
         tempValuesDict = { 'request_button':self.__request_button,
                           'request_tag':self.__request_tag }
         doRender( reqhandler,"dialogTemplate",tempValuesDict )
