@@ -410,7 +410,6 @@ class MaintAppModel(object):
         return status
       
     def chk_year(self, year):
-        # FIXME: is year already an integer, not a string????
         if (year.isdigit() == False):
             return False
         maxYr = datetime.datetime.today().year + 3
@@ -601,7 +600,6 @@ class MaintAppModel(object):
         status,msg = lenOK(work_performed,1,5000)
         return status
     
-    #FIXME: what about date fields?
     
     def validateWorkOrder(self,workOrder):
         """
