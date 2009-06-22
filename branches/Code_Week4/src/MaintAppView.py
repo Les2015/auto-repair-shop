@@ -3,17 +3,15 @@ Created on May 25, 2009
 
 @author: Brad Gaiser, Jerome Calvo
 
-This module provides a prototype implementation of the View in the MVC
-implementation of the Maintenance Records System for Dermico Auto.  The
-UI code is a bit more complex, so has taken more time to get into place
-than anticipated.  As a consequence, this quick & dirty code was written
-to provide a framework for integration testing and making sure that the
-control flow managed by the Controller classes works.
+This module was first implemented as a prototype of the View in the MVC
+implementation of the Maintenance Records System for Dermico Auto.
+The code was written to provide a framework for integration testing and 
+making sure that the control flow managed by the Controller classes works.
 
-This also is providing a 'spec' for the full implementation of the UI
-using Django templates to be provided by Jerome Calvo.  This code has
-been written with the intent that all if not most of the code will be
-replaced.  As such, minimal effort has been put into documentation.
+The current version has been partially re-written to support a set of templates
+(available in the /templates directory) and using a subset of the Django
+templating engine bundled with Google App Engine.
+
 
 06/12/09 Template code for customerSubview and vehicleSubview completed
          with support for error handling
@@ -24,8 +22,13 @@ replaced.  As such, minimal effort has been put into documentation.
 06/16/09 Added validation error handling in workorderSubviewForm
          Added handling of former mechanic no longer in the mechanic list.
 06/17/09 Fixed issue with None value in mechanic list
+06/18/09 Moved some HTML code from MaintAppView() to templates 'top.html'
+         and 'bottom.html'.
+         Added display of Python version and Server Software info.
 '''
 
+
+""" UI modes """
 NEW_CUSTOMER = 1
 FIND_CUSTOMER = 2
 INPUT_CUSTOMER = 3
@@ -38,8 +41,11 @@ import Utilities
 
 
 def doRender(handler,temp,dict):
-    """ Helper function rendering a template given a template name and
-        a dictionary of values.
+    """ Helper function rendering a template given 'temp' a template name and
+        'dict' a dictionary of place holder names matching the template design
+        and their corresponding values. 
+        Format for 'temp':
+        If template name is 'my_template.html' then temp = "my_template"       
     """
     path = os.path.join ( os.path.dirname(__file__), 'templates/' + temp + '.html' )
     outstr = template.render ( path, dict )
@@ -66,6 +72,9 @@ class MaintAppView(object):
     """
     
     def __init__(self, controller):
+        """ Constructor for MaintAppView(). Initialize state of the main screen UI
+            when called by the controller"
+        """
         self.__macController = controller
         self.__sidePanel = SidePanelSubview()
         self.__customerPanel = CustomerSubview()
@@ -76,21 +85,31 @@ class MaintAppView(object):
         return None
     
     def set_new_customer_mode(self):
+        """ set UI to New Customer mode 
+        """
         self.__mainMode = NEW_CUSTOMER
         self.__customerPanel._configure_input_mode()
     
     def set_search_mode(self):
+        """ set UI to Find Customer mode 
+        """
         self.__mainMode = FIND_CUSTOMER
         self.__customerPanel._configure_search_mode()
         
     def set_search_results_mode(self):
+        """ Set UI to Search Results mode 
+        """
         self.__mainMode = FIND_CUSTOMER
     
     def set_customer_vehicle_mode(self):
+        """ Set UI to Vehicle mode 
+        """
         self.__mainMode = INPUT_CUSTOMER
         self.__customerPanel._configure_display_mode()
         
     def set_workorder_mode(self):
+        """ Set UI to Work order mode 
+        """
         self.__mainMode = INPUT_WORKORDER
         
     def configureHiddenFields(self, customer_id, vehicle_id, workorder_id):
@@ -108,7 +127,8 @@ class MaintAppView(object):
         self.__sidePanel._configureErrorMessages(errorObj)
         
     def configureDuplicateCustomerMessage(self, errorObj):
-        """ Set up to report duplicate customer information to user. """
+        """ Set up to report duplicate customer information to user. 
+        """
         self.__customerPanel._configureDuplicateCustomerMessage(errorObj.getDuplicateCustomer())
         self.__sidePanel._configureErrorMessages(errorObj)
         
@@ -116,32 +136,54 @@ class MaintAppView(object):
                                   openWorkorders,
                                   completedWorkorders,
                                   debug_message):
+        """ Configure the Side Panel on the left side of the main screen 
+            with active buttons, list of open and completed orders, and
+            validation error messages.
+        """
         self.__sidePanel._configure_selection(activeElement)
         self.__sidePanel._configure_content(openWorkorders, 
                                             completedWorkorders, 
                                             debug_message)
         
     def configureCustomerContent(self, customer_info):
+        """ Configure Customer Subview with customer data passed by 
+            the controller.
+        """
         self.__customerPanel._configure_content(customer_info)
 
     def configureSearchResults(self, customer_list):
+        """ Configure Customer Subview with customer list passed by 
+            the controller as the result of Find Customer operation.
+        """
         self.__customerPanel._configure_search_results(customer_list)
         
     def configureVehicleContent(self, vehicle_list):
+        """ Configure Vehicle Subview with a vehicle list for a given customer.
+        """
         self.__vehiclePanel._configure_content(vehicle_list)
     
     def configureWorkorderCount(self, workorder_count):
+        """ Configure Vehicle Subview with # of work orders
+        """
         self.__vehiclePanel._configure_workorder_count(workorder_count)
         
     def configureWorkorderStatus(self, has_unclosed_workorder):
         self.__vehiclePanel._configure_workorder_status(has_unclosed_workorder)
+        """ Configure Vehicle Subview with work orders status
+        """
         
     def configureWorkorderHeader(self, customer, vehicle):
         self.__workorderPanel._configureHeader(customer, vehicle)
+        """ Configure Work order Subview header with data from a given customer 
+            and vehicle.
+        """
     
     def configureWorkorderContent(self, mechanics, workorder_list):
         self.__workorderPanel._configureWorkorderContent(mechanics, workorder_list)
-    
+        """ Configure Work order Subview with data from a list of work orders for
+            a given customer and vehicle.
+        """
+
     def showSaveDialog(self, request_button, request_tag):
         """ This method is called to set the UI up to display a save dialog
             on the browser with Yes/No/Cancel buttons.  This dialog should be
@@ -159,11 +201,18 @@ class MaintAppView(object):
         return None
     
     def reportInternalError(self, reqhandler, errorMessage):
+        """ Display error message and Traceback in case of internal error not
+            trapped elsewhere
+        """
         dict = {'error_message':errorMessage}
         doRender(reqhandler, 'internalError', dict)
         return None
     
-    def serve_content(self, reqhandler):   
+    def serve_content(self, reqhandler): 
+        """ Configure main screen UI based on UI modes:
+            NEW_CUSTOMER, FIND_CUSTOMER, INPUT_CUSTOMER and,
+            INPUT_WORKORDER      
+        """  
          # moving some html code to templates      
         doRender (reqhandler, 'top', {})
         #               
@@ -204,11 +253,15 @@ class MaintAppView(object):
         return None
     
 class SidePanelSubview(object):
+    """ Configure and render content of the Side Panel Subview on the left side
+        of the main screen UI
+    """
     def __init__(self):
         """ 
-        Constructor for SidePanelSubview() 
+        Constructor for SidePanelSubview(). Initialize Side Panel UI
+        with default values.
         """
-        self.__itemSelected = 1
+        self.__itemSelected = 1  # New Customer
         self.__comments = ""
         self.__customerId = "-1"
         self.__vehicleId = "-1"
@@ -229,17 +282,23 @@ class SidePanelSubview(object):
         self.__itemSelected = whichItem
     
     def _configure_content(self, openWorkorders, completedWorkorders, debug_message):
+        """ Configure Side Panel with open and completed work orders and validation
+            error messages if any.
+        """
         self.__openWorkorders = openWorkorders
         self.__completedWorkorders = completedWorkorders
         self.__comments = debug_message
         
     def _configure_hidden_fields(self, customer_id, vehicle_id, workorder_id):
+        """ Configure hidden field in form """
         self.__customerId = customer_id
         self.__vehicleId = vehicle_id
         self.__workorderId = workorder_id
         return None
     
     def _configureErrorMessages(self, errorObj):
+        """ Get error messages if any. 
+        """
         self.__errorObj = errorObj
         
     def __build_workorderList(self, reqhandler, woList):
@@ -292,7 +351,13 @@ class SidePanelSubview(object):
         return None   
         
 class CustomerSubview(object):
+    """ Configure and render content of the Customer Subview on the top right
+        side of the main screen UI
+    """
     def __init__(self):
+        """ Constructor for CustomerSubview(). Initiliaze Customer subview
+            UI with default state and values.
+        """
         self.__customer = None
         self.__searchMode = False
         self.__dispMode = False
@@ -302,35 +367,49 @@ class CustomerSubview(object):
         return None
     
     def _configure_content(self, customerInfo):
+        """ Configure UI with content from customer data """
         self.__customer = customerInfo
         return None
     
     def _configure_search_mode(self):
+        """ Configure UI for search mode """
         self.__searchMode = True
         self.__displayMode = False
         return None
     
     def _configure_input_mode(self):
+        """ Configure UI for input mode (New Customer input or edit mode for 
+            existing customer data)
+        """
         self.__searchMode = False
         self.__displayMode = False
         return None
     
     def _configure_display_mode(self):
+        """ Configure UI for display mode.
+        """
         self.__searchMode = False
         self.__displayMode = True
         return None
  
     def _configure_search_results(self, customer_list):
+        """ Configure UI for displaying search results after a 'Find Customer'
+            request.
+        """
         self.__searchMode = True
         self__displayMode = False
         self.__searchResults = customer_list
         return None
 
     def _configureErrorFields(self, error_fields):
+        """ Get list of fields with validation error if any 
+        """
         self.__errorFields = error_fields
         return None
     
     def _configureDuplicateCustomerMessage(self, duplicateCustomerInfo):
+        """ Get duplicate customer info after New Customer input 
+        """
         self.__duplicateCustomerInfo = duplicateCustomerInfo
         
     def _serve_content(self, reqhandler):
@@ -364,21 +443,31 @@ class CustomerSubview(object):
         return None
    
 class VehicleSubview(object):
+    """ Configure and render content of the Vehicle Subview under Customer panel
+        of the main screen UI
+    """
     def __init__(self):
+        """ Constructor for VehicleSubview(). Initialize UI with default values
+        """
         self.__errorFields = None
         self.__workorderCount = 0
         self.__hasUnclosedWorkorder = False
         return None
     
     def _configureActiveVehicle(self, vehicle_id):
+        """ Get Id for active vehicle """
         self.__activeVehicleId = vehicle_id
     
     def _configure_content(self, vehicle_list):
+        """ Set content for list of vehicle from 'vehicle_list'
+        """
         self.__vehicles = vehicle_list
         self.__vehicle = self.__vehicles[0]
         return None
     
     def __retrieveActiveVehicle(self):
+        """ Get data for active vehicle. 
+        """
         for eachVehicle in self.__vehicles:
             if eachVehicle.getId() == self.__activeVehicleId:
                 self.__vehicle = eachVehicle
@@ -386,14 +475,20 @@ class VehicleSubview(object):
         return None
     
     def _configureErrorFields(self, error_fields):
+        """ Get list of fields with validation error if any
+        """
         self.__errorFields = error_fields
         return None
 
     def _configure_workorder_count(self, workorder_count):
+        """ Get # of work orders for given vehicle
+        """
         self.__workorderCount = workorder_count
         return None
     
     def _configure_workorder_status(self, has_unclosed_workorder):
+        """ Get work order status for given vehicle
+        """
         self.__hasUnclosedWorkorder = has_unclosed_workorder
         
     def _serve_content(self, reqhandler):
@@ -429,7 +524,12 @@ class VehicleSubview(object):
         return None
         
 class WorkorderSubview(object):
+    """ Configure and render content of the Workorder Subview on the right side
+        of main screen UI.
+    """
     def __init__(self):
+        """ Constructor for WorkorderSubview(). Initialize UI with default values
+        """
         self.__customer = None
         self.__vehicle = None
         self.__activeWorkorderId = None
@@ -444,15 +544,23 @@ class WorkorderSubview(object):
         return None
     
     def _configureActiveWorkorder(self, workorder_id):
+        """ Set active work order
+        """
         self.__activeWorkorderId = workorder_id
         return None
 
     def _configureWorkorderContent(self, mechanics, workorder_list):
+        """ Set content for list of vehicle from 'vehicle_list' and a list
+            of mechanic's names
+        """
+
         self.__mechanics = mechanics
         self.__workorders = workorder_list
         return None
     
     def __retrieveActiveWorkorder(self):
+        """ Retrieve active work order data.
+        """
         for eachWorkorder in self.__workorders:
             if eachWorkorder.getId() == self.__activeWorkorderId:
                 self.__workorder = eachWorkorder
@@ -460,6 +568,8 @@ class WorkorderSubview(object):
         return None
     
     def _configureErrorFields(self, error_fields):
+        """ Get list of fields with validation error if any
+        """
         self.__errorFields = error_fields
         return None    
     
