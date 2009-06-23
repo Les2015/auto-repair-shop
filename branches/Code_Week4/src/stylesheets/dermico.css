@@ -196,11 +196,13 @@ body
 #evenRow
 {
   background: #C0C0C0;
+  font-size: 14px;
 }
 
 #oddRow
 {
   background: #99CCFF;
+  font-size: 14px;
 }
 
 
